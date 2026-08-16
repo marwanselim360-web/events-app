@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +39,7 @@
       padding: 6px 18px;
       border-radius: 20px;
       margin-bottom: 18px;
+      letter-spacing: 0.5px;
     }
     h1 {
       font-size: 22px;
@@ -102,14 +103,16 @@
 
   <div class="card">
     <div class="event-badge" id="eventDisplay">Event: Loading...</div>
-    <h1>شاركتنا اللحظة! 📸🎥</h1>
-    <p>التقط صورة أو سجّل فيديو وهيترفع مباشرة لألبوم الإيفنت الرسمي.</p>
+    <h1>Capture the Moment! 📸🎥</h1>
+    <p>Take a photo or record a video to automatically upload it to the event album.</p>
 
     <div class="btn-group">
-      <label for="photoInput" class="action-btn">📸 التقاط صورة</label>
+      <!-- Take Photo Button -->
+      <label for="photoInput" class="action-btn">📸 Take Photo</label>
       <input type="file" id="photoInput" accept="image/*" capture="environment">
 
-      <label for="videoInput" class="action-btn video-btn">🎥 تسجيل فيديو</label>
+      <!-- Record Video Button -->
+      <label for="videoInput" class="action-btn video-btn">🎥 Record Video</label>
       <input type="file" id="videoInput" accept="video/*" capture="camcorder">
     </div>
 
@@ -122,11 +125,13 @@
   </div>
 
   <script>
+    // 1. Get event name from URL
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
     const eventName = rawEvent ? rawEvent.trim() : 'General_Event';
-    document.getElementById('eventDisplay').innerText = "إيفنت: " + eventName.replace(/_/g, ' ');
+    document.getElementById('eventDisplay').innerText = "Event: " + eventName.replace(/_/g, ' ');
 
+    // 2. Cloudinary Credentials
     const CLOUD_NAME = "qwmaeyjl";
     const UPLOAD_PRESET = "events_upload";
 
@@ -137,6 +142,7 @@
     const imagePreview = document.getElementById('imagePreview');
     const videoPreview = document.getElementById('videoPreview');
 
+    // Upload Handler
     async function uploadMedia(file, resourceType) {
       if (!file) return;
 
@@ -152,12 +158,12 @@
       }
 
       statusBox.style.color = "#38bdf8";
-      statusBox.innerText = "جاري الرفع إلى ألبوم الإيفنت... ⏳";
+      statusBox.innerText = "Uploading to album... ⏳";
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", eventName);
+      formData.append("folder", eventName); // Automatically groups by event folder
 
       try {
         const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
@@ -169,15 +175,15 @@
 
         if (response.ok && data.secure_url) {
           statusBox.style.color = "#4ade80";
-          statusBox.innerText = "✅ تم الرفع بنجاح إلى الإيفنت!";
+          statusBox.innerText = "✅ Uploaded successfully!";
         } else {
           statusBox.style.color = "#f87171";
-          statusBox.innerText = "❌ حدث خطأ أثناء الرفع، حاول مرة أخرى.";
+          statusBox.innerText = "❌ Upload failed. Please try again.";
         }
       } catch (err) {
         console.error(err);
         statusBox.style.color = "#f87171";
-        statusBox.innerText = "❌ تعذر الاتصال بالسيرفر. تحقق من الإنترنت.";
+        statusBox.innerText = "❌ Connection error. Check your internet.";
       }
     }
 
