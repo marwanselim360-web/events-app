@@ -1,194 +1,285 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Media Uploader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Event Live Album</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #38bdf8;
+      --primary-gradient: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+      --bg: #090d16;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+    }
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
     body {
-      background-color: #0f172a;
+      background-color: var(--bg);
+      background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.12) 0px, transparent 50%);
       color: #f8fafc;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+      align-items: flex-start;
+      padding: 24px 16px 40px;
+    }
+    .container {
+      width: 100%;
+      max-width: 440px;
+      margin: 0 auto;
     }
     .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 24px;
-      padding: 32px 24px;
-      width: 100%;
-      max-width: 420px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 32px 20px;
       text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
     }
-    .event-badge {
-      display: inline-block;
-      background: #0284c7;
-      color: #ffffff;
+    .event-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-size: 13px;
       font-weight: 700;
-      font-size: 14px;
-      padding: 6px 18px;
-      border-radius: 20px;
-      margin-bottom: 18px;
-      letter-spacing: 0.5px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+      text-transform: capitalize;
     }
     h1 {
-      font-size: 22px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
       margin-bottom: 8px;
-      color: #ffffff;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    p {
+    p.subtitle {
       color: #94a3b8;
       font-size: 14px;
-      margin-bottom: 26px;
       line-height: 1.5;
+      margin-bottom: 28px;
     }
-    .btn-group {
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-    }
-    .action-btn {
-      display: block;
-      width: 100%;
-      background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
-      color: #ffffff;
-      font-size: 16px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 18px 12px;
+      border-radius: 20px;
+      font-size: 14px;
       font-weight: 700;
-      padding: 15px;
-      border-radius: 14px;
+      color: #ffffff;
       cursor: pointer;
       border: none;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-      transition: transform 0.1s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
     }
-    .action-btn.video-btn {
-      background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
-      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.25);
+    .btn:active {
+      transform: scale(0.96);
     }
-    .action-btn:active {
-      transform: scale(0.98);
+    .btn-photo {
+      background: var(--primary-gradient);
+    }
+    .btn-video {
+      background: var(--accent-gradient);
+    }
+    .btn-icon {
+      font-size: 24px;
     }
     input[type="file"] {
       display: none;
     }
-    .status-box {
-      margin-top: 22px;
-      font-size: 15px;
+    .status-alert {
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
       font-weight: 600;
-      min-height: 24px;
+      display: none;
+      margin-top: 14px;
+      animation: fadeIn 0.3s ease;
     }
-    .preview-container {
-      margin-top: 18px;
+    .status-loading {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .status-success {
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+    .status-error {
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+    /* Section Uploads */
+    .history-section {
+      margin-top: 24px;
+      text-align: left;
       display: none;
     }
-    .preview-container img, .preview-container video {
-      max-width: 100%;
-      max-height: 220px;
+    .history-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .gallery-item {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
       border-radius: 12px;
-      border: 2px solid #38bdf8;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #0f172a;
+    }
+    .gallery-item img, .gallery-item video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <div class="event-badge" id="eventDisplay">Event: Loading...</div>
-    <h1>Capture the Moment! 📸🎥</h1>
-    <p>Take a photo or record a video to automatically upload it to the event album.</p>
+  <div class="container">
+    <div class="card">
+      <div class="event-tag" id="eventBadge">✨ Live Event</div>
+      <h1>Capture the Moment</h1>
+      <p class="subtitle">Snap photos or record clips to share directly with the couple & guests.</p>
 
-    <div class="btn-group">
-      <!-- Take Photo Button -->
-      <label for="photoInput" class="action-btn">📸 Take Photo</label>
-      <input type="file" id="photoInput" accept="image/*" capture="environment">
+      <div class="actions-grid">
+        <label for="photoInput" class="btn btn-photo">
+          <span class="btn-icon">📸</span>
+          <span>Take Photo</span>
+        </label>
+        <input type="file" id="photoInput" accept="image/*" capture="environment">
 
-      <!-- Record Video Button -->
-      <label for="videoInput" class="action-btn video-btn">🎥 Record Video</label>
-      <input type="file" id="videoInput" accept="video/*" capture="camcorder">
+        <label for="videoInput" class="btn btn-video">
+          <span class="btn-icon">🎥</span>
+          <span>Record Video</span>
+        </label>
+        <input type="file" id="videoInput" accept="video/*" capture="camcorder">
+      </div>
+
+      <div id="statusBox" class="status-alert"></div>
+
+      <!-- History of items uploaded in this session -->
+      <div class="history-section" id="historySection">
+        <div class="history-title">Your Uploads</div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+      </div>
     </div>
-
-    <div class="preview-container" id="previewContainer">
-      <img id="imagePreview" style="display: none;" alt="Preview">
-      <video id="videoPreview" controls style="display: none;"></video>
-    </div>
-
-    <div id="statusBox" class="status-box"></div>
   </div>
 
   <script>
-    // 1. Get event name from URL
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
-    const eventName = rawEvent ? rawEvent.trim() : 'General_Event';
-    document.getElementById('eventDisplay').innerText = "Event: " + eventName.replace(/_/g, ' ');
+    const eventName = rawEvent ? rawEvent.trim().replace(/\s+/g, '_') : 'General_Event';
+    document.getElementById('eventBadge').innerText = "✨ " + eventName.replace(/_/g, ' ');
 
-    // 2. Cloudinary Credentials
     const CLOUD_NAME = "qwmaeyjl";
     const UPLOAD_PRESET = "events_upload";
 
     const photoInput = document.getElementById('photoInput');
     const videoInput = document.getElementById('videoInput');
     const statusBox = document.getElementById('statusBox');
-    const previewContainer = document.getElementById('previewContainer');
-    const imagePreview = document.getElementById('imagePreview');
-    const videoPreview = document.getElementById('videoPreview');
+    const historySection = document.getElementById('historySection');
+    const galleryGrid = document.getElementById('galleryGrid');
 
-    // Upload Handler
-    async function uploadMedia(file, resourceType) {
+    function setStatus(msg, type) {
+      statusBox.className = `status-alert status-${type}`;
+      statusBox.innerText = msg;
+      statusBox.style.display = "block";
+    }
+
+    function addGalleryItem(url, type) {
+      historySection.style.display = "block";
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      if (type === 'image') {
+        item.innerHTML = `<img src="${url}" alt="Uploaded">`;
+      } else {
+        item.innerHTML = `<video src="${url}" autoplay muted loop playsinline></video>`;
+      }
+      galleryGrid.prepend(item);
+    }
+
+    async function handleUpload(file, resourceType) {
       if (!file) return;
 
-      previewContainer.style.display = "block";
-      if (resourceType === 'image') {
-        videoPreview.style.display = "none";
-        imagePreview.src = URL.createObjectURL(file);
-        imagePreview.style.display = "block";
-      } else {
-        imagePreview.style.display = "none";
-        videoPreview.src = URL.createObjectURL(file);
-        videoPreview.style.display = "block";
-      }
-
-      statusBox.style.color = "#38bdf8";
-      statusBox.innerText = "Uploading to album... ⏳";
+      setStatus("Uploading to album... ⏳", "loading");
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", eventName); // Automatically groups by event folder
+      formData.append("folder", eventName);
+      formData.append("asset_folder", eventName);
+      formData.append("public_id", `${eventName}_${Date.now()}`);
 
       try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
           method: "POST",
           body: formData
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
-        if (response.ok && data.secure_url) {
-          statusBox.style.color = "#4ade80";
-          statusBox.innerText = "✅ Uploaded successfully!";
+        if (res.ok && data.secure_url) {
+          setStatus("✅ Uploaded successfully!", "success");
+          addGalleryItem(data.secure_url, resourceType);
         } else {
-          statusBox.style.color = "#f87171";
-          statusBox.innerText = "❌ Upload failed. Please try again.";
+          console.error(data);
+          setStatus("❌ Upload failed. Please try again.", "error");
         }
       } catch (err) {
         console.error(err);
-        statusBox.style.color = "#f87171";
-        statusBox.innerText = "❌ Connection error. Check your internet.";
+        setStatus("❌ Connection error. Check Wi-Fi / Data.", "error");
       }
     }
 
-    photoInput.addEventListener('change', (e) => uploadMedia(e.target.files[0], 'image'));
-    videoInput.addEventListener('change', (e) => uploadMedia(e.target.files[0], 'video'));
+    photoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'image'));
+    videoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'video'));
   </script>
 
 </body>
