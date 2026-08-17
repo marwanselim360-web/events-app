@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Event Live Album</title>
+  <title>Live Event Album & Gallery</title>
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -28,14 +28,11 @@
                         radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.12) 0px, transparent 50%);
       color: #f8fafc;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 24px 16px 40px;
+      padding: 20px 14px 40px;
     }
     .container {
       width: 100%;
-      max-width: 440px;
+      max-width: 480px;
       margin: 0 auto;
     }
     .card {
@@ -44,9 +41,10 @@
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border);
       border-radius: 28px;
-      padding: 32px 20px;
+      padding: 28px 18px;
       text-align: center;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      margin-bottom: 24px;
     }
     .event-tag {
       display: inline-flex;
@@ -59,29 +57,27 @@
       font-weight: 700;
       padding: 6px 16px;
       border-radius: 100px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-transform: capitalize;
     }
     h1 {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     p.subtitle {
       color: #94a3b8;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
-      margin-bottom: 28px;
+      margin-bottom: 22px;
     }
     .actions-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-bottom: 20px;
     }
     .btn {
       display: flex;
@@ -89,31 +85,22 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 18px 12px;
-      border-radius: 20px;
+      padding: 16px 10px;
+      border-radius: 18px;
       font-size: 14px;
       font-weight: 700;
       color: #ffffff;
       cursor: pointer;
       border: none;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s ease;
     }
-    .btn:active {
-      transform: scale(0.96);
-    }
-    .btn-photo {
-      background: var(--primary-gradient);
-    }
-    .btn-video {
-      background: var(--accent-gradient);
-    }
-    .btn-icon {
-      font-size: 24px;
-    }
-    input[type="file"] {
-      display: none;
-    }
+    .btn:active { transform: scale(0.96); }
+    .btn-photo { background: var(--primary-gradient); }
+    .btn-video { background: var(--accent-gradient); }
+    .btn-icon { font-size: 24px; }
+    input[type="file"] { display: none; }
+
     .status-alert {
       padding: 12px 16px;
       border-radius: 14px;
@@ -123,56 +110,84 @@
       margin-top: 14px;
       animation: fadeIn 0.3s ease;
     }
-    .status-loading {
-      background: rgba(56, 189, 248, 0.15);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+    .status-loading { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .status-success { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
+    .status-error { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+
+    /* Event Live Gallery Section */
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 4px 16px;
     }
-    .status-success {
-      background: rgba(74, 222, 128, 0.15);
-      color: #4ade80;
-      border: 1px solid rgba(74, 222, 128, 0.3);
-    }
-    .status-error {
-      background: rgba(248, 113, 113, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(248, 113, 113, 0.3);
-    }
-    /* Section Uploads */
-    .history-section {
-      margin-top: 24px;
-      text-align: left;
-      display: none;
-    }
-    .history-title {
-      font-size: 13px;
+    .gallery-header h2 {
+      font-size: 18px;
       font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .refresh-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      cursor: pointer;
     }
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
-    .gallery-item {
+    .gallery-card {
       position: relative;
-      width: 100%;
-      padding-top: 100%;
-      border-radius: 12px;
+      background: #1e293b;
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: #0f172a;
+      border: 1px solid var(--border);
+      aspect-ratio: 1 / 1.1;
+      display: flex;
+      flex-direction: column;
     }
-    .gallery-item img, .gallery-item video {
-      position: absolute;
-      top: 0;
-      left: 0;
+    .gallery-media-wrapper {
+      flex: 1;
+      position: relative;
+      background: #0b1120;
+      overflow: hidden;
+    }
+    .gallery-card img, .gallery-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    .download-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 30px 10px;
+      color: #64748b;
+      font-size: 14px;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
@@ -183,10 +198,11 @@
 <body>
 
   <div class="container">
+    <!-- Top Upload Card -->
     <div class="card">
       <div class="event-tag" id="eventBadge">✨ Live Event</div>
       <h1>Capture the Moment</h1>
-      <p class="subtitle">Snap photos or record clips to share directly with the couple & guests.</p>
+      <p class="subtitle">Snap photos or record clips to add them instantly to the wedding album!</p>
 
       <div class="actions-grid">
         <label for="photoInput" class="btn btn-photo">
@@ -203,12 +219,16 @@
       </div>
 
       <div id="statusBox" class="status-alert"></div>
+    </div>
 
-      <!-- History of items uploaded in this session -->
-      <div class="history-section" id="historySection">
-        <div class="history-title">Your Uploads</div>
-        <div class="gallery-grid" id="galleryGrid"></div>
-      </div>
+    <!-- Live Event Gallery -->
+    <div class="gallery-header">
+      <h2>🎉 Event Live Album</h2>
+      <button class="refresh-btn" onclick="fetchEventMedia()">🔄 Refresh</button>
+    </div>
+
+    <div class="gallery-grid" id="mainGallery">
+      <div class="empty-state">Loading event media... ⏳</div>
     </div>
   </div>
 
@@ -224,8 +244,7 @@
     const photoInput = document.getElementById('photoInput');
     const videoInput = document.getElementById('videoInput');
     const statusBox = document.getElementById('statusBox');
-    const historySection = document.getElementById('historySection');
-    const galleryGrid = document.getElementById('galleryGrid');
+    const mainGallery = document.getElementById('mainGallery');
 
     function setStatus(msg, type) {
       statusBox.className = `status-alert status-${type}`;
@@ -233,18 +252,90 @@
       statusBox.style.display = "block";
     }
 
-    function addGalleryItem(url, type) {
-      historySection.style.display = "block";
-      const item = document.createElement('div');
-      item.className = 'gallery-item';
-      if (type === 'image') {
-        item.innerHTML = `<img src="${url}" alt="Uploaded">`;
-      } else {
-        item.innerHTML = `<video src="${url}" autoplay muted loop playsinline></video>`;
-      }
-      galleryGrid.prepend(item);
+    // Download helper
+    async function downloadFile(url, filename) {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     }
 
+    function createMediaCard(url, type) {
+      const card = document.createElement('div');
+      card.className = 'gallery-card';
+      const filename = `${eventName}_${Date.now()}.${type === 'image' ? 'jpg' : 'mp4'}`;
+      
+      const mediaHtml = type === 'image' 
+        ? `<img src="${url}" loading="lazy" alt="Moment">`
+        : `<video src="${url}" controls playsinline></video>`;
+
+      card.innerHTML = `
+        <div class="gallery-media-wrapper">
+          ${mediaHtml}
+          <a href="javascript:void(0)" class="download-btn" onclick="downloadFile('${url}', '${filename}')">
+            ⬇️ Save
+          </a>
+        </div>
+      `;
+      return card;
+    }
+
+    // جلب صور وفيديوهات الإيفنت
+    async function fetchEventMedia() {
+      mainGallery.innerHTML = '<div class="empty-state">Updating album... ⏳</div>';
+      try {
+        // Fetch by tag (eventName)
+        const [imagesRes, videosRes] = await Promise.allSettled([
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json`),
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json`)
+        ]);
+
+        let items = [];
+
+        if (imagesRes.status === 'fulfilled' && imagesRes.value.ok) {
+          const imgData = await imagesRes.value.json();
+          imgData.resources.forEach(r => {
+            items.push({
+              url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}.${r.format}`,
+              type: 'image',
+              created_at: new Date(r.created_at)
+            });
+          });
+        }
+
+        if (videosRes.status === 'fulfilled' && videosRes.value.ok) {
+          const vidData = await videosRes.value.json();
+          vidData.resources.forEach(r => {
+            items.push({
+              url: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${r.public_id}.${r.format}`,
+              type: 'video',
+              created_at: new Date(r.created_at)
+            });
+          });
+        }
+
+        items.sort((a, b) => b.created_at - a.created_at);
+
+        mainGallery.innerHTML = '';
+        if (items.length === 0) {
+          mainGallery.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a moment. 📸</div>';
+        } else {
+          items.forEach(item => {
+            mainGallery.appendChild(createMediaCard(item.url, item.type));
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        mainGallery.innerHTML = '<div class="empty-state">Snap a photo to start the album! 📸</div>';
+      }
+    }
+
+    // Upload function
     async function handleUpload(file, resourceType) {
       if (!file) return;
 
@@ -255,7 +346,7 @@
       formData.append("upload_preset", UPLOAD_PRESET);
       formData.append("folder", eventName);
       formData.append("asset_folder", eventName);
-      formData.append("public_id", `${eventName}_${Date.now()}`);
+      formData.append("tags", eventName); // مهم جداً عشان يربطها بألبوم الإيفنت
 
       try {
         const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
@@ -267,19 +358,25 @@
 
         if (res.ok && data.secure_url) {
           setStatus("✅ Uploaded successfully!", "success");
-          addGalleryItem(data.secure_url, resourceType);
+          // Add newly uploaded item at top of gallery immediately
+          const newCard = createMediaCard(data.secure_url, resourceType);
+          const emptyState = mainGallery.querySelector('.empty-state');
+          if (emptyState) emptyState.remove();
+          mainGallery.prepend(newCard);
         } else {
-          console.error(data);
           setStatus("❌ Upload failed. Please try again.", "error");
         }
       } catch (err) {
         console.error(err);
-        setStatus("❌ Connection error. Check Wi-Fi / Data.", "error");
+        setStatus("❌ Connection error. Check internet.", "error");
       }
     }
 
     photoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'image'));
     videoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'video'));
+
+    // Initial fetch on page load
+    fetchEventMedia();
   </script>
 
 </body>
