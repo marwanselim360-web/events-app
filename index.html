@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Live Event Album & Gallery</title>
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -114,7 +113,6 @@
     .status-success { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
     .status-error { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
 
-    /* Event Live Gallery Section */
     .gallery-header {
       display: flex;
       justify-content: space-between;
@@ -198,7 +196,6 @@
 <body>
 
   <div class="container">
-    <!-- Top Upload Card -->
     <div class="card">
       <div class="event-tag" id="eventBadge">✨ Live Event</div>
       <h1>Capture the Moment</h1>
@@ -221,7 +218,6 @@
       <div id="statusBox" class="status-alert"></div>
     </div>
 
-    <!-- Live Event Gallery -->
     <div class="gallery-header">
       <h2>🎉 Event Live Album</h2>
       <button class="refresh-btn" onclick="fetchEventMedia()">🔄 Refresh</button>
@@ -252,17 +248,20 @@
       statusBox.style.display = "block";
     }
 
-    // Download helper
     async function downloadFile(url, filename) {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (e) {
+        window.open(url, '_blank');
+      }
     }
 
     function createMediaCard(url, type) {
@@ -285,38 +284,40 @@
       return card;
     }
 
-    // جلب صور وفيديوهات الإيفنت
     async function fetchEventMedia() {
-      mainGallery.innerHTML = '<div class="empty-state">Updating album... ⏳</div>';
+      const cacheBuster = Date.now();
       try {
-        // Fetch by tag (eventName)
         const [imagesRes, videosRes] = await Promise.allSettled([
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json`),
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json`)
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${cacheBuster}`),
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${cacheBuster}`)
         ]);
 
         let items = [];
 
         if (imagesRes.status === 'fulfilled' && imagesRes.value.ok) {
           const imgData = await imagesRes.value.json();
-          imgData.resources.forEach(r => {
-            items.push({
-              url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}.${r.format}`,
-              type: 'image',
-              created_at: new Date(r.created_at)
+          if (imgData.resources) {
+            imgData.resources.forEach(r => {
+              items.push({
+                url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}.${r.format}`,
+                type: 'image',
+                created_at: new Date(r.created_at)
+              });
             });
-          });
+          }
         }
 
         if (videosRes.status === 'fulfilled' && videosRes.value.ok) {
           const vidData = await videosRes.value.json();
-          vidData.resources.forEach(r => {
-            items.push({
-              url: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${r.public_id}.${r.format}`,
-              type: 'video',
-              created_at: new Date(r.created_at)
+          if (vidData.resources) {
+            vidData.resources.forEach(r => {
+              items.push({
+                url: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${r.public_id}.${r.format}`,
+                type: 'video',
+                created_at: new Date(r.created_at)
+              });
             });
-          });
+          }
         }
 
         items.sort((a, b) => b.created_at - a.created_at);
@@ -335,7 +336,6 @@
       }
     }
 
-    // Upload function
     async function handleUpload(file, resourceType) {
       if (!file) return;
 
@@ -346,7 +346,7 @@
       formData.append("upload_preset", UPLOAD_PRESET);
       formData.append("folder", eventName);
       formData.append("asset_folder", eventName);
-      formData.append("tags", eventName); // مهم جداً عشان يربطها بألبوم الإيفنت
+      formData.append("tags", eventName);
 
       try {
         const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
@@ -358,11 +358,7 @@
 
         if (res.ok && data.secure_url) {
           setStatus("✅ Uploaded successfully!", "success");
-          // Add newly uploaded item at top of gallery immediately
-          const newCard = createMediaCard(data.secure_url, resourceType);
-          const emptyState = mainGallery.querySelector('.empty-state');
-          if (emptyState) emptyState.remove();
-          mainGallery.prepend(newCard);
+          setTimeout(fetchEventMedia, 1500); // تحديث الجاليري تلقائياً بعد ثانية ونصف
         } else {
           setStatus("❌ Upload failed. Please try again.", "error");
         }
@@ -375,7 +371,6 @@
     photoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'image'));
     videoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'video'));
 
-    // Initial fetch on page load
     fetchEventMedia();
   </script>
 
