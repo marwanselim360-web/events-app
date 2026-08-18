@@ -35,7 +35,6 @@
       margin: 0 auto;
     }
 
-    /* Event Badge */
     .header-badge {
       display: inline-flex;
       align-items: center;
@@ -50,7 +49,6 @@
       margin-bottom: 12px;
     }
 
-    /* Hero Upload Card */
     .action-card {
       background: var(--card-bg);
       backdrop-filter: blur(16px);
@@ -96,7 +94,6 @@
       border: none;
       color: #fff;
       transition: all 0.2s ease;
-      text-decoration: none;
     }
 
     .btn-photo {
@@ -109,7 +106,6 @@
       box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
     }
 
-    /* زرار المعرض بالعرض الكامل */
     .btn-gallery-upload {
       grid-column: span 2;
       flex-direction: row;
@@ -117,23 +113,12 @@
       border: 1px dashed rgba(255, 255, 255, 0.25);
       color: #f8fafc;
       padding: 14px 16px;
-      box-shadow: none;
-    }
-
-    .btn-gallery-upload:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.4);
     }
 
     .upload-btn:active {
       transform: scale(0.97);
     }
 
-    .upload-btn span.icon {
-      font-size: 20px;
-    }
-
-    /* Status Messages */
     .status-alert {
       display: none;
       margin-top: 14px;
@@ -146,7 +131,6 @@
     .status-success { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
     .status-error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
 
-    /* Gallery Tabs Section */
     .gallery-header {
       display: flex;
       justify-content: space-between;
@@ -170,12 +154,8 @@
       border-radius: 10px;
       font-size: 12px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
 
-    /* Custom Tabs */
     .tab-bar {
       display: flex;
       background: rgba(255, 255, 255, 0.06);
@@ -205,7 +185,6 @@
       box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
     }
 
-    /* Media Grid */
     .media-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -261,11 +240,6 @@
       justify-content: center;
       gap: 4px;
       text-decoration: none;
-      transition: background 0.2s;
-    }
-
-    .save-btn:active {
-      background: rgba(255, 255, 255, 0.2);
     }
 
     .empty-state {
@@ -280,7 +254,6 @@
       display: none;
     }
 
-    /* Lightbox Modal */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -306,7 +279,6 @@
       max-width: 100%;
       max-height: 75vh;
       border-radius: 14px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }
 
     .modal-close-btn {
@@ -330,14 +302,12 @@
 <body>
 
   <div class="container">
-    <!-- Event Card -->
     <div class="action-card">
       <div class="header-badge" id="eventBadge">✨ General Event</div>
       <h1>Capture the Moment</h1>
       <p>Snap live moments or upload your favorite memories to the wedding album!</p>
 
       <div class="button-group">
-        <!-- أزرار الكاميرا المباشرة -->
         <label for="photoInput" class="upload-btn btn-photo">
           <span class="icon">📸</span>
           <span>Take Photo</span>
@@ -346,37 +316,29 @@
           <span class="icon">🎥</span>
           <span>Record Video</span>
         </label>
-
-        <!-- زرار الرفع من ألبوم الموبايل -->
         <label for="galleryInput" class="upload-btn btn-gallery-upload">
           <span class="icon">📁</span>
           <span>Upload from Gallery</span>
         </label>
       </div>
 
-      <!-- Inputs الكاميرا المباشرة -->
       <input type="file" id="photoInput" accept="image/*" capture="environment">
       <input type="file" id="videoInput" accept="video/*" capture="environment">
-
-      <!-- Input الاستوديو (يقبل صور وفيديوهات واختيار متعدد) -->
       <input type="file" id="galleryInput" accept="image/*,video/*" multiple>
 
       <div id="statusBox" class="status-alert"></div>
     </div>
 
-    <!-- Live Album Section -->
     <div class="gallery-header">
       <div class="gallery-title">🎉 Live Album</div>
       <button class="btn-refresh" id="refreshBtn">🔄 Refresh</button>
     </div>
 
-    <!-- Tabs -->
     <div class="tab-bar">
       <button class="tab-btn active" id="photosTab" onclick="switchTab('photos')">📸 Photos (<span id="photoCount">0</span>)</button>
       <button class="tab-btn" id="videosTab" onclick="switchTab('videos')">🎥 Videos (<span id="videoCount">0</span>)</button>
     </div>
 
-    <!-- Media Grids -->
     <div class="media-grid" id="photosGrid">
       <div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>
     </div>
@@ -386,7 +348,6 @@
     </div>
   </div>
 
-  <!-- Modal Preview -->
   <div class="modal-overlay" id="mediaModal" onclick="closeModal(event)">
     <button class="modal-close-btn" onclick="closeModal()">✕</button>
     <div class="modal-content-wrapper" id="modalTarget"></div>
@@ -409,8 +370,7 @@
     const refreshBtn = document.getElementById('refreshBtn');
 
     let currentTab = 'photos';
-    let photoItems = [];
-    let videoItems = [];
+    let localCache = JSON.parse(localStorage.getItem('event_media_' + eventName) || '{"photos":[], "videos":[]}');
 
     function setStatus(msg, type) {
       if (!statusBox) return;
@@ -495,27 +455,46 @@
       return card;
     }
 
+    function renderGrids() {
+      document.getElementById('photoCount').innerText = localCache.photos.length;
+      document.getElementById('videoCount').innerText = localCache.videos.length;
+
+      const photosGrid = document.getElementById('photosGrid');
+      photosGrid.innerHTML = '';
+      if (localCache.photos.length === 0) {
+        photosGrid.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>';
+      } else {
+        localCache.photos.forEach(item => photosGrid.appendChild(createMediaCard(item.url, 'image')));
+      }
+
+      const videosGrid = document.getElementById('videosGrid');
+      videosGrid.innerHTML = '';
+      if (localCache.videos.length === 0) {
+        videosGrid.innerHTML = '<div class="empty-state">No videos yet! Record a moment now. 🎥</div>';
+      } else {
+        localCache.videos.forEach(item => videosGrid.appendChild(createMediaCard(item.url, 'video')));
+      }
+    }
+
     async function fetchEventMedia() {
       const cacheBuster = Date.now();
-      setStatus("Refreshing gallery... 🔄", "loading");
-
       try {
         const [imagesRes, videosRes] = await Promise.allSettled([
           fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${cacheBuster}`),
           fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${cacheBuster}`)
         ]);
 
-        photoItems = [];
-        videoItems = [];
+        let hasNew = false;
 
         if (imagesRes.status === 'fulfilled' && imagesRes.value.ok) {
           const imgData = await imagesRes.value.json();
           if (imgData.resources) {
             imgData.resources.forEach(r => {
-              photoItems.push({
-                url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`,
-                created_at: new Date(r.created_at)
-              });
+              const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`;
+              if (!localCache.photos.some(p => p.url === url)) {
+                localCache.photos.unshift({ url, created_at: r.created_at });
+                hasNew = true;
+              }
             });
           }
         }
@@ -524,41 +503,23 @@
           const vidData = await videosRes.value.json();
           if (vidData.resources) {
             vidData.resources.forEach(r => {
-              videoItems.push({
-                url: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`,
-                created_at: new Date(r.created_at)
-              });
+              const url = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`;
+              if (!localCache.videos.some(v => v.url === url)) {
+                localCache.videos.unshift({ url, created_at: r.created_at });
+                hasNew = true;
+              }
             });
           }
         }
 
-        photoItems.sort((a, b) => b.created_at - a.created_at);
-        videoItems.sort((a, b) => b.created_at - a.created_at);
-
-        document.getElementById('photoCount').innerText = photoItems.length;
-        document.getElementById('videoCount').innerText = videoItems.length;
-
-        // Render Photos
-        const photosGrid = document.getElementById('photosGrid');
-        photosGrid.innerHTML = '';
-        if (photoItems.length === 0) {
-          photosGrid.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>';
-        } else {
-          photoItems.forEach(item => photosGrid.appendChild(createMediaCard(item.url, 'image')));
+        if (hasNew) {
+          localStorage.setItem('event_media_' + eventName, JSON.stringify(localCache));
         }
 
-        // Render Videos
-        const videosGrid = document.getElementById('videosGrid');
-        videosGrid.innerHTML = '';
-        if (videoItems.length === 0) {
-          videosGrid.innerHTML = '<div class="empty-state">No videos yet! Record a moment now. 🎥</div>';
-        } else {
-          videoItems.forEach(item => videosGrid.appendChild(createMediaCard(item.url, 'video')));
-        }
-
+        renderGrids();
         statusBox.style.display = "none";
       } catch (e) {
-        console.error(e);
+        renderGrids();
         statusBox.style.display = "none";
       }
     }
@@ -587,17 +548,27 @@
       try {
         let successCount = 0;
         for (const file of files) {
-          const res = await uploadSingleFile(file);
-          if (res.secure_url) successCount++;
+          const data = await uploadSingleFile(file);
+          if (data && data.secure_url) {
+            successCount++;
+            const item = { url: data.secure_url, created_at: new Date().toISOString() };
+            if (data.resource_type === 'video' || file.type.startsWith('video')) {
+              localCache.videos.unshift(item);
+              switchTab('videos');
+            } else {
+              localCache.photos.unshift(item);
+              switchTab('photos');
+            }
+            localStorage.setItem('event_media_' + eventName, JSON.stringify(localCache));
+            renderGrids();
+          }
         }
 
         if (successCount > 0) {
           setStatus(`✅ Uploaded ${successCount} item(s) successfully!`, "success");
-          setTimeout(() => {
-            fetchEventMedia();
-          }, 1200);
+          setTimeout(() => { statusBox.style.display = "none"; }, 2500);
         } else {
-          setStatus("❌ Upload failed. Please try again.", "error");
+          setStatus("❌ Upload failed. Please check network.", "error");
         }
       } catch (err) {
         console.error(err);
@@ -608,8 +579,12 @@
     if (photoInput) photoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'image'));
     if (videoInput) videoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'video'));
     if (galleryInput) galleryInput.addEventListener('change', (e) => handleUpload(e.target.files, 'mixed'));
-    if (refreshBtn) refreshBtn.addEventListener('click', fetchEventMedia);
+    if (refreshBtn) refreshBtn.addEventListener('click', () => {
+      setStatus("Refreshing gallery... 🔄", "loading");
+      fetchEventMedia();
+    });
 
+    renderGrids();
     fetchEventMedia();
   </script>
 </body>
