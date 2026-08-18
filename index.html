@@ -119,6 +119,10 @@
       transform: scale(0.97);
     }
 
+    .upload-btn span.icon {
+      font-size: 20px;
+    }
+
     .status-alert {
       display: none;
       margin-top: 14px;
@@ -144,16 +148,6 @@
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-
-    .btn-refresh {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-size: 12px;
-      cursor: pointer;
     }
 
     .tab-bar {
@@ -331,7 +325,6 @@
 
     <div class="gallery-header">
       <div class="gallery-title">🎉 Live Album</div>
-      <button class="btn-refresh" id="refreshBtn">🔄 Refresh</button>
     </div>
 
     <div class="tab-bar">
@@ -353,7 +346,20 @@
     <div class="modal-content-wrapper" id="modalTarget"></div>
   </div>
 
+  <!-- Firebase Scripts للربط اللحظي السحابي -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <script>
+    // إعداد قاعدة البيانات السحابية المركزية لجميع الموبايلات
+    const firebaseConfig = {
+      databaseURL: "https://events-app-live-default-rtdb.firebaseio.com/"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
     const eventName = rawEvent ? rawEvent.trim().replace(/\s+/g, '_') : 'General_Event';
@@ -367,10 +373,10 @@
     const videoInput = document.getElementById('videoInput');
     const galleryInput = document.getElementById('galleryInput');
     const statusBox = document.getElementById('statusBox');
-    const refreshBtn = document.getElementById('refreshBtn');
 
     let currentTab = 'photos';
-    let localCache = JSON.parse(localStorage.getItem('event_media_' + eventName) || '{"photos":[], "videos":[]}');
+    let photoItems = [];
+    let videoItems = [];
 
     function setStatus(msg, type) {
       if (!statusBox) return;
@@ -456,73 +462,48 @@
     }
 
     function renderGrids() {
-      document.getElementById('photoCount').innerText = localCache.photos.length;
-      document.getElementById('videoCount').innerText = localCache.videos.length;
+      document.getElementById('photoCount').innerText = photoItems.length;
+      document.getElementById('videoCount').innerText = videoItems.length;
 
       const photosGrid = document.getElementById('photosGrid');
       photosGrid.innerHTML = '';
-      if (localCache.photos.length === 0) {
+      if (photoItems.length === 0) {
         photosGrid.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>';
       } else {
-        localCache.photos.forEach(item => photosGrid.appendChild(createMediaCard(item.url, 'image')));
+        photoItems.forEach(item => photosGrid.appendChild(createMediaCard(item.url, 'image')));
       }
 
       const videosGrid = document.getElementById('videosGrid');
       videosGrid.innerHTML = '';
-      if (localCache.videos.length === 0) {
+      if (videoItems.length === 0) {
         videosGrid.innerHTML = '<div class="empty-state">No videos yet! Record a moment now. 🎥</div>';
       } else {
-        localCache.videos.forEach(item => videosGrid.appendChild(createMediaCard(item.url, 'video')));
+        videoItems.forEach(item => videosGrid.appendChild(createMediaCard(item.url, 'video')));
       }
     }
 
-    async function fetchEventMedia() {
-      const cacheBuster = Date.now();
-      try {
-        const [imagesRes, videosRes] = await Promise.allSettled([
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${cacheBuster}`),
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${cacheBuster}`)
-        ]);
+    // مزامنة لحظية مع قاعدة البيانات المركزية لجميع الموبايلات في العالم
+    db.ref('events/' + eventName).on('value', (snapshot) => {
+      const data = snapshot.val();
+      photoItems = [];
+      videoItems = [];
 
-        let hasNew = false;
-
-        if (imagesRes.status === 'fulfilled' && imagesRes.value.ok) {
-          const imgData = await imagesRes.value.json();
-          if (imgData.resources) {
-            imgData.resources.forEach(r => {
-              const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`;
-              if (!localCache.photos.some(p => p.url === url)) {
-                localCache.photos.unshift({ url, created_at: r.created_at });
-                hasNew = true;
-              }
-            });
+      if (data) {
+        Object.keys(data).forEach(key => {
+          const item = data[key];
+          if (item.type === 'video') {
+            videoItems.push(item);
+          } else {
+            photoItems.push(item);
           }
-        }
+        });
 
-        if (videosRes.status === 'fulfilled' && videosRes.value.ok) {
-          const vidData = await videosRes.value.json();
-          if (vidData.resources) {
-            vidData.resources.forEach(r => {
-              const url = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`;
-              if (!localCache.videos.some(v => v.url === url)) {
-                localCache.videos.unshift({ url, created_at: r.created_at });
-                hasNew = true;
-              }
-            });
-          }
-        }
-
-        if (hasNew) {
-          localStorage.setItem('event_media_' + eventName, JSON.stringify(localCache));
-        }
-
-        renderGrids();
-        statusBox.style.display = "none";
-      } catch (e) {
-        renderGrids();
-        statusBox.style.display = "none";
+        photoItems.sort((a, b) => b.timestamp - a.timestamp);
+        videoItems.sort((a, b) => b.timestamp - a.timestamp);
       }
-    }
+
+      renderGrids();
+    });
 
     async function uploadSingleFile(file) {
       const resourceType = file.type.startsWith('video') ? 'video' : 'image';
@@ -530,13 +511,23 @@
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
       formData.append("folder", eventName);
-      formData.append("tags", eventName);
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
         method: "POST",
         body: formData
       });
-      return await res.json();
+      const data = await res.json();
+
+      if (data && data.secure_url) {
+        // حفظ الصورة في السحابة المركزية لتصل لكل الموبايلات فوراً
+        await db.ref('events/' + eventName).push({
+          url: data.secure_url,
+          type: resourceType,
+          timestamp: Date.now()
+        });
+        return true;
+      }
+      return false;
     }
 
     async function handleUpload(fileList, defaultType) {
@@ -548,27 +539,15 @@
       try {
         let successCount = 0;
         for (const file of files) {
-          const data = await uploadSingleFile(file);
-          if (data && data.secure_url) {
-            successCount++;
-            const item = { url: data.secure_url, created_at: new Date().toISOString() };
-            if (data.resource_type === 'video' || file.type.startsWith('video')) {
-              localCache.videos.unshift(item);
-              switchTab('videos');
-            } else {
-              localCache.photos.unshift(item);
-              switchTab('photos');
-            }
-            localStorage.setItem('event_media_' + eventName, JSON.stringify(localCache));
-            renderGrids();
-          }
+          const success = await uploadSingleFile(file);
+          if (success) successCount++;
         }
 
         if (successCount > 0) {
           setStatus(`✅ Uploaded ${successCount} item(s) successfully!`, "success");
           setTimeout(() => { statusBox.style.display = "none"; }, 2500);
         } else {
-          setStatus("❌ Upload failed. Please check network.", "error");
+          setStatus("❌ Upload failed. Please check internet.", "error");
         }
       } catch (err) {
         console.error(err);
@@ -579,13 +558,6 @@
     if (photoInput) photoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'image'));
     if (videoInput) videoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'video'));
     if (galleryInput) galleryInput.addEventListener('change', (e) => handleUpload(e.target.files, 'mixed'));
-    if (refreshBtn) refreshBtn.addEventListener('click', () => {
-      setStatus("Refreshing gallery... 🔄", "loading");
-      fetchEventMedia();
-    });
-
-    renderGrids();
-    fetchEventMedia();
   </script>
 </body>
 </html>
