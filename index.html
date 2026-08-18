@@ -79,6 +79,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+      margin-bottom: 12px;
     }
 
     .upload-btn {
@@ -108,12 +109,28 @@
       box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
     }
 
+    /* زرار المعرض بالعرض الكامل */
+    .btn-gallery-upload {
+      grid-column: span 2;
+      flex-direction: row;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      color: #f8fafc;
+      padding: 14px 16px;
+      box-shadow: none;
+    }
+
+    .btn-gallery-upload:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
     .upload-btn:active {
       transform: scale(0.97);
     }
 
     .upload-btn span.icon {
-      font-size: 24px;
+      font-size: 20px;
     }
 
     /* Status Messages */
@@ -317,9 +334,10 @@
     <div class="action-card">
       <div class="header-badge" id="eventBadge">✨ General Event</div>
       <h1>Capture the Moment</h1>
-      <p>Take live photos or record short videos to add them straight to the couple's live album!</p>
+      <p>Snap live moments or upload your favorite memories to the wedding album!</p>
 
       <div class="button-group">
+        <!-- أزرار الكاميرا المباشرة -->
         <label for="photoInput" class="upload-btn btn-photo">
           <span class="icon">📸</span>
           <span>Take Photo</span>
@@ -328,10 +346,20 @@
           <span class="icon">🎥</span>
           <span>Record Video</span>
         </label>
+
+        <!-- زرار الرفع من ألبوم الموبايل -->
+        <label for="galleryInput" class="upload-btn btn-gallery-upload">
+          <span class="icon">📁</span>
+          <span>Upload from Gallery</span>
+        </label>
       </div>
 
+      <!-- Inputs الكاميرا المباشرة -->
       <input type="file" id="photoInput" accept="image/*" capture="environment">
       <input type="file" id="videoInput" accept="video/*" capture="environment">
+
+      <!-- Input الاستوديو (يقبل صور وفيديوهات واختيار متعدد) -->
+      <input type="file" id="galleryInput" accept="image/*,video/*" multiple>
 
       <div id="statusBox" class="status-alert"></div>
     </div>
@@ -376,6 +404,7 @@
 
     const photoInput = document.getElementById('photoInput');
     const videoInput = document.getElementById('videoInput');
+    const galleryInput = document.getElementById('galleryInput');
     const statusBox = document.getElementById('statusBox');
     const refreshBtn = document.getElementById('refreshBtn');
 
@@ -534,31 +563,38 @@
       }
     }
 
-    async function handleUpload(file, resourceType) {
-      if (!file) return;
-
-      setStatus(`Uploading ${resourceType}... ⏳`, "loading");
-
+    async function uploadSingleFile(file) {
+      const resourceType = file.type.startsWith('video') ? 'video' : 'image';
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
       formData.append("folder", eventName);
       formData.append("tags", eventName);
 
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
+        method: "POST",
+        body: formData
+      });
+      return await res.json();
+    }
+
+    async function handleUpload(fileList, defaultType) {
+      if (!fileList || fileList.length === 0) return;
+
+      const files = Array.from(fileList);
+      setStatus(`Uploading ${files.length} item(s)... ⏳`, "loading");
+
       try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
-          method: "POST",
-          body: formData
-        });
+        let successCount = 0;
+        for (const file of files) {
+          const res = await uploadSingleFile(file);
+          if (res.secure_url) successCount++;
+        }
 
-        const data = await res.json();
-
-        if (res.ok && data.secure_url) {
-          setStatus("✅ Uploaded successfully!", "success");
+        if (successCount > 0) {
+          setStatus(`✅ Uploaded ${successCount} item(s) successfully!`, "success");
           setTimeout(() => {
             fetchEventMedia();
-            if (resourceType === 'video') switchTab('videos');
-            else switchTab('photos');
           }, 1200);
         } else {
           setStatus("❌ Upload failed. Please try again.", "error");
@@ -569,8 +605,9 @@
       }
     }
 
-    if (photoInput) photoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'image'));
-    if (videoInput) videoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'video'));
+    if (photoInput) photoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'image'));
+    if (videoInput) videoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'video'));
+    if (galleryInput) galleryInput.addEventListener('change', (e) => handleUpload(e.target.files, 'mixed'));
     if (refreshBtn) refreshBtn.addEventListener('click', fetchEventMedia);
 
     fetchEventMedia();
