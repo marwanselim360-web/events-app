@@ -228,11 +228,16 @@
     </div>
   </div>
 
-  <script>
+ <script>
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
     const eventName = rawEvent ? rawEvent.trim().replace(/\s+/g, '_') : 'General_Event';
-    document.getElementById('eventBadge').innerText = "✨ " + eventName.replace(/_/g, ' ');
+    
+    // عرض اسم الإيفنت
+    const badge = document.getElementById('eventBadge');
+    if (badge) {
+      badge.innerText = "✨ " + eventName.replace(/_/g, ' ');
+    }
 
     const CLOUD_NAME = "qwmaeyjl";
     const UPLOAD_PRESET = "events_upload";
@@ -241,8 +246,10 @@
     const videoInput = document.getElementById('videoInput');
     const statusBox = document.getElementById('statusBox');
     const mainGallery = document.getElementById('mainGallery');
+    const refreshBtn = document.querySelector('.gallery-header button, button[onclick="fetchEventMedia()"]') || document.querySelector('.btn-refresh');
 
     function setStatus(msg, type) {
+      if (!statusBox) return;
       statusBox.className = `status-alert status-${type}`;
       statusBox.innerText = msg;
       statusBox.style.display = "block";
@@ -274,9 +281,9 @@
         : `<video src="${url}" controls playsinline></video>`;
 
       card.innerHTML = `
-        <div class="gallery-media-wrapper">
+        <div class="gallery-media-wrapper" style="position:relative; margin-bottom:15px;">
           ${mediaHtml}
-          <a href="javascript:void(0)" class="download-btn" onclick="downloadFile('${url}', '${filename}')">
+          <a href="javascript:void(0)" class="download-btn" onclick="downloadFile('${url}', '${filename}')" style="display:inline-block; margin-top:8px; padding:6px 12px; background:#2563eb; color:#fff; border-radius:6px; text-decoration:none; font-size:14px;">
             ⬇️ Save
           </a>
         </div>
@@ -286,6 +293,8 @@
 
     async function fetchEventMedia() {
       const cacheBuster = Date.now();
+      setStatus("Refreshing gallery... 🔄", "loading");
+      
       try {
         const [imagesRes, videosRes] = await Promise.allSettled([
           fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${cacheBuster}`),
@@ -299,7 +308,7 @@
           if (imgData.resources) {
             imgData.resources.forEach(r => {
               items.push({
-                url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}.${r.format}`,
+                url: `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`,
                 type: 'image',
                 created_at: new Date(r.created_at)
               });
@@ -312,7 +321,7 @@
           if (vidData.resources) {
             vidData.resources.forEach(r => {
               items.push({
-                url: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${r.public_id}.${r.format}`,
+                url: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`,
                 type: 'video',
                 created_at: new Date(r.created_at)
               });
@@ -322,17 +331,23 @@
 
         items.sort((a, b) => b.created_at - a.created_at);
 
-        mainGallery.innerHTML = '';
-        if (items.length === 0) {
-          mainGallery.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a moment. 📸</div>';
-        } else {
-          items.forEach(item => {
-            mainGallery.appendChild(createMediaCard(item.url, item.type));
-          });
+        if (mainGallery) {
+          mainGallery.innerHTML = '';
+          if (items.length === 0) {
+            mainGallery.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a moment. 📸</div>';
+          } else {
+            items.forEach(item => {
+              mainGallery.appendChild(createMediaCard(item.url, item.type));
+            });
+          }
         }
+        
+        if (statusBox) statusBox.style.display = "none";
       } catch (e) {
-        console.error(e);
-        mainGallery.innerHTML = '<div class="empty-state">Snap a photo to start the album! 📸</div>';
+        console.error("Error fetching media:", e);
+        if (mainGallery) {
+          mainGallery.innerHTML = '<div class="empty-state">Snap a photo to start the album! 📸</div>';
+        }
       }
     }
 
@@ -345,8 +360,7 @@
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
       formData.append("folder", eventName);
-      formData.append("asset_folder", eventName);
-      formData.append("tags", eventName);
+      formData.append("tags", eventName); // مهم جداً عشان الـ list تعتمد على الـ tag
 
       try {
         const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
@@ -358,7 +372,7 @@
 
         if (res.ok && data.secure_url) {
           setStatus("✅ Uploaded successfully!", "success");
-          setTimeout(fetchEventMedia, 1500); // تحديث الجاليري تلقائياً بعد ثانية ونصف
+          setTimeout(fetchEventMedia, 1200);
         } else {
           setStatus("❌ Upload failed. Please try again.", "error");
         }
@@ -368,11 +382,19 @@
       }
     }
 
-    photoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'image'));
-    videoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'video'));
+    if (photoInput) photoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'image'));
+    if (videoInput) videoInput.addEventListener('change', (e) => handleUpload(e.target.files[0], 'video'));
+
+    // ربط أي زرار ريفرش في الصفحة
+    document.querySelectorAll('*').forEach(el => {
+      if (el.innerText && el.innerText.includes('Refresh')) {
+        el.style.cursor = 'pointer';
+        el.onclick = fetchEventMedia;
+      }
+    });
 
     fetchEventMedia();
-  </script>
+</script>
 
 </body>
 </html>
