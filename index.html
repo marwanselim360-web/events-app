@@ -94,6 +94,7 @@
       border: none;
       color: #fff;
       transition: all 0.2s ease;
+      text-decoration: none;
     }
 
     .btn-photo {
@@ -150,6 +151,16 @@
       gap: 6px;
     }
 
+    .btn-refresh {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     .tab-bar {
       display: flex;
       background: rgba(255, 255, 255, 0.06);
@@ -193,6 +204,7 @@
       display: flex;
       flex-direction: column;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
     }
 
     .media-preview {
@@ -234,6 +246,19 @@
       justify-content: center;
       gap: 4px;
       text-decoration: none;
+    }
+
+    .uploading-badge {
+      background: rgba(234, 179, 8, 0.25);
+      color: #fde047;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
 
     .empty-state {
@@ -325,6 +350,7 @@
 
     <div class="gallery-header">
       <div class="gallery-title">🎉 Live Album</div>
+      <button class="btn-refresh" id="refreshBtn">🔄 Refresh</button>
     </div>
 
     <div class="tab-bar">
@@ -346,20 +372,7 @@
     <div class="modal-content-wrapper" id="modalTarget"></div>
   </div>
 
-  <!-- Firebase Scripts للربط اللحظي السحابي -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
   <script>
-    // إعداد قاعدة البيانات السحابية المركزية لجميع الموبايلات
-    const firebaseConfig = {
-      databaseURL: "https://events-app-live-default-rtdb.firebaseio.com/"
-    };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
     const eventName = rawEvent ? rawEvent.trim().replace(/\s+/g, '_') : 'General_Event';
@@ -373,10 +386,12 @@
     const videoInput = document.getElementById('videoInput');
     const galleryInput = document.getElementById('galleryInput');
     const statusBox = document.getElementById('statusBox');
+    const refreshBtn = document.getElementById('refreshBtn');
 
     let currentTab = 'photos';
-    let photoItems = [];
-    let videoItems = [];
+    let photoList = [];
+    let videoList = [];
+    let activeUploadsCount = 0;
 
     function setStatus(msg, type) {
       if (!statusBox) return;
@@ -441,123 +456,181 @@
       }
     }
 
-    function createMediaCard(url, type) {
-      const card = document.createElement('div');
-      card.className = 'media-card';
-      const filename = `${eventName}_${Date.now()}.${type === 'image' ? 'jpg' : 'mp4'}`;
-      
-      const mediaHtml = type === 'image' 
-        ? `<img src="${url}" loading="lazy" alt="Event Moment">`
-        : `<video src="${url}" playsinline muted></video><div class="video-play-overlay">▶️</div>`;
-
-      card.innerHTML = `
-        <div class="media-preview" onclick="openModal('${url}', '${type}')">
-          ${mediaHtml}
-        </div>
-        <button class="save-btn" onclick="downloadFile('${url}', '${filename}')">
-          ⬇️ Save ${type === 'image' ? 'Photo' : 'Video'}
-        </button>
-      `;
-      return card;
-    }
-
     function renderGrids() {
-      document.getElementById('photoCount').innerText = photoItems.length;
-      document.getElementById('videoCount').innerText = videoItems.length;
+      document.getElementById('photoCount').innerText = photoList.length;
+      document.getElementById('videoCount').innerText = videoList.length;
 
       const photosGrid = document.getElementById('photosGrid');
       photosGrid.innerHTML = '';
-      if (photoItems.length === 0) {
+      if (photoList.length === 0) {
         photosGrid.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>';
       } else {
-        photoItems.forEach(item => photosGrid.appendChild(createMediaCard(item.url, 'image')));
+        photoList.forEach(item => photosGrid.appendChild(createItemElement(item, 'image')));
       }
 
       const videosGrid = document.getElementById('videosGrid');
       videosGrid.innerHTML = '';
-      if (videoItems.length === 0) {
+      if (videoList.length === 0) {
         videosGrid.innerHTML = '<div class="empty-state">No videos yet! Record a moment now. 🎥</div>';
       } else {
-        videoItems.forEach(item => videosGrid.appendChild(createMediaCard(item.url, 'video')));
+        videoList.forEach(item => videosGrid.appendChild(createItemElement(item, 'video')));
       }
     }
 
-    // مزامنة لحظية مع قاعدة البيانات المركزية لجميع الموبايلات في العالم
-    db.ref('events/' + eventName).on('value', (snapshot) => {
-      const data = snapshot.val();
-      photoItems = [];
-      videoItems = [];
+    function createItemElement(item, type) {
+      const card = document.createElement('div');
+      card.className = 'media-card';
+      card.id = `card_${item.id}`;
 
-      if (data) {
-        Object.keys(data).forEach(key => {
-          const item = data[key];
-          if (item.type === 'video') {
-            videoItems.push(item);
-          } else {
-            photoItems.push(item);
+      const mediaHtml = type === 'image' 
+        ? `<img src="${item.url}" loading="lazy" alt="Event Moment">`
+        : `<video src="${item.url}" playsinline muted></video><div class="video-play-overlay">▶️</div>`;
+
+      let actionHtml = '';
+      if (item.uploading) {
+        actionHtml = `<div class="uploading-badge">⏳ Uploading...</div>`;
+      } else {
+        const filename = `${eventName}_${Date.now()}.${type === 'image' ? 'jpg' : 'mp4'}`;
+        actionHtml = `<button class="save-btn" onclick="downloadFile('${item.url}', '${filename}')">⬇️ Save ${type === 'image' ? 'Photo' : 'Video'}</button>`;
+      }
+
+      card.innerHTML = `
+        <div class="media-preview" onclick="openModal('${item.url}', '${type}')">
+          ${mediaHtml}
+        </div>
+        ${actionHtml}
+      `;
+      return card;
+    }
+
+    async function fetchCloudinaryList() {
+      const cacheBuster = Date.now();
+      try {
+        const [imgRes, vidRes] = await Promise.allSettled([
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${cacheBuster}`),
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${cacheBuster}`)
+        ]);
+
+        if (imgRes.status === 'fulfilled' && imgRes.value.ok) {
+          const data = await imgRes.value.json();
+          if (data.resources) {
+            data.resources.forEach(r => {
+              const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`;
+              if (!photoList.some(p => p.url === url)) {
+                photoList.unshift({ id: r.public_id, url: url, uploading: false });
+              }
+            });
           }
-        });
+        }
 
-        photoItems.sort((a, b) => b.timestamp - a.timestamp);
-        videoItems.sort((a, b) => b.timestamp - a.timestamp);
+        if (vidRes.status === 'fulfilled' && vidRes.value.ok) {
+          const data = await vidRes.value.json();
+          if (data.resources) {
+            data.resources.forEach(r => {
+              const url = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`;
+              if (!videoList.some(v => v.url === url)) {
+                videoList.unshift({ id: r.public_id, url: url, uploading: false });
+              }
+            });
+          }
+        }
+
+        renderGrids();
+      } catch (e) {
+        console.error(e);
       }
-
-      renderGrids();
-    });
-
-    async function uploadSingleFile(file) {
-      const resourceType = file.type.startsWith('video') ? 'video' : 'image';
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", eventName);
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
-        method: "POST",
-        body: formData
-      });
-      const data = await res.json();
-
-      if (data && data.secure_url) {
-        // حفظ الصورة في السحابة المركزية لتصل لكل الموبايلات فوراً
-        await db.ref('events/' + eventName).push({
-          url: data.secure_url,
-          type: resourceType,
-          timestamp: Date.now()
-        });
-        return true;
-      }
-      return false;
     }
 
-    async function handleUpload(fileList, defaultType) {
-      if (!fileList || fileList.length === 0) return;
+    // رفع كل صورة / فيديو بشكل متوازي ومستقل في الخلفية
+    async function processUploadAsync(file) {
+      const isVideo = file.type.startsWith('video');
+      const resourceType = isVideo ? 'video' : 'image';
+      const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
+      const localPreviewUrl = URL.createObjectURL(file);
 
-      const files = Array.from(fileList);
-      setStatus(`Uploading ${files.length} item(s)... ⏳`, "loading");
+      // إضافة فورية في الشاشة في لمح البصر
+      const tempItem = { id: tempId, url: localPreviewUrl, uploading: true };
+      if (isVideo) {
+        videoList.unshift(tempItem);
+        switchTab('videos');
+      } else {
+        photoList.unshift(tempItem);
+        switchTab('photos');
+      }
+      renderGrids();
+
+      activeUploadsCount++;
+      setStatus(`Uploading ${activeUploadsCount} active item(s)... ⏳`, "loading");
 
       try {
-        let successCount = 0;
-        for (const file of files) {
-          const success = await uploadSingleFile(file);
-          if (success) successCount++;
-        }
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+        formData.append("folder", eventName);
+        formData.append("tags", eventName);
 
-        if (successCount > 0) {
-          setStatus(`✅ Uploaded ${successCount} item(s) successfully!`, "success");
-          setTimeout(() => { statusBox.style.display = "none"; }, 2500);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+
+        activeUploadsCount--;
+        if (data && data.secure_url) {
+          // تحديث الكارت باللينك السحابي الدائم
+          const targetList = isVideo ? videoList : photoList;
+          const idx = targetList.findIndex(i => i.id === tempId);
+          if (idx !== -1) {
+            targetList[idx] = { id: data.public_id, url: data.secure_url, uploading: false };
+          }
+          renderGrids();
+
+          if (activeUploadsCount === 0) {
+            setStatus("✅ All uploads completed successfully!", "success");
+            setTimeout(() => { statusBox.style.display = "none"; }, 2500);
+          } else {
+            setStatus(`Uploading ${activeUploadsCount} active item(s)... ⏳`, "loading");
+          }
         } else {
-          setStatus("❌ Upload failed. Please check internet.", "error");
+          throw new Error("Upload response failed");
         }
       } catch (err) {
+        activeUploadsCount = Math.max(0, activeUploadsCount - 1);
         console.error(err);
-        setStatus("❌ Connection error. Check internet.", "error");
+        setStatus("❌ An item failed to upload. Check connection.", "error");
       }
     }
 
-    if (photoInput) photoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'image'));
-    if (videoInput) videoInput.addEventListener('change', (e) => handleUpload(e.target.files, 'video'));
-    if (galleryInput) galleryInput.addEventListener('change', (e) => handleUpload(e.target.files, 'mixed'));
+    function handleFilesInput(files) {
+      if (!files || files.length === 0) return;
+      Array.from(files).forEach(file => {
+        processUploadAsync(file);
+      });
+    }
+
+    if (photoInput) photoInput.addEventListener('change', (e) => {
+      handleFilesInput(e.target.files);
+      photoInput.value = ''; // تصفير عشان لو حبيت تفتح الكاميرا تاني ورا بعض
+    });
+
+    if (videoInput) videoInput.addEventListener('change', (e) => {
+      handleFilesInput(e.target.files);
+      videoInput.value = ''; // تصفير عشان لو حبيت تسجل فيديو تاني فوراً
+    });
+
+    if (galleryInput) galleryInput.addEventListener('change', (e) => {
+      handleFilesInput(e.target.files);
+      galleryInput.value = '';
+    });
+
+    if (refreshBtn) refreshBtn.addEventListener('click', () => {
+      setStatus("Refreshing gallery... 🔄", "loading");
+      fetchCloudinaryList().then(() => {
+        setTimeout(() => { statusBox.style.display = "none"; }, 800);
+      });
+    });
+
+    fetchCloudinaryList();
   </script>
 </body>
 </html>
