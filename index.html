@@ -7,10 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      --bg: #0b0f19;
       --card-bg: rgba(255, 255, 255, 0.05);
       --card-border: rgba(255, 255, 255, 0.1);
-      --primary: #6366f1;
+      --primary: #4f46e5;
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
@@ -24,10 +24,10 @@
     }
 
     body {
-      background: var(--bg-gradient);
+      background: radial-gradient(circle at top, #1e1b4b 0%, #0b0f19 70%);
       color: var(--text);
       min-height: 100vh;
-      padding: 20px 16px 60px;
+      padding: 20px 16px 80px;
     }
 
     .container {
@@ -39,9 +39,9 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      color: #a5b4fc;
+      background: rgba(79, 70, 229, 0.2);
+      border: 1px solid rgba(79, 70, 229, 0.4);
+      color: #c7d2fe;
       padding: 6px 14px;
       border-radius: 999px;
       font-size: 13px;
@@ -56,7 +56,7 @@
       border-radius: 24px;
       padding: 24px 20px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       margin-bottom: 24px;
     }
 
@@ -70,7 +70,6 @@
       font-size: 13px;
       color: var(--text-muted);
       margin-bottom: 20px;
-      line-height: 1.4;
     }
 
     .button-group {
@@ -93,72 +92,29 @@
       cursor: pointer;
       border: none;
       color: #fff;
-      transition: all 0.2s ease;
-      text-decoration: none;
+      transition: transform 0.1s ease;
     }
 
     .btn-photo {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      box-shadow: 0 4px 15px rgba(29, 78, 216, 0.3);
     }
 
     .btn-video {
-      background: linear-gradient(135deg, #ec4899, #d946ef);
-      box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
+      background: linear-gradient(135deg, #ec4899, #be185d);
+      box-shadow: 0 4px 15px rgba(190, 24, 93, 0.3);
     }
 
-    .btn-gallery-upload {
+    .btn-gallery {
       grid-column: span 2;
       flex-direction: row;
       background: rgba(255, 255, 255, 0.08);
-      border: 1px dashed rgba(255, 255, 255, 0.25);
-      color: #f8fafc;
-      padding: 14px 16px;
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      padding: 14px;
     }
 
     .upload-btn:active {
-      transform: scale(0.97);
-    }
-
-    .upload-btn span.icon {
-      font-size: 20px;
-    }
-
-    .status-alert {
-      display: none;
-      margin-top: 14px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .status-loading { background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3); }
-    .status-success { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
-    .status-error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
-
-    .gallery-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .gallery-title {
-      font-size: 18px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-refresh {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-size: 12px;
-      cursor: pointer;
+      transform: scale(0.96);
     }
 
     .tab-bar {
@@ -181,13 +137,11 @@
       cursor: pointer;
       border: none;
       background: transparent;
-      transition: 0.2s ease;
     }
 
     .tab-btn.active {
       background: var(--primary);
       color: #fff;
-      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
     }
 
     .media-grid {
@@ -203,14 +157,12 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      position: relative;
     }
 
     .media-preview {
       position: relative;
       width: 100%;
-      height: 150px;
+      height: 160px;
       background: #000;
       cursor: pointer;
     }
@@ -219,46 +171,36 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
     }
 
-    .video-play-overlay {
+    .video-play-icon {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.3);
-      font-size: 28px;
+      font-size: 32px;
+      background: rgba(0,0,0,0.25);
     }
 
     .save-btn {
-      padding: 10px 10px;
-      background: rgba(255, 255, 255, 0.08);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.06);
       border: none;
       color: #fff;
       font-size: 12px;
       font-weight: 600;
       text-align: center;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      text-decoration: none;
     }
 
     .uploading-badge {
-      background: rgba(234, 179, 8, 0.25);
+      padding: 10px;
+      background: rgba(234, 179, 8, 0.2);
       color: #fde047;
       font-size: 11px;
       font-weight: 700;
-      padding: 8px;
       text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
     }
 
     .empty-state {
@@ -273,48 +215,22 @@
       display: none;
     }
 
-    .modal-overlay {
-      display: none;
+    .upload-toast {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.92);
-      backdrop-filter: blur(10px);
-      z-index: 9999;
-      flex-direction: column;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e1b4b;
+      border: 1px solid var(--primary);
+      padding: 12px 20px;
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      z-index: 1000;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-content-wrapper {
-      max-width: 100%;
-      max-height: 80vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-content-wrapper img, .modal-content-wrapper video {
-      max-width: 100%;
-      max-height: 75vh;
-      border-radius: 14px;
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255,255,255,0.15);
-      border: none;
-      color: #fff;
-      font-size: 20px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      gap: 8px;
     }
   </style>
 </head>
@@ -324,19 +240,19 @@
     <div class="action-card">
       <div class="header-badge" id="eventBadge">✨ General Event</div>
       <h1>Capture the Moment</h1>
-      <p>Snap live moments or upload your favorite memories to the wedding album!</p>
+      <p>Snap live moments or upload memories in real-time!</p>
 
       <div class="button-group">
         <label for="photoInput" class="upload-btn btn-photo">
-          <span class="icon">📸</span>
+          <span>📸</span>
           <span>Take Photo</span>
         </label>
         <label for="videoInput" class="upload-btn btn-video">
-          <span class="icon">🎥</span>
+          <span>🎥</span>
           <span>Record Video</span>
         </label>
-        <label for="galleryInput" class="upload-btn btn-gallery-upload">
-          <span class="icon">📁</span>
+        <label for="galleryInput" class="upload-btn btn-gallery">
+          <span>📁</span>
           <span>Upload from Gallery</span>
         </label>
       </div>
@@ -344,13 +260,6 @@
       <input type="file" id="photoInput" accept="image/*" capture="environment">
       <input type="file" id="videoInput" accept="video/*" capture="environment">
       <input type="file" id="galleryInput" accept="image/*,video/*" multiple>
-
-      <div id="statusBox" class="status-alert"></div>
-    </div>
-
-    <div class="gallery-header">
-      <div class="gallery-title">🎉 Live Album</div>
-      <button class="btn-refresh" id="refreshBtn">🔄 Refresh</button>
     </div>
 
     <div class="tab-bar">
@@ -359,278 +268,204 @@
     </div>
 
     <div class="media-grid" id="photosGrid">
-      <div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>
+      <div class="empty-state">No photos yet! Snap one now. 📸</div>
     </div>
 
     <div class="media-grid" id="videosGrid" style="display: none;">
-      <div class="empty-state">No videos yet! Record a moment now. 🎥</div>
+      <div class="empty-state">No videos yet! Record one now. 🎥</div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="mediaModal" onclick="closeModal(event)">
-    <button class="modal-close-btn" onclick="closeModal()">✕</button>
-    <div class="modal-content-wrapper" id="modalTarget"></div>
+  <div id="uploadToast" class="upload-toast">
+    <span>⏳</span> <span id="toastText">Uploading in background...</span>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
-    const eventName = rawEvent ? rawEvent.trim().replace(/\s+/g, '_') : 'General_Event';
-    
-    document.getElementById('eventBadge').innerText = "✨ " + eventName.replace(/_/g, ' ');
+    const eventName = rawEvent ? rawEvent.trim().toLowerCase().replace(/\s+/g, '_') : 'general_event';
+    document.getElementById('eventBadge').innerText = "✨ " + eventName.replace(/_/g, ' ').toUpperCase();
 
     const CLOUD_NAME = "qwmaeyjl";
     const UPLOAD_PRESET = "events_upload";
 
-    const photoInput = document.getElementById('photoInput');
-    const videoInput = document.getElementById('videoInput');
-    const galleryInput = document.getElementById('galleryInput');
-    const statusBox = document.getElementById('statusBox');
-    const refreshBtn = document.getElementById('refreshBtn');
+    let activeTab = 'photos';
+    let mediaState = { photos: [], videos: [] };
+    let pendingUploads = 0;
 
-    let currentTab = 'photos';
-    let photoList = [];
-    let videoList = [];
-    let activeUploadsCount = 0;
-
-    function setStatus(msg, type) {
-      if (!statusBox) return;
-      statusBox.className = `status-alert status-${type}`;
-      statusBox.innerText = msg;
-      statusBox.style.display = "block";
-    }
-
-    async function downloadFile(url, filename) {
-      try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } catch (e) {
-        window.open(url, '_blank');
-      }
-    }
-
-    function openModal(url, type) {
-      const modal = document.getElementById('mediaModal');
-      const target = document.getElementById('modalTarget');
-      if (type === 'image') {
-        target.innerHTML = `<img src="${url}" alt="Full View">`;
+    function updateToast() {
+      const toast = document.getElementById('uploadToast');
+      const toastText = document.getElementById('toastText');
+      if (pendingUploads > 0) {
+        toastText.innerText = `Uploading ${pendingUploads} item(s) in background...`;
+        toast.style.display = 'flex';
       } else {
-        target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
-      }
-      modal.style.display = 'flex';
-    }
-
-    function closeModal(e) {
-      if (!e || e.target.id === 'mediaModal' || e.target.className === 'modal-close-btn') {
-        const modal = document.getElementById('mediaModal');
-        const target = document.getElementById('modalTarget');
-        target.innerHTML = '';
-        modal.style.display = 'none';
+        toast.style.display = 'none';
       }
     }
 
     function switchTab(tab) {
-      currentTab = tab;
-      const photosTab = document.getElementById('photosTab');
-      const videosTab = document.getElementById('videosTab');
-      const photosGrid = document.getElementById('photosGrid');
-      const videosGrid = document.getElementById('videosGrid');
-
-      if (tab === 'photos') {
-        photosTab.classList.add('active');
-        videosTab.classList.remove('active');
-        photosGrid.style.display = 'grid';
-        videosGrid.style.display = 'none';
-      } else {
-        videosTab.classList.add('active');
-        photosTab.classList.remove('active');
-        photosGrid.style.display = 'none';
-        videosGrid.style.display = 'grid';
-      }
+      activeTab = tab;
+      document.getElementById('photosTab').classList.toggle('active', tab === 'photos');
+      document.getElementById('videosTab').classList.toggle('active', tab === 'videos');
+      document.getElementById('photosGrid').style.display = tab === 'photos' ? 'grid' : 'none';
+      document.getElementById('videosGrid').style.display = tab === 'videos' ? 'grid' : 'none';
     }
 
-    function renderGrids() {
-      document.getElementById('photoCount').innerText = photoList.length;
-      document.getElementById('videoCount').innerText = videoList.length;
+    function render() {
+      document.getElementById('photoCount').innerText = mediaState.photos.length;
+      document.getElementById('videoCount').innerText = mediaState.videos.length;
 
-      const photosGrid = document.getElementById('photosGrid');
-      photosGrid.innerHTML = '';
-      if (photoList.length === 0) {
-        photosGrid.innerHTML = '<div class="empty-state">No photos yet! Be the first to snap a shot. 📸</div>';
-      } else {
-        photoList.forEach(item => photosGrid.appendChild(createItemElement(item, 'image')));
-      }
+      const pGrid = document.getElementById('photosGrid');
+      pGrid.innerHTML = mediaState.photos.length === 0 
+        ? '<div class="empty-state">No photos yet! Snap one now. 📸</div>'
+        : mediaState.photos.map(renderCard).join('');
 
-      const videosGrid = document.getElementById('videosGrid');
-      videosGrid.innerHTML = '';
-      if (videoList.length === 0) {
-        videosGrid.innerHTML = '<div class="empty-state">No videos yet! Record a moment now. 🎥</div>';
-      } else {
-        videoList.forEach(item => videosGrid.appendChild(createItemElement(item, 'video')));
-      }
+      const vGrid = document.getElementById('videosGrid');
+      vGrid.innerHTML = mediaState.videos.length === 0 
+        ? '<div class="empty-state">No videos yet! Record one now. 🎥</div>'
+        : mediaState.videos.map(renderCard).join('');
     }
 
-    function createItemElement(item, type) {
-      const card = document.createElement('div');
-      card.className = 'media-card';
-      card.id = `card_${item.id}`;
+    function renderCard(item) {
+      const isVid = item.type === 'video';
+      const preview = isVid 
+        ? `<video src="${item.url}" playsinline muted></video><div class="video-play-icon">▶️</div>`
+        : `<img src="${item.url}" loading="lazy">`;
 
-      const mediaHtml = type === 'image' 
-        ? `<img src="${item.url}" loading="lazy" alt="Event Moment">`
-        : `<video src="${item.url}" playsinline muted></video><div class="video-play-overlay">▶️</div>`;
+      const bottomBar = item.uploading
+        ? `<div class="uploading-badge">⏳ Uploading...</div>`
+        : `<button class="save-btn" onclick="window.open('${item.url}', '_blank')">⬇️ Save ${isVid ? 'Video' : 'Photo'}</button>`;
 
-      let actionHtml = '';
-      if (item.uploading) {
-        actionHtml = `<div class="uploading-badge">⏳ Uploading...</div>`;
-      } else {
-        const filename = `${eventName}_${Date.now()}.${type === 'image' ? 'jpg' : 'mp4'}`;
-        actionHtml = `<button class="save-btn" onclick="downloadFile('${item.url}', '${filename}')">⬇️ Save ${type === 'image' ? 'Photo' : 'Video'}</button>`;
-      }
-
-      card.innerHTML = `
-        <div class="media-preview" onclick="openModal('${item.url}', '${type}')">
-          ${mediaHtml}
+      return `
+        <div class="media-card">
+          <div class="media-preview" onclick="window.open('${item.url}', '_blank')">${preview}</div>
+          ${bottomBar}
         </div>
-        ${actionHtml}
       `;
-      return card;
     }
 
-    async function fetchCloudinaryList() {
-      const cacheBuster = Date.now();
+    // بث لحظي للـ 500 معزوم عبر شبكة Real-time NTFY Channel
+    function broadcastMedia(newItem) {
+      fetch(`https://ntfy.sh/event_feed_${eventName}`, {
+        method: 'POST',
+        body: JSON.stringify(newItem)
+      }).catch(e => console.error(e));
+    }
+
+    // استقبال فوري لأي صورة يرفعها أي شخص في نفس اللحظة
+    function listenToLiveFeed() {
+      const eventSource = new EventSource(`https://ntfy.sh/event_feed_${eventName}/sse`);
+      eventSource.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg && msg.message) {
+            const data = JSON.parse(msg.message);
+            if (data && data.url) {
+              const list = data.type === 'video' ? mediaState.videos : mediaState.photos;
+              if (!list.some(i => i.url === data.url)) {
+                list.unshift(data);
+                render();
+              }
+            }
+          }
+        } catch (e) {
+          // ignore non-json messages
+        }
+      };
+    }
+
+    async function uploadWorker(file) {
+      const isVideo = file.type.startsWith('video') || file.name.match(/\.(mov|mp4|avi)$/i);
+      const tempId = 'temp_' + Date.now() + Math.random();
+      const localUrl = URL.createObjectURL(file);
+
+      const tempItem = { id: tempId, url: localUrl, type: isVideo ? 'video' : 'image', uploading: true };
+      if (isVideo) mediaState.videos.unshift(tempItem);
+      else mediaState.photos.unshift(tempItem);
+
+      render();
+      pendingUploads++;
+      updateToast();
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      formData.append("folder", eventName);
+      formData.append("tags", eventName);
+
       try {
-        const [imgRes, vidRes] = await Promise.allSettled([
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${cacheBuster}`),
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${cacheBuster}`)
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${isVideo ? 'video' : 'image'}/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+        
+        const list = isVideo ? mediaState.videos : mediaState.photos;
+        const target = list.find(i => i.id === tempId);
+        if (target && data.secure_url) {
+          target.url = data.secure_url;
+          target.uploading = false;
+
+          // بث مباشر فوري لجميع الموبايلات المفتوحة حالياً
+          broadcastMedia({
+            id: data.public_id,
+            url: data.secure_url,
+            type: isVideo ? 'video' : 'image',
+            uploading: false
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        pendingUploads--;
+        updateToast();
+        render();
+      }
+    }
+
+    function handleFiles(files) {
+      if (!files) return;
+      Array.from(files).forEach(uploadWorker);
+    }
+
+    document.getElementById('photoInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+    document.getElementById('videoInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+    document.getElementById('galleryInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+
+    // تحميل الصور القديمة لأول مرة
+    async function loadCloudMedia() {
+      try {
+        const [imgs, vids] = await Promise.allSettled([
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${Date.now()}`).then(r => r.json()),
+          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${Date.now()}`).then(r => r.json())
         ]);
 
-        if (imgRes.status === 'fulfilled' && imgRes.value.ok) {
-          const data = await imgRes.value.json();
-          if (data.resources) {
-            data.resources.forEach(r => {
-              const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`;
-              if (!photoList.some(p => p.url === url)) {
-                photoList.unshift({ id: r.public_id, url: url, uploading: false });
-              }
-            });
-          }
+        if (imgs.status === 'fulfilled' && imgs.value.resources) {
+          imgs.value.resources.forEach(r => {
+            const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`;
+            if (!mediaState.photos.some(p => p.url === url)) {
+              mediaState.photos.push({ id: r.public_id, url, type: 'image', uploading: false });
+            }
+          });
         }
 
-        if (vidRes.status === 'fulfilled' && vidRes.value.ok) {
-          const data = await vidRes.value.json();
-          if (data.resources) {
-            data.resources.forEach(r => {
-              const url = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`;
-              if (!videoList.some(v => v.url === url)) {
-                videoList.unshift({ id: r.public_id, url: url, uploading: false });
-              }
-            });
-          }
+        if (vids.status === 'fulfilled' && vids.value.resources) {
+          vids.value.resources.forEach(r => {
+            const url = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`;
+            if (!mediaState.videos.some(v => v.url === url)) {
+              mediaState.videos.push({ id: r.public_id, url, type: 'video', uploading: false });
+            }
+          });
         }
-
-        renderGrids();
+        render();
       } catch (e) {
         console.error(e);
       }
     }
 
-    // رفع كل صورة / فيديو بشكل متوازي ومستقل في الخلفية
-    async function processUploadAsync(file) {
-      const isVideo = file.type.startsWith('video');
-      const resourceType = isVideo ? 'video' : 'image';
-      const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
-      const localPreviewUrl = URL.createObjectURL(file);
-
-      // إضافة فورية في الشاشة في لمح البصر
-      const tempItem = { id: tempId, url: localPreviewUrl, uploading: true };
-      if (isVideo) {
-        videoList.unshift(tempItem);
-        switchTab('videos');
-      } else {
-        photoList.unshift(tempItem);
-        switchTab('photos');
-      }
-      renderGrids();
-
-      activeUploadsCount++;
-      setStatus(`Uploading ${activeUploadsCount} active item(s)... ⏳`, "loading");
-
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", UPLOAD_PRESET);
-        formData.append("folder", eventName);
-        formData.append("tags", eventName);
-
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, {
-          method: "POST",
-          body: formData
-        });
-        const data = await res.json();
-
-        activeUploadsCount--;
-        if (data && data.secure_url) {
-          // تحديث الكارت باللينك السحابي الدائم
-          const targetList = isVideo ? videoList : photoList;
-          const idx = targetList.findIndex(i => i.id === tempId);
-          if (idx !== -1) {
-            targetList[idx] = { id: data.public_id, url: data.secure_url, uploading: false };
-          }
-          renderGrids();
-
-          if (activeUploadsCount === 0) {
-            setStatus("✅ All uploads completed successfully!", "success");
-            setTimeout(() => { statusBox.style.display = "none"; }, 2500);
-          } else {
-            setStatus(`Uploading ${activeUploadsCount} active item(s)... ⏳`, "loading");
-          }
-        } else {
-          throw new Error("Upload response failed");
-        }
-      } catch (err) {
-        activeUploadsCount = Math.max(0, activeUploadsCount - 1);
-        console.error(err);
-        setStatus("❌ An item failed to upload. Check connection.", "error");
-      }
-    }
-
-    function handleFilesInput(files) {
-      if (!files || files.length === 0) return;
-      Array.from(files).forEach(file => {
-        processUploadAsync(file);
-      });
-    }
-
-    if (photoInput) photoInput.addEventListener('change', (e) => {
-      handleFilesInput(e.target.files);
-      photoInput.value = ''; // تصفير عشان لو حبيت تفتح الكاميرا تاني ورا بعض
-    });
-
-    if (videoInput) videoInput.addEventListener('change', (e) => {
-      handleFilesInput(e.target.files);
-      videoInput.value = ''; // تصفير عشان لو حبيت تسجل فيديو تاني فوراً
-    });
-
-    if (galleryInput) galleryInput.addEventListener('change', (e) => {
-      handleFilesInput(e.target.files);
-      galleryInput.value = '';
-    });
-
-    if (refreshBtn) refreshBtn.addEventListener('click', () => {
-      setStatus("Refreshing gallery... 🔄", "loading");
-      fetchCloudinaryList().then(() => {
-        setTimeout(() => { statusBox.style.display = "none"; }, 800);
-      });
-    });
-
-    fetchCloudinaryList();
+    loadCloudMedia();
+    listenToLiveFeed();
   </script>
 </body>
 </html>
