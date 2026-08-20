@@ -37,7 +37,6 @@
       margin: 0 auto;
     }
 
-    /* Wedding Top Header */
     .wedding-header {
       text-align: center;
       margin-bottom: 24px;
@@ -71,7 +70,6 @@
       text-transform: uppercase;
     }
 
-    /* Main Action Card */
     .action-card {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
@@ -129,7 +127,6 @@
       transform: scale(0.96);
     }
 
-    /* Gallery Tabs */
     .tab-bar {
       display: flex;
       background: rgba(255, 255, 255, 0.04);
@@ -159,7 +156,6 @@
       font-weight: 700;
     }
 
-    /* Media Grid */
     .media-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -242,7 +238,6 @@
       display: none;
     }
 
-    /* Modal Fullscreen */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -287,7 +282,6 @@
       cursor: pointer;
     }
 
-    /* Upload Toast */
     .upload-toast {
       position: fixed;
       bottom: 24px;
@@ -366,7 +360,6 @@
     const rawEvent = urlParams.get('event');
     const eventName = rawEvent ? rawEvent.trim().toLowerCase().replace(/\s+/g, '_') : 'marwan_and_noor';
     
-    // تحويل اسم الإيفنت لشكل أنيق (مثال: wedding_marwan_and_noor -> MARWAN & NOOR)
     let formattedNames = eventName
       .replace(/^wedding_/, '')
       .replace(/_and_/g, ' & ')
@@ -379,8 +372,30 @@
     const UPLOAD_PRESET = "events_upload";
 
     let activeTab = 'photos';
-    let mediaState = { photos: [], videos: [] };
+    
+    // استرجاع الصور المحفوظة محلياً فوراً
+    const storageKey = `media_cache_${eventName}`;
+    let cachedMedia = { photos: [], videos: [] };
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) cachedMedia = JSON.parse(saved);
+    } catch(e) {}
+
+    let mediaState = { 
+      photos: cachedMedia.photos || [], 
+      videos: cachedMedia.videos || [] 
+    };
     let pendingUploads = 0;
+
+    function saveState() {
+      try {
+        const cleanState = {
+          photos: mediaState.photos.filter(p => !p.uploading),
+          videos: mediaState.videos.filter(v => !v.uploading)
+        };
+        localStorage.setItem(storageKey, JSON.stringify(cleanState));
+      } catch(e) {}
+    }
 
     function updateToast() {
       const toast = document.getElementById('uploadToast');
@@ -480,6 +495,7 @@
               const list = data.type === 'video' ? mediaState.videos : mediaState.photos;
               if (!list.some(i => i.url === data.url)) {
                 list.unshift(data);
+                saveState();
                 render();
               }
             }
@@ -519,6 +535,8 @@
         if (target && data.secure_url) {
           target.url = data.secure_url;
           target.uploading = false;
+
+          saveState();
 
           broadcastMedia({
             id: data.public_id,
@@ -569,12 +587,14 @@
             }
           });
         }
+        saveState();
         render();
       } catch (e) {
         console.error(e);
       }
     }
 
+    render();
     loadCloudMedia();
     listenToLiveFeed();
   </script>
