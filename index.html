@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Event Album</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>Wedding Live Album</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: rgba(255, 255, 255, 0.05);
-      --card-border: rgba(255, 255, 255, 0.1);
-      --primary: #4f46e5;
+      --bg: #090a0f;
+      --gold-primary: #d4af37;
+      --gold-gradient: linear-gradient(135deg, #f5d77f 0%, #d4af37 50%, #aa7c11 100%);
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(212, 175, 55, 0.25);
       --text: #f8fafc;
-      --text-muted: #94a3b8;
+      --text-muted: #a1a1aa;
     }
 
     * {
@@ -24,10 +26,10 @@
     }
 
     body {
-      background: radial-gradient(circle at top, #1e1b4b 0%, #0b0f19 70%);
+      background: radial-gradient(circle at 50% 0%, #1c1917 0%, #0c0a09 100%);
       color: var(--text);
       min-height: 100vh;
-      padding: 20px 16px 80px;
+      padding: 24px 16px 80px;
     }
 
     .container {
@@ -35,41 +37,50 @@
       margin: 0 auto;
     }
 
-    .header-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(79, 70, 229, 0.2);
-      border: 1px solid rgba(79, 70, 229, 0.4);
-      color: #c7d2fe;
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-
-    .action-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 24px 20px;
+    /* Wedding Top Header */
+    .wedding-header {
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       margin-bottom: 24px;
     }
 
-    .action-card h1 {
+    .monogram {
+      font-family: 'Great Vibes', cursive;
+      font-size: 42px;
+      color: #f5d77f;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    .wedding-names {
+      font-family: 'Cinzel', serif;
       font-size: 22px;
       font-weight: 700;
+      letter-spacing: 3px;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
       margin-bottom: 6px;
     }
 
-    .action-card p {
-      font-size: 13px;
+    .wedding-subtitle {
+      font-size: 12px;
       color: var(--text-muted);
-      margin-bottom: 20px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Main Action Card */
+    .action-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      margin-bottom: 28px;
     }
 
     .button-group {
@@ -86,30 +97,31 @@
       justify-content: center;
       gap: 8px;
       padding: 16px 12px;
-      border-radius: 16px;
+      border-radius: 18px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       border: none;
-      color: #fff;
-      transition: transform 0.1s ease;
+      color: #000;
+      transition: transform 0.15s ease, opacity 0.2s;
     }
 
     .btn-photo {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      box-shadow: 0 4px 15px rgba(29, 78, 216, 0.3);
+      background: var(--gold-gradient);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
     }
 
     .btn-video {
-      background: linear-gradient(135deg, #ec4899, #be185d);
-      box-shadow: 0 4px 15px rgba(190, 24, 93, 0.3);
+      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
     }
 
     .btn-gallery {
       grid-column: span 2;
       flex-direction: row;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px dashed rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(212, 175, 55, 0.4);
+      color: #f5d77f;
       padding: 14px;
     }
 
@@ -117,52 +129,57 @@
       transform: scale(0.96);
     }
 
+    /* Gallery Tabs */
     .tab-bar {
       display: flex;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.04);
       padding: 4px;
-      border-radius: 14px;
-      margin-bottom: 16px;
+      border-radius: 16px;
+      margin-bottom: 18px;
       border: 1px solid var(--card-border);
     }
 
     .tab-btn {
       flex: 1;
       text-align: center;
-      padding: 10px 0;
-      border-radius: 10px;
+      padding: 11px 0;
+      border-radius: 12px;
       font-size: 13px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
       border: none;
       background: transparent;
+      transition: 0.2s;
     }
 
     .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
+      background: var(--gold-gradient);
+      color: #0c0a09;
+      font-weight: 700;
     }
 
+    /* Media Grid */
     .media-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 14px;
     }
 
     .media-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 18px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }
 
     .media-preview {
       position: relative;
       width: 100%;
-      height: 160px;
+      height: 165px;
       background: #000;
       cursor: pointer;
     }
@@ -171,6 +188,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
 
     .video-play-icon {
@@ -180,23 +198,32 @@
       align-items: center;
       justify-content: center;
       font-size: 32px;
-      background: rgba(0,0,0,0.25);
+      background: rgba(0,0,0,0.3);
     }
 
     .save-btn {
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.06);
+      padding: 11px;
+      background: rgba(212, 175, 55, 0.1);
       border: none;
-      color: #fff;
+      border-top: 1px solid rgba(212, 175, 55, 0.15);
+      color: #f5d77f;
       font-size: 12px;
       font-weight: 600;
       text-align: center;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .save-btn:active {
+      background: rgba(212, 175, 55, 0.25);
     }
 
     .uploading-badge {
       padding: 10px;
-      background: rgba(234, 179, 8, 0.2);
+      background: rgba(212, 175, 55, 0.15);
       color: #fde047;
       font-size: 11px;
       font-weight: 700;
@@ -206,7 +233,7 @@
     .empty-state {
       grid-column: span 2;
       text-align: center;
-      padding: 40px 10px;
+      padding: 45px 10px;
       color: var(--text-muted);
       font-size: 13px;
     }
@@ -215,16 +242,63 @@
       display: none;
     }
 
+    /* Modal Fullscreen */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.96);
+      backdrop-filter: blur(16px);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-box img, .modal-box video {
+      max-width: 100%;
+      max-height: 75vh;
+      border-radius: 18px;
+      object-fit: contain;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* Upload Toast */
     .upload-toast {
       position: fixed;
-      bottom: 20px;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: #1e1b4b;
-      border: 1px solid var(--primary);
-      padding: 12px 20px;
+      background: #1c1917;
+      border: 1px solid var(--gold-primary);
+      color: #f5d77f;
+      padding: 12px 22px;
       border-radius: 999px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
       font-size: 13px;
       font-weight: 600;
       display: none;
@@ -237,23 +311,25 @@
 <body>
 
   <div class="container">
-    <div class="action-card">
-      <div class="header-badge" id="eventBadge">✨ General Event</div>
-      <h1>Capture the Moment</h1>
-      <p>Snap live moments or upload memories in real-time!</p>
+    <div class="wedding-header">
+      <div class="monogram">💍</div>
+      <div class="wedding-names" id="coupleNames">MARWAN & NOOR</div>
+      <div class="wedding-subtitle">Live Wedding Album</div>
+    </div>
 
+    <div class="action-card">
       <div class="button-group">
         <label for="photoInput" class="upload-btn btn-photo">
-          <span>📸</span>
+          <span style="font-size: 20px;">📸</span>
           <span>Take Photo</span>
         </label>
         <label for="videoInput" class="upload-btn btn-video">
-          <span>🎥</span>
+          <span style="font-size: 20px;">🎥</span>
           <span>Record Video</span>
         </label>
         <label for="galleryInput" class="upload-btn btn-gallery">
-          <span>📁</span>
-          <span>Upload from Gallery</span>
+          <span style="font-size: 18px;">📁</span>
+          <span>Upload Memories</span>
         </label>
       </div>
 
@@ -268,12 +344,17 @@
     </div>
 
     <div class="media-grid" id="photosGrid">
-      <div class="empty-state">No photos yet! Snap one now. 📸</div>
+      <div class="empty-state">No wedding photos yet! Be the first to snap a shot. ✨</div>
     </div>
 
     <div class="media-grid" id="videosGrid" style="display: none;">
-      <div class="empty-state">No videos yet! Record one now. 🎥</div>
+      <div class="empty-state">No wedding videos yet! Record a moment now. 🥂</div>
     </div>
+  </div>
+
+  <div class="modal-overlay" id="mediaModal" onclick="closeModal(event)">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-box" id="modalTarget"></div>
   </div>
 
   <div id="uploadToast" class="upload-toast">
@@ -283,8 +364,16 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const rawEvent = urlParams.get('event');
-    const eventName = rawEvent ? rawEvent.trim().toLowerCase().replace(/\s+/g, '_') : 'general_event';
-    document.getElementById('eventBadge').innerText = "✨ " + eventName.replace(/_/g, ' ').toUpperCase();
+    const eventName = rawEvent ? rawEvent.trim().toLowerCase().replace(/\s+/g, '_') : 'marwan_and_noor';
+    
+    // تحويل اسم الإيفنت لشكل أنيق (مثال: wedding_marwan_and_noor -> MARWAN & NOOR)
+    let formattedNames = eventName
+      .replace(/^wedding_/, '')
+      .replace(/_and_/g, ' & ')
+      .replace(/_/g, ' ')
+      .toUpperCase();
+      
+    document.getElementById('coupleNames').innerText = formattedNames;
 
     const CLOUD_NAME = "qwmaeyjl";
     const UPLOAD_PRESET = "events_upload";
@@ -297,7 +386,7 @@
       const toast = document.getElementById('uploadToast');
       const toastText = document.getElementById('toastText');
       if (pendingUploads > 0) {
-        toastText.innerText = `Uploading ${pendingUploads} item(s) in background...`;
+        toastText.innerText = `Uploading ${pendingUploads} item(s)...`;
         toast.style.display = 'flex';
       } else {
         toast.style.display = 'none';
@@ -312,40 +401,67 @@
       document.getElementById('videosGrid').style.display = tab === 'videos' ? 'grid' : 'none';
     }
 
+    function openModal(url, type) {
+      const modal = document.getElementById('mediaModal');
+      const target = document.getElementById('modalTarget');
+      if (type === 'image') {
+        target.innerHTML = `<img src="${url}" alt="Wedding Moment">`;
+      } else {
+        target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
+      }
+      modal.style.display = 'flex';
+    }
+
+    function closeModal(e) {
+      if (!e || e.target.id === 'mediaModal' || e.target.className === 'modal-close') {
+        const modal = document.getElementById('mediaModal');
+        const target = document.getElementById('modalTarget');
+        target.innerHTML = '';
+        modal.style.display = 'none';
+      }
+    }
+
+    function triggerDownload(url, type) {
+      let downloadUrl = url;
+      if (url.includes('/upload/')) {
+        downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+      }
+      window.location.href = downloadUrl;
+    }
+
     function render() {
       document.getElementById('photoCount').innerText = mediaState.photos.length;
       document.getElementById('videoCount').innerText = mediaState.videos.length;
 
       const pGrid = document.getElementById('photosGrid');
       pGrid.innerHTML = mediaState.photos.length === 0 
-        ? '<div class="empty-state">No photos yet! Snap one now. 📸</div>'
-        : mediaState.photos.map(renderCard).join('');
+        ? '<div class="empty-state">No wedding photos yet! Be the first to snap a shot. ✨</div>'
+        : mediaState.photos.map(item => renderCard(item, 'image')).join('');
 
       const vGrid = document.getElementById('videosGrid');
       vGrid.innerHTML = mediaState.videos.length === 0 
-        ? '<div class="empty-state">No videos yet! Record one now. 🎥</div>'
-        : mediaState.videos.map(renderCard).join('');
+        ? '<div class="empty-state">No wedding videos yet! Record a moment now. 🥂</div>'
+        : mediaState.videos.map(item => renderCard(item, 'video')).join('');
     }
 
-    function renderCard(item) {
-      const isVid = item.type === 'video';
+    function renderCard(item, type) {
+      const isVid = type === 'video';
       const preview = isVid 
         ? `<video src="${item.url}" playsinline muted></video><div class="video-play-icon">▶️</div>`
         : `<img src="${item.url}" loading="lazy">`;
 
       const bottomBar = item.uploading
         ? `<div class="uploading-badge">⏳ Uploading...</div>`
-        : `<button class="save-btn" onclick="window.open('${item.url}', '_blank')">⬇️ Save ${isVid ? 'Video' : 'Photo'}</button>`;
+        : `<button class="save-btn" onclick="triggerDownload('${item.url}', '${type}')">⬇️ Save ${isVid ? 'Video' : 'Photo'}</button>`;
 
       return `
         <div class="media-card">
-          <div class="media-preview" onclick="window.open('${item.url}', '_blank')">${preview}</div>
+          <div class="media-preview" onclick="openModal('${item.url}', '${type}')">${preview}</div>
           ${bottomBar}
         </div>
       `;
     }
 
-    // بث لحظي للـ 500 معزوم عبر شبكة Real-time NTFY Channel
     function broadcastMedia(newItem) {
       fetch(`https://ntfy.sh/event_feed_${eventName}`, {
         method: 'POST',
@@ -353,7 +469,6 @@
       }).catch(e => console.error(e));
     }
 
-    // استقبال فوري لأي صورة يرفعها أي شخص في نفس اللحظة
     function listenToLiveFeed() {
       const eventSource = new EventSource(`https://ntfy.sh/event_feed_${eventName}/sse`);
       eventSource.onmessage = (event) => {
@@ -369,9 +484,7 @@
               }
             }
           }
-        } catch (e) {
-          // ignore non-json messages
-        }
+        } catch (e) {}
       };
     }
 
@@ -407,7 +520,6 @@
           target.url = data.secure_url;
           target.uploading = false;
 
-          // بث مباشر فوري لجميع الموبايلات المفتوحة حالياً
           broadcastMedia({
             id: data.public_id,
             url: data.secure_url,
@@ -433,7 +545,6 @@
     document.getElementById('videoInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
     document.getElementById('galleryInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
 
-    // تحميل الصور القديمة لأول مرة
     async function loadCloudMedia() {
       try {
         const [imgs, vids] = await Promise.allSettled([
