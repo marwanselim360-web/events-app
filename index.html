@@ -293,26 +293,19 @@
       const formData = new FormData();
       formData.append('chat_id', CHAT_ID);
       formData.append('caption', `✨ Event: ${eventName}\n📅 ${new Date().toLocaleTimeString('ar-EG')}`);
-
-      if (isVideo) {
-        formData.append('video', file, 'video.mp4');
-      } else {
-        formData.append('photo', file, 'photo.jpg');
-      }
-
-      const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
+      formData.append('document', file, file.name || (isVideo ? 'video.mp4' : 'photo.jpg'));
 
       try {
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${endpoint}`, {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
           method: 'POST',
           body: formData
         });
         const resData = await response.json();
         if (!resData.ok) {
-          alert('Telegram Error: ' + resData.description);
+          alert('Telegram Alert: ' + resData.description);
         }
       } catch (err) {
-        alert('Network Error: ' + err.message);
+        alert('Upload Error: ' + err.message);
       }
     }
   </script>
