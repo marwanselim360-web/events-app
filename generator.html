@@ -1,124 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event QR & Table Card Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event QR & Theme Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background: #0f1117; color: #fff; padding: 30px 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-    .card { background: #1a1d24; border: 1px solid #333; padding: 24px; border-radius: 12px; width: 100%; max-width: 440px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    h2 { font-family: 'Cinzel', serif; font-size: 20px; color: #d4af37; margin-bottom: 20px; text-align: center; }
-    .form-group { margin-bottom: 14px; text-align: left; }
-    label { font-size: 12px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; display: block; }
-    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222630; color: #fff; font-size: 14px; outline: none; }
-    button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #f5d77f, #d4af37); color: #000; font-weight: 700; cursor: pointer; margin-top: 10px; }
-    
-    /* Table Card Print Preview */
-    .print-area { display: none; margin-top: 30px; text-align: center; }
-    .table-tent {
-      width: 320px;
-      padding: 30px 20px;
-      border-radius: 16px;
-      border: 2px solid #d4af37;
-      background: #090a0f;
-      color: #fff;
-      margin: 0 auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      padding: 30px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    .table-tent.olive { border-color: #879b76; background: #171d15; }
-    .tent-title { font-family: 'Cinzel', serif; font-size: 18px; margin-bottom: 8px; color: #d4af37; }
-    .table-tent.olive .tent-title { color: #a3b892; }
-    .tent-subtitle { font-size: 12px; color: #ccc; margin-bottom: 20px; }
-    .qr-box { display: flex; justify-content: center; margin-bottom: 15px; }
-    .qr-box img { border-radius: 8px; }
-    .print-btn { background: #22c55e; color: #fff; margin-top: 15px; width: auto; padding: 10px 24px; display: inline-block; }
+    .card {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 32px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 24px;
+      text-align: center;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    p.sub {
+      text-align: center;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 12px 16px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: #38bdf8;
+    }
+    .color-pickers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .color-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0f172a;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    input[type="color"] {
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+    }
+    .btn-generate {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      border: none;
+      border-radius: 14px;
+      color: #000;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.2s;
+    }
+    .btn-generate:hover { opacity: 0.9; }
 
-    @media print {
-      body * { visibility: hidden; }
-      .print-area, .print-area * { visibility: visible; }
-      .print-area { position: absolute; left: 50%; top: 20%; transform: translate(-50%, -20%); display: block !important; }
-      .print-btn { display: none; }
+    .result-section {
+      display: none;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #334155;
+      text-align: center;
+    }
+    .qr-wrapper {
+      background: #fff;
+      padding: 16px;
+      border-radius: 16px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    .link-box {
+      background: #0f172a;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      font-size: 12px;
+      word-break: break-all;
+      color: #38bdf8;
+      margin-bottom: 12px;
+    }
+    .action-links {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .btn-action.primary {
+      background: #38bdf8;
+      color: #000;
     }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>Event Card Generator</h2>
-    <div class="form-group">
-      <label>Event Type</label>
-      <select id="eventType">
-        <option value="wedding">Wedding (فرح)</option>
-        <option value="corporate">Corporate / Company Event (شركة)</option>
-        <option value="birthday">Birthday (عيد ميلاد)</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Names / Event Title</label>
-      <input type="text" id="eventTitle" placeholder="e.g. Omar & Nour" value="Omar & Nour">
-    </div>
-    <div class="form-group">
-      <label>Theme Color</label>
-      <select id="eventTheme">
-        <option value="olive">Olive & White</option>
-        <option value="gold">Luxury Gold</option>
-      </select>
-    </div>
-    <button onclick="generateCard()">Generate Table QR Card ✨</button>
-  </div>
+    <h1>Event Generator</h1>
+    <p class="sub">Create custom QR codes & live album links instantly</p>
 
-  <div class="print-area" id="printArea">
-    <div class="table-tent" id="tableTent">
-      <h3 class="tent-title" id="cardHeading">Celebrating the Wedding of</h3>
-      <h2 class="tent-title" id="cardEventName" style="font-size: 22px; margin-bottom: 12px;">Omar & Nour</h2>
-      <p class="tent-subtitle">Scan to share your photos & videos live with us 📸</p>
-      <div class="qr-box" id="qrcode"></div>
+    <div class="form-group">
+      <label>Wedding / Event Name</label>
+      <input type="text" id="evName" placeholder="e.g. Omar & Nour" value="Omar & Nour" />
     </div>
-    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+
+    <div class="form-group">
+      <label>Preset Aesthetic Themes</label>
+      <select id="presetSelect" onchange="applyPreset()">
+        <option value="custom">Custom Colors (Pick Below)</option>
+        <option value="olive_gold" selected>🌿 Olive Green & Gold (White Theme)</option>
+        <option value="emerald_luxury">💎 Emerald Green & Gold (Dark Luxury)</option>
+        <option value="classic_gold">✨ Pure White & Royal Gold</option>
+        <option value="midnight_blue">🌌 Midnight Navy & Silver Blue</option>
+        <option value="rose_elegance">🌸 Rose Gold & Velvet Noir</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Custom Color Palette</label>
+      <div class="color-pickers">
+        <div class="color-field">
+          <input type="color" id="primaryCol" value="#4a6342" />
+          <span style="font-size: 12px;">Primary / Accent</span>
+        </div>
+        <div class="color-field">
+          <input type="color" id="bgCol" value="#f8faf7" />
+          <span style="font-size: 12px;">Page Background</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-generate" onclick="generateQR()">⚡ Generate Live Album & QR</button>
+
+    <div class="result-section" id="resultBox">
+      <div class="qr-wrapper" id="qrcode"></div>
+      <div class="link-box" id="albumLink"></div>
+      <div class="action-links">
+        <a href="#" id="openBtn" target="_blank" class="btn-action primary">🚀 Open Album</a>
+        <button onclick="copyLink()" class="btn-action">📋 Copy Link</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    function generateCard() {
-      const type = document.getElementById('eventType').value;
-      const title = document.getElementById('eventTitle').value.trim();
-      const theme = document.getElementById('eventTheme').value;
-      
-      const formattedSlug = encodeURIComponent(title.replace(/\s+/g, '_'));
-      
-      // ضع هنا رابط حسابك الأساسي على GitHub Pages
-      // لو اسم حسابك مختلف عن marwan، عدل اسم اليوزر فقط
-const githubUrl = `https://marwanselim360-web.github.io/events-app/index.html?event=${formattedSlug}&theme=${theme}`;      
-      // تحديث مظهر الكارت
-      const cardHeading = document.getElementById('cardHeading');
-      if (type === 'wedding') cardHeading.innerText = "Celebrating the Wedding of";
-      else if (type === 'corporate') cardHeading.innerText = "Welcome to";
-      else cardHeading.innerText = "Celebrating";
-      
-      document.getElementById('cardEventName').innerText = title;
-      
-      const tableTent = document.getElementById('tableTent');
-      if (theme === 'olive') {
-        tableTent.className = "table-tent olive";
-      } else {
-        tableTent.className = "table-tent";
-      }
+    const presets = {
+      olive_gold: { primary: "#4a6342", bg: "#f8faf7" },
+      emerald_luxury: { primary: "#10b981", bg: "#06281e" },
+      classic_gold: { primary: "#c2a649", bg: "#ffffff" },
+      midnight_blue: { primary: "#38bdf8", bg: "#0b1329" },
+      rose_elegance: { primary: "#e07a5f", bg: "#1f1d24" }
+    };
 
-      // توليد الـ QR برابط إنترنت حقيقي
+    function applyPreset() {
+      const val = document.getElementById('presetSelect').value;
+      if (val !== 'custom' && presets[val]) {
+        document.getElementById('primaryCol').value = presets[val].primary;
+        document.getElementById('bgCol').value = presets[val].bg;
+      }
+    }
+
+    function generateQR() {
+      const name = document.getElementById('evName').value.trim() || 'Wedding';
+      const pCol = document.getElementById('primaryCol').value.replace('#', '');
+      const bCol = document.getElementById('bgCol').value.replace('#', '');
+      const rawTag = name.replace(/\s+/g, '_');
+
+      // رابط الـ GitHub Pages الأساسي بتاعك
+      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+      const fullUrl = `${baseUrl}/index.html?event=${encodeURIComponent(rawTag)}&p=${pCol}&bg=${bCol}`;
+
+      document.getElementById('albumLink').innerText = fullUrl;
+      document.getElementById('openBtn').href = fullUrl;
+
       const qrContainer = document.getElementById('qrcode');
       qrContainer.innerHTML = '';
       new QRCode(qrContainer, {
-        text: githubUrl,
-        width: 200,
-        height: 200,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.M
+        text: fullUrl,
+        width: 180,
+        height: 180,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
       });
 
-      document.getElementById('printArea').style.display = 'block';
+      document.getElementById('resultBox').style.display = 'block';
+    }
+
+    function copyLink() {
+      const text = document.getElementById('albumLink').innerText;
+      navigator.clipboard.writeText(text);
+      alert('Link copied to clipboard!');
     }
   </script>
 </body>

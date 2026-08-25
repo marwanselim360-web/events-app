@@ -4,50 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Live Event Album</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #F8FAF7;
-      --card-bg: #FFFFFF;
-      --text-main: #233324;
-      --text-muted: #5D705E;
-      --olive-primary: #4A6342;
-      --olive-dark: #374B31;
-      --olive-light: #EDF3EC;
-      --card-border: #D5E2D3;
-      --accent-gold: #C2A649;
+      --primary: #4a6342;
+      --bg: #f8faf7;
+      --text: #1e293b;
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --muted: #64748b;
     }
 
-    body.theme-gold {
-      --bg-color: #FAF8F5;
-      --card-bg: #FFFFFF;
-      --text-main: #2A241E;
-      --text-muted: #7A6F64;
-      --olive-primary: #C5A059;
-      --olive-dark: #9E7D3B;
-      --olive-light: #F7F2E7;
-      --card-border: #E8DEC8;
-    }
-
-    body.theme-navy {
-      --bg-color: #0F172A;
-      --card-bg: #1E293B;
-      --text-main: #F8FAFC;
-      --text-muted: #94A3B8;
-      --olive-primary: #38BDF8;
-      --olive-dark: #0284C7;
-      --olive-light: #1E293B;
-      --card-border: #334155;
+    body.dark-mode {
+      --text: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --muted: #94a3b8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: var(--bg-color);
-      color: var(--text-main);
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
-      padding: 24px 16px 40px;
+      padding: 20px 14px 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -62,17 +44,32 @@
       align-items: center;
     }
 
-    .header { text-align: center; margin-bottom: 24px; }
-    .sparkle { color: var(--accent-gold); font-size: 24px; margin-bottom: 6px; }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .sparkle {
+      color: var(--primary);
+      font-size: 20px;
+      letter-spacing: 4px;
+      margin-bottom: 4px;
+    }
+
     .event-title {
       font-family: 'Cinzel', serif;
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: var(--olive-primary);
+      color: var(--primary);
     }
-    .event-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
     .upload-card {
       width: 100%;
@@ -80,16 +77,16 @@
       border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 16px;
-      box-shadow: 0 8px 20px rgba(74, 99, 66, 0.08);
-      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      margin-bottom: 18px;
     }
 
     .upload-btn {
       width: 100%;
-      background: var(--olive-primary);
-      color: #FFFFFF;
+      background: var(--primary);
+      color: #fff;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 700;
       padding: 14px;
       border-radius: 12px;
       border: none;
@@ -98,12 +95,15 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
+
+    .upload-btn:active { transform: scale(0.98); }
 
     .tabs {
       display: flex;
       width: 100%;
-      background: var(--olive-light);
+      background: var(--card-bg);
       border-radius: 12px;
       padding: 4px;
       margin-bottom: 16px;
@@ -118,45 +118,98 @@
       background: transparent;
       font-size: 14px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--muted);
       cursor: pointer;
     }
 
     .tab-btn.active {
-      background: var(--card-bg);
-      color: var(--olive-primary);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      background: var(--primary);
+      color: #fff;
     }
 
     .gallery-grid {
       width: 100%;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 10px;
     }
 
     .gallery-item {
       position: relative;
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
       aspect-ratio: 1;
-      background: var(--olive-light);
+      background: rgba(0,0,0,0.05);
       border: 1px solid var(--card-border);
+      cursor: pointer;
     }
 
     .gallery-item img, .gallery-item video {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
 
     .empty-state {
       grid-column: span 2;
       text-align: center;
       padding: 40px 16px;
-      color: var(--text-muted);
+      color: var(--muted);
       font-size: 14px;
     }
+
+    /* Modal */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.94);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .lightbox.show { display: flex; }
+
+    .lightbox-body {
+      max-width: 100%;
+      max-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-body img, .lightbox-body video {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+
+    .lightbox-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .btn-ctrl {
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-dl { background: var(--primary); color: #fff; }
+    .btn-close { background: rgba(255,255,255,0.2); color: #fff; }
 
     #fileInput { display: none; }
   </style>
@@ -166,148 +219,187 @@
   <div class="container">
     <div class="header">
       <div class="sparkle">✦ ✧ ✦</div>
-      <h1 class="event-title" id="eventTitle">Wedding Memories</h1>
-      <p class="event-subtitle">Share your live photos & videos with the couple</p>
+      <h1 class="event-title" id="eventTitle">Live Moments</h1>
+      <p class="subtitle">Share your live memories with everyone</p>
     </div>
 
     <div class="upload-card">
       <button class="upload-btn" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
-        <span>📸 / 🎥 Add Memories</span>
+        <span>📸 Add Photo / Video</span>
       </button>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple />
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" id="photosTab" onclick="switchTab('photos')">📷 Photos (<span id="photoCount">0</span>)</button>
-      <button class="tab-btn" id="videosTab" onclick="switchTab('videos')">🎥 Videos (<span id="videoCount">0</span>)</button>
+      <button class="tab-btn active" id="tabPhoto" onclick="switchTab('photo')">📷 Photos (<span id="photoCount">0</span>)</button>
+      <button class="tab-btn" id="tabVideo" onclick="switchTab('video')">🎥 Videos (<span id="videoCount">0</span>)</button>
     </div>
 
     <div class="gallery-grid" id="galleryGrid">
-      <div class="empty-state" id="emptyState">No memories yet. Be the first to share!</div>
+      <div class="empty-state">Loading live album...</div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="modalBox" onclick="if(event.target === this) closeModal()">
+    <div class="lightbox-body" id="modalTarget"></div>
+    <div class="lightbox-actions">
+      <a href="#" id="modalDl" download class="btn-ctrl btn-dl">⬇ Download</a>
+      <button class="btn-ctrl btn-close" onclick="closeModal()">✕ Close</button>
     </div>
   </div>
 
   <script>
-    const WORKER_URL = "https://nameless-king-3d15.marwanselim360.workers.dev";
-
+    const API_BASE = "https://nameless-king-3d15.marwanselim360.workers.dev";
+    
+    // Dynamic URL Customizer (No code changes needed!)
     const urlParams = new URLSearchParams(window.location.search);
-    const rawEvent = urlParams.get('event') || 'Omar_Nour';
-    const eventName = decodeURIComponent(rawEvent.replace(/_/g, ' '));
-    const eventTag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const themeName = urlParams.get('theme') || 'olive';
+    const rawName = urlParams.get('event') || 'Omar_Nour';
+    const primaryColor = '#' + (urlParams.get('p') || '4a6342');
+    const bgColor = '#' + (urlParams.get('bg') || 'f8faf7');
+
+    const eventName = decodeURIComponent(rawName.replace(/_/g, ' '));
+    const eventTag = '#event_' + rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
 
     document.getElementById('eventTitle').innerText = eventName;
-    if (themeName !== 'olive') {
-      document.body.classList.add('theme-' + themeName);
+    document.documentElement.style.setProperty('--primary', primaryColor);
+    document.documentElement.style.setProperty('--bg', bgColor);
+
+    // Auto detect dark/light background
+    function isDark(hex) {
+      const c = hex.substring(1);
+      const rgb = parseInt(c, 16);
+      const r = (rgb >> 16) & 0xff;
+      const g = (rgb >> 8) & 0xff;
+      const b = (rgb >> 0) & 0xff;
+      const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      return luma < 128;
+    }
+    if (isDark(bgColor)) {
+      document.body.classList.add('dark-mode');
     }
 
+    let activeTab = 'photo';
     let photos = [];
     let videos = [];
-    let currentTab = 'photos';
-    const fileInput = document.getElementById('fileInput');
 
-    function switchTab(tab) {
-      currentTab = tab;
-      document.getElementById('photosTab').classList.toggle('active', tab === 'photos');
-      document.getElementById('videosTab').classList.toggle('active', tab === 'videos');
-      renderGallery();
+    function switchTab(t) {
+      activeTab = t;
+      document.getElementById('tabPhoto').classList.toggle('active', t === 'photo');
+      document.getElementById('tabVideo').classList.toggle('active', t === 'video');
+      render();
     }
 
-    function renderGallery() {
+    function openModal(url, type) {
+      const box = document.getElementById('modalBox');
+      const target = document.getElementById('modalTarget');
+      const dl = document.getElementById('modalDl');
+      dl.href = url;
+      dl.setAttribute('download', type === 'video' ? 'video.mp4' : 'photo.jpg');
+
+      if (type === 'video') {
+        target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
+      } else {
+        target.innerHTML = `<img src="${url}" alt="Memory" />`;
+      }
+      box.classList.add('show');
+    }
+
+    function closeModal() {
+      const box = document.getElementById('modalBox');
+      document.getElementById('modalTarget').innerHTML = '';
+      box.classList.remove('show');
+    }
+
+    function render() {
       const grid = document.getElementById('galleryGrid');
       grid.innerHTML = '';
-      const items = currentTab === 'photos' ? photos : videos;
+      const list = activeTab === 'photo' ? photos : videos;
 
-      if (items.length === 0) {
-        grid.innerHTML = `<div class="empty-state">No ${currentTab} uploaded yet for this event.<br>Be the first to share!</div>`;
+      if (!list.length) {
+        grid.innerHTML = `<div class="empty-state">No ${activeTab}s uploaded yet.<br>Be the first to capture the moment!</div>`;
         return;
       }
 
-      items.forEach(item => {
+      list.forEach(item => {
         const div = document.createElement('div');
         div.className = 'gallery-item';
-        if (item.type === 'photo') {
-          div.innerHTML = `<img src="${item.url}" alt="Memory" loading="lazy" />`;
+        if (item.type === 'video') {
+          div.innerHTML = `<video src="${item.url}" playsinline preload="metadata" muted></video>`;
+          div.onclick = () => openModal(item.url, 'video');
         } else {
-          div.innerHTML = `<video src="${item.url}" muted playsinline loop autoplay controls></video>`;
+          div.innerHTML = `<img src="${item.url}" loading="lazy" alt="Photo" />`;
+          div.onclick = () => openModal(item.url, 'photo');
         }
         grid.appendChild(div);
       });
     }
 
-    async function fetchSharedLiveGallery() {
+    async function syncData() {
       try {
-        const res = await fetch(`${WORKER_URL}?tag=${encodeURIComponent(eventTag)}`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.result) return;
-
-        const newPhotos = [];
-        const newVideos = [];
-
-        data.result.forEach(item => {
-          const mediaObj = {
-            url: `${WORKER_URL}?file_id=${item.file_id}`,
-            type: item.type
-          };
-          if (item.type === 'video') newVideos.push(mediaObj);
-          else newPhotos.push(mediaObj);
-        });
-
-        photos = newPhotos;
-        videos = newVideos;
-
-        document.getElementById('photoCount').innerText = photos.length;
-        document.getElementById('videoCount').innerText = videos.length;
-        renderGallery();
-      } catch (err) {}
+        const res = await fetch(`${API_BASE}?tag=${encodeURIComponent(eventTag)}`);
+        const json = await res.json();
+        if (json.ok && json.result) {
+          const p = [];
+          const v = [];
+          json.result.forEach(item => {
+            const entry = {
+              url: `${API_BASE}?file_id=${item.file_id}`,
+              type: item.type
+            };
+            if (item.type === 'video') v.push(entry);
+            else p.push(entry);
+          });
+          photos = p;
+          videos = v;
+          document.getElementById('photoCount').innerText = p.length;
+          document.getElementById('videoCount').innerText = v.length;
+          render();
+        }
+      } catch (e) {}
     }
 
-    fileInput.addEventListener('change', async (e) => {
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      const uploadBtn = document.getElementById('uploadBtn');
-      uploadBtn.innerHTML = `<span>⏳ Uploading...</span>`;
-      uploadBtn.disabled = true;
+      const btn = document.getElementById('uploadBtn');
+      btn.innerHTML = `<span>⏳ Uploading...</span>`;
+      btn.disabled = true;
 
       for (const file of files) {
         const isVideo = file.type.startsWith('video');
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('tag', eventTag);
-        formData.append('is_video', isVideo ? 'true' : 'false');
+        const form = new FormData();
+        form.append('file', file);
+        form.append('tag', eventTag);
+        form.append('is_video', isVideo ? 'true' : 'false');
 
         try {
-          const res = await fetch(WORKER_URL, {
-            method: 'POST',
-            body: formData
-          });
+          const res = await fetch(API_BASE, { method: 'POST', body: form });
           const data = await res.json();
           if (data.ok && data.item) {
-            const mediaObj = {
-              url: `${WORKER_URL}?file_id=${data.item.file_id}`,
+            const entry = {
+              url: `${API_BASE}?file_id=${data.item.file_id}`,
               type: data.item.type
             };
             if (isVideo) {
-              videos.unshift(mediaObj);
-              switchTab('videos');
+              videos.unshift(entry);
+              switchTab('video');
             } else {
-              photos.unshift(mediaObj);
-              switchTab('photos');
+              photos.unshift(entry);
+              switchTab('photo');
             }
-            renderGallery();
           }
         } catch (err) {}
       }
 
-      uploadBtn.innerHTML = `<span>📸 / 🎥 Add Memories</span>`;
-      uploadBtn.disabled = false;
-      fileInput.value = '';
+      btn.innerHTML = `<span>📸 Add Photo / Video</span>`;
+      btn.disabled = false;
+      e.target.value = '';
+      syncData();
     });
 
-    fetchSharedLiveGallery();
-    setInterval(fetchSharedLiveGallery, 5000);
+    syncData();
+    setInterval(syncData, 3500);
   </script>
 </body>
 </html>
