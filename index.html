@@ -265,21 +265,32 @@
       fileInput.value = '';
     });
 
- async function uploadToTelegram(file) {
+    async function uploadToTelegram(file) {
       const isVideo = file.type.startsWith('video');
-      const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
       const formData = new FormData();
       formData.append('chat_id', CHAT_ID);
-      formData.append(isVideo ? 'video' : 'photo', file);
-      formData.append('caption', `✨ Event: ${eventName}\n📅 Date: ${new Date().toLocaleDateString('ar-EG')}`);
+      formData.append('caption', `✨ Event: ${eventName}\n📅 ${new Date().toLocaleTimeString('ar-EG')}`);
+
+      if (isVideo) {
+        formData.append('video', file, 'video.mp4');
+      } else {
+        formData.append('photo', file, 'photo.jpg');
+      }
+
+      const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
 
       try {
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${endpoint}`, {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${endpoint}`, {
           method: 'POST',
           body: formData
         });
+        const resData = await response.json();
+        
+        if (!resData.ok) {
+          alert('Telegram Error: ' + resData.description);
+        }
       } catch (err) {
-        console.error("Upload Error:", err);
+        alert('Network Error: ' + err.message);
       }
     }
   </script>
