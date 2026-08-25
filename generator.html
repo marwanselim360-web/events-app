@@ -217,6 +217,7 @@
     function syncHex(colId, hexId) {
       document.getElementById(hexId).value = document.getElementById(colId).value;
     }
+
     function syncColor(hexId, colId) {
       const val = document.getElementById(hexId).value;
       if (val.startsWith('#') && (val.length === 7 || val.length === 4)) {
@@ -224,21 +225,28 @@
       }
     }
 
+    // دالة توليد كود فريد مستحيل يتكرر
+    function getUniqueCode() {
+      return Math.random().toString(36).substring(2, 7);
+    }
+
     function generateSystem() {
       const type = document.getElementById('evType').value;
       const title = document.getElementById('evTitle').value.trim() || 'Live Event';
-      const sub = document.getElementById('evSub').value.trim() || 'Live Shared Album';
+      const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
       
       let pCol = document.getElementById('primaryHex').value.replace('#', '').trim();
       let bCol = document.getElementById('bgHex').value.replace('#', '').trim();
       if (!pCol) pCol = '4a6342';
       if (!bCol) bCol = 'f8faf7';
 
-      const cleanTag = (title + '_' + type).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      // دمج الاسم والنوع مع الكود العشوائي الفريد
+      const cleanTitle = title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      const uniqueTag = `${cleanTitle}_${getUniqueCode()}`;
 
-      // الرابط الرسمي الدائم على GitHub Pages ليعمل على أي موبايل
+      // الرابط الرسمي الدائم على GitHub Pages
       const hostUrl = "https://marwanselim360-web.github.io/events-app";
-      const fullUrl = `${hostUrl}/index.html?event=${cleanTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
+      const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
 
       document.getElementById('generatedLink').innerText = fullUrl;
       document.getElementById('openLinkBtn').href = fullUrl;
@@ -255,6 +263,12 @@
       });
 
       document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function copyGeneratedLink() {
+      const text = document.getElementById('generatedLink').innerText;
+      navigator.clipboard.writeText(text);
+      alert('Link copied to clipboard!');
     }
   </script>
 </body>
