@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Live Event Gallery</title>
+  <title>Wedding Live Album</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -13,6 +13,7 @@
       --card-bg: #ffffff;
       --card-border: rgba(0, 0, 0, 0.08);
       --muted: #64748b;
+      --gold: #c5a059;
     }
 
     body.dark-theme {
@@ -29,7 +30,7 @@
       color: var(--text);
       font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
-      padding: 20px 14px 40px;
+      padding: 24px 14px 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -46,20 +47,19 @@
 
     .header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
-    .badge {
+    .wedding-icon {
+      font-size: 32px;
+      margin-bottom: 4px;
       display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: var(--primary);
-      color: #fff;
-      margin-bottom: 8px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
     }
 
     .title {
@@ -67,14 +67,17 @@
       font-size: 26px;
       font-weight: 700;
       color: var(--primary);
-      letter-spacing: 1px;
+      letter-spacing: 2px;
       line-height: 1.2;
+      text-transform: uppercase;
+      margin-top: 4px;
     }
 
     .subtitle {
       font-size: 13px;
       color: var(--muted);
       margin-top: 6px;
+      letter-spacing: 0.5px;
     }
 
     .upload-container {
@@ -101,6 +104,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
 
     .btn-upload:active { transform: scale(0.98); }
@@ -147,6 +151,9 @@
       background: rgba(0,0,0,0.05);
       border: 1px solid var(--card-border);
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .media-card img, .media-card video {
@@ -154,6 +161,21 @@
       height: 100%;
       object-fit: cover;
       display: block;
+    }
+
+    .play-badge {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      pointer-events: none;
+      border: 1px solid rgba(255,255,255,0.4);
     }
 
     .empty {
@@ -223,9 +245,9 @@
 
   <div class="wrapper">
     <div class="header">
-      <div class="badge" id="eventBadge">Event</div>
-      <h1 class="title" id="eventTitle">Live Moments</h1>
-      <p class="subtitle" id="eventSub">Capture and share live memories</p>
+      <div class="wedding-icon" id="eventIcon">💍</div>
+      <h1 class="title" id="eventTitle">Wedding Moments</h1>
+      <p class="subtitle" id="eventSub">Share your live memories with the couple</p>
     </div>
 
     <div class="upload-container">
@@ -241,7 +263,7 @@
     </div>
 
     <div class="gallery" id="mediaGrid">
-      <div class="empty">Loading live stream...</div>
+      <div class="empty">Loading memories...</div>
     </div>
   </div>
 
@@ -257,18 +279,32 @@
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
     const q = new URLSearchParams(window.location.search);
 
-    const tag = '#event_' + (q.get('event') || 'general').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const title = q.get('title') || 'Live Event';
-    const type = q.get('type') || 'Celebration';
-    const sub = q.get('sub') || 'Live shared album';
+    const rawEvent = q.get('event') || 'wedding';
+    const tag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const title = q.get('title') || decodeURIComponent(rawEvent.replace(/_/g, ' '));
+    const type = q.get('type') || 'Wedding';
+    const sub = q.get('sub') || 'Share your live memories with the couple';
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
     document.getElementById('eventTitle').innerText = decodeURIComponent(title);
-    document.getElementById('eventBadge').innerText = decodeURIComponent(type);
     document.getElementById('eventSub').innerText = decodeURIComponent(sub);
     document.documentElement.style.setProperty('--primary', pCol);
     document.documentElement.style.setProperty('--bg', bCol);
+
+    const icons = {
+      'Wedding': '💍',
+      'Engagement': '💍',
+      'Birthday': '🎂',
+      'Real Estate Launch': '🏢',
+      'Corporate Event': '💼',
+      'Concert': '🎵',
+      'Graduation': '🎓',
+      'VIP Gathering': '⭐'
+    };
+    if (icons[type]) {
+      document.getElementById('eventIcon').innerText = icons[type];
+    }
 
     function isDark(hex) {
       const c = hex.replace('#', '');
@@ -325,7 +361,10 @@
         const d = document.createElement('div');
         d.className = 'media-card';
         if (item.type === 'video') {
-          d.innerHTML = `<video src="${item.url}" playsinline preload="metadata" muted></video>`;
+          d.innerHTML = `
+            <video src="${item.url}#t=0.1" preload="metadata" playsinline muted></video>
+            <div class="play-badge">▶</div>
+          `;
           d.onclick = () => openViewer(item.url, true);
         } else {
           d.innerHTML = `<img src="${item.url}" loading="lazy" alt="Media" />`;
