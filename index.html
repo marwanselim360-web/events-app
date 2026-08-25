@@ -13,14 +13,14 @@
       --card-bg: #ffffff;
       --card-border: rgba(0, 0, 0, 0.08);
       --muted: #64748b;
-      --gold: #c5a059;
+      --gold: #d4af37;
     }
 
     body.dark-theme {
-      --text: #f8fafc;
-      --card-bg: rgba(255, 255, 255, 0.05);
-      --card-border: rgba(255, 255, 255, 0.1);
-      --muted: #94a3b8;
+      --text: #ffffff;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --muted: #cbd5e1;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,33 +51,31 @@
     }
 
     .wedding-icon {
-      font-size: 32px;
-      margin-bottom: 4px;
+      font-size: 34px;
+      margin-bottom: 6px;
       display: inline-block;
-      animation: pulse 2s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
+      color: var(--gold);
     }
 
     .title {
       font-family: 'Cinzel', serif;
       font-size: 26px;
-      font-weight: 700;
-      color: var(--primary);
+      font-weight: 800;
+      color: var(--text);
       letter-spacing: 2px;
       line-height: 1.2;
       text-transform: uppercase;
       margin-top: 4px;
     }
 
+    body.dark-theme .title {
+      color: #ffffff;
+    }
+
     .subtitle {
       font-size: 13px;
       color: var(--muted);
       margin-top: 6px;
-      letter-spacing: 0.5px;
     }
 
     .upload-container {
@@ -86,14 +84,14 @@
       border: 1px solid var(--card-border);
       border-radius: 18px;
       padding: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
       margin-bottom: 18px;
     }
 
     .btn-upload {
       width: 100%;
       background: var(--primary);
-      color: #fff;
+      color: #ffffff;
       font-size: 15px;
       font-weight: 700;
       padding: 14px;
@@ -104,7 +102,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .btn-upload:active { transform: scale(0.98); }
@@ -133,7 +131,7 @@
 
     .tab.active {
       background: var(--primary);
-      color: #fff;
+      color: #ffffff;
     }
 
     .gallery {
@@ -148,7 +146,7 @@
       border-radius: 14px;
       overflow: hidden;
       aspect-ratio: 1;
-      background: rgba(0,0,0,0.05);
+      background: rgba(125, 125, 125, 0.15);
       border: 1px solid var(--card-border);
       cursor: pointer;
       display: flex;
@@ -156,26 +154,36 @@
       justify-content: center;
     }
 
-    .media-card img, .media-card video {
+    .media-card img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .play-badge {
-      position: absolute;
-      background: rgba(0, 0, 0, 0.65);
+    .video-thumb {
+      width: 100%;
+      height: 100%;
+      background: #1e293b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       color: #fff;
-      width: 40px;
-      height: 40px;
+    }
+
+    .play-btn-circle {
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
+      background: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      pointer-events: none;
-      border: 1px solid rgba(255,255,255,0.4);
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
     .empty {
@@ -186,12 +194,12 @@
       font-size: 14px;
     }
 
-    /* Modal */
+    /* Modal Lightbox */
     .lightbox {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.95);
+      background: rgba(0, 0, 0, 0.96);
       z-index: 9999;
       flex-direction: column;
       align-items: center;
@@ -203,15 +211,16 @@
 
     .lightbox-content {
       max-width: 100%;
-      max-height: 80vh;
+      max-height: 75vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 100%;
     }
 
     .lightbox-content img, .lightbox-content video {
       max-width: 100%;
-      max-height: 80vh;
+      max-height: 75vh;
       border-radius: 12px;
       object-fit: contain;
     }
@@ -219,7 +228,7 @@
     .lightbox-controls {
       display: flex;
       gap: 12px;
-      margin-top: 16px;
+      margin-top: 20px;
     }
 
     .btn-ctrl {
@@ -283,7 +292,7 @@
     const tag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
     const title = q.get('title') || decodeURIComponent(rawEvent.replace(/_/g, ' '));
     const type = q.get('type') || 'Wedding';
-    const sub = q.get('sub') || 'Share your live memories with the couple';
+    const sub = q.get('sub') || 'Share your live moments with us';
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
@@ -319,6 +328,7 @@
     let current = 'p';
     let photoData = [];
     let videoData = [];
+    let activeBlobUrl = null;
 
     function switchMedia(t) {
       current = t;
@@ -327,23 +337,44 @@
       draw();
     }
 
-    function openViewer(url, isVideo) {
+    async function openViewer(url, isVideo) {
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
       const dl = document.getElementById('viewerDl');
+
       dl.href = url;
-      dl.setAttribute('download', isVideo ? 'video.mp4' : 'photo.jpg');
+      dl.setAttribute('download', isVideo ? 'wedding_video.mp4' : 'wedding_photo.jpg');
 
       if (isVideo) {
-        target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
+        target.innerHTML = `<div style="color:#fff; font-size:14px;">⏳ Loading video...</div>`;
+        box.classList.add('active');
+
+        try {
+          // جلب الفيديو كـ Blob محلي لتشغيله في iOS فوراً بدون أخطاء السيرفرات
+          const res = await fetch(url);
+          const blob = await res.blob();
+          if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
+          activeBlobUrl = URL.createObjectURL(blob);
+
+          target.innerHTML = `
+            <video src="${activeBlobUrl}" controls autoplay playsinline webkit-playsinline></video>
+          `;
+        } catch (e) {
+          target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
+        }
       } else {
         target.innerHTML = `<img src="${url}" alt="Memory" />`;
+        box.classList.add('active');
       }
-      box.classList.add('active');
     }
 
     function closeViewer() {
-      document.getElementById('viewerTarget').innerHTML = '';
+      const target = document.getElementById('viewerTarget');
+      target.innerHTML = '';
+      if (activeBlobUrl) {
+        URL.revokeObjectURL(activeBlobUrl);
+        activeBlobUrl = null;
+      }
       document.getElementById('viewer').classList.remove('active');
     }
 
@@ -362,12 +393,14 @@
         d.className = 'media-card';
         if (item.type === 'video') {
           d.innerHTML = `
-            <video src="${item.url}#t=0.1" preload="metadata" playsinline muted></video>
-            <div class="play-badge">▶</div>
+            <div class="video-thumb">
+              <div class="play-btn-circle">▶</div>
+              <span style="font-size: 11px; font-weight:600;">Play Video</span>
+            </div>
           `;
           d.onclick = () => openViewer(item.url, true);
         } else {
-          d.innerHTML = `<img src="${item.url}" loading="lazy" alt="Media" />`;
+          d.innerHTML = `<img src="${item.url}" loading="lazy" alt="Photo" />`;
           d.onclick = () => openViewer(item.url, false);
         }
         grid.appendChild(d);
