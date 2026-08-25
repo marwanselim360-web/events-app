@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Wedding Live Album</title>
+  <title>Live Event Gallery</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -45,38 +45,20 @@
       align-items: center;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 22px;
-    }
-
-    .wedding-icon {
-      font-size: 34px;
-      margin-bottom: 6px;
-      display: inline-block;
-      color: var(--gold);
-    }
-
+    .header { text-align: center; margin-bottom: 22px; }
+    .wedding-icon { font-size: 34px; margin-bottom: 6px; display: inline-block; color: var(--gold); }
     .title {
       font-family: 'Cinzel', serif;
       font-size: 26px;
       font-weight: 800;
-      color: var(--text);
+      color: var(--primary);
       letter-spacing: 2px;
       line-height: 1.2;
       text-transform: uppercase;
       margin-top: 4px;
     }
-
-    body.dark-theme .title {
-      color: #ffffff;
-    }
-
-    .subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
+    body.dark-theme .title { color: #ffffff; }
+    .subtitle { font-size: 13px; color: var(--muted); margin-top: 6px; }
 
     .upload-container {
       width: 100%;
@@ -104,7 +86,6 @@
       gap: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-
     .btn-upload:active { transform: scale(0.98); }
 
     .tabs {
@@ -128,11 +109,7 @@
       color: var(--muted);
       cursor: pointer;
     }
-
-    .tab.active {
-      background: var(--primary);
-      color: #ffffff;
-    }
+    .tab.active { background: var(--primary); color: #ffffff; }
 
     .gallery {
       width: 100%;
@@ -146,7 +123,7 @@
       border-radius: 14px;
       overflow: hidden;
       aspect-ratio: 1;
-      background: rgba(125, 125, 125, 0.15);
+      background: #1e293b;
       border: 1px solid var(--card-border);
       cursor: pointer;
       display: flex;
@@ -154,36 +131,31 @@
       justify-content: center;
     }
 
-    .media-card img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    .media-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .video-thumb {
+    .video-card-inner {
       width: 100%;
       height: 100%;
-      background: #1e293b;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      color: #fff;
+      color: #ffffff;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
     }
 
-    .play-btn-circle {
-      width: 48px;
-      height: 48px;
+    .play-circle {
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-size: 18px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .empty {
@@ -194,7 +166,6 @@
       font-size: 14px;
     }
 
-    /* Modal Lightbox */
     .lightbox {
       display: none;
       position: fixed;
@@ -206,7 +177,6 @@
       justify-content: center;
       padding: 16px;
     }
-
     .lightbox.active { display: flex; }
 
     .lightbox-content {
@@ -255,8 +225,8 @@
   <div class="wrapper">
     <div class="header">
       <div class="wedding-icon" id="eventIcon">💍</div>
-      <h1 class="title" id="eventTitle">Wedding Moments</h1>
-      <p class="subtitle" id="eventSub">Share your live memories with the couple</p>
+      <h1 class="title" id="eventTitle">Live Moments</h1>
+      <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
     <div class="upload-container">
@@ -279,7 +249,7 @@
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
-      <a href="#" id="viewerDl" download class="btn-ctrl btn-save">⬇ Download</a>
+      <button class="btn-ctrl btn-save" id="btnDl">⬇ Download</button>
       <button class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
     </div>
   </div>
@@ -288,10 +258,9 @@
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
     const q = new URLSearchParams(window.location.search);
 
-    const rawEvent = q.get('event') || 'wedding';
+    const rawEvent = q.get('event') || 'event';
     const tag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
     const title = q.get('title') || decodeURIComponent(rawEvent.replace(/_/g, ' '));
-    const type = q.get('type') || 'Wedding';
     const sub = q.get('sub') || 'Share your live moments with us';
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
@@ -301,34 +270,17 @@
     document.documentElement.style.setProperty('--primary', pCol);
     document.documentElement.style.setProperty('--bg', bCol);
 
-    const icons = {
-      'Wedding': '💍',
-      'Engagement': '💍',
-      'Birthday': '🎂',
-      'Real Estate Launch': '🏢',
-      'Corporate Event': '💼',
-      'Concert': '🎵',
-      'Graduation': '🎓',
-      'VIP Gathering': '⭐'
-    };
-    if (icons[type]) {
-      document.getElementById('eventIcon').innerText = icons[type];
-    }
-
     function isDark(hex) {
       const c = hex.replace('#', '');
       const rgb = parseInt(c, 16);
-      const r = (rgb >> 16) & 0xff;
-      const g = (rgb >> 8) & 0xff;
-      const b = (rgb >> 0) & 0xff;
-      return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128;
+      return (0.2126 * ((rgb >> 16) & 0xff) + 0.7152 * ((rgb >> 8) & 0xff) + 0.0722 * (rgb & 0xff)) < 128;
     }
     if (isDark(bCol)) document.body.classList.add('dark-theme');
 
     let current = 'p';
     let photoData = [];
     let videoData = [];
-    let activeBlobUrl = null;
+    let currentUrl = '';
 
     function switchMedia(t) {
       current = t;
@@ -337,44 +289,33 @@
       draw();
     }
 
-    async function openViewer(url, isVideo) {
+    function openViewer(url, isVideo) {
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
-      const dl = document.getElementById('viewerDl');
-
-      dl.href = url;
-      dl.setAttribute('download', isVideo ? 'wedding_video.mp4' : 'wedding_photo.jpg');
+      currentUrl = url;
 
       if (isVideo) {
-        target.innerHTML = `<div style="color:#fff; font-size:14px;">⏳ Loading video...</div>`;
+        // بدون autoplay وبأمر play() المباشر لتشغيل iOS فوراً
+        target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline preload="auto"></video>`;
         box.classList.add('active');
-
-        try {
-          // جلب الفيديو كـ Blob محلي لتشغيله في iOS فوراً بدون أخطاء السيرفرات
-          const res = await fetch(url);
-          const blob = await res.blob();
-          if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
-          activeBlobUrl = URL.createObjectURL(blob);
-
-          target.innerHTML = `
-            <video src="${activeBlobUrl}" controls autoplay playsinline webkit-playsinline></video>
-          `;
-        } catch (e) {
-          target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
-        }
+        const v = document.getElementById('activeVid');
+        if (v) v.play().catch(() => {});
       } else {
         target.innerHTML = `<img src="${url}" alt="Memory" />`;
         box.classList.add('active');
       }
     }
 
+    document.getElementById('btnDl').onclick = () => {
+      if (!currentUrl) return;
+      window.location.href = `${currentUrl}&dl=1`;
+    };
+
     function closeViewer() {
       const target = document.getElementById('viewerTarget');
+      const v = document.getElementById('activeVid');
+      if (v) v.pause();
       target.innerHTML = '';
-      if (activeBlobUrl) {
-        URL.revokeObjectURL(activeBlobUrl);
-        activeBlobUrl = null;
-      }
       document.getElementById('viewer').classList.remove('active');
     }
 
@@ -393,9 +334,9 @@
         d.className = 'media-card';
         if (item.type === 'video') {
           d.innerHTML = `
-            <div class="video-thumb">
-              <div class="play-btn-circle">▶</div>
-              <span style="font-size: 11px; font-weight:600;">Play Video</span>
+            <div class="video-card-inner">
+              <div class="play-circle">▶</div>
+              <span style="font-size:12px; font-weight:700;">Watch Video</span>
             </div>
           `;
           d.onclick = () => openViewer(item.url, true);
