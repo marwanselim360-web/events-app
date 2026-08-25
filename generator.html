@@ -24,7 +24,7 @@
       border-radius: 20px;
       padding: 28px;
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
     h1 {
@@ -38,29 +38,34 @@
       text-align: center;
       font-size: 13px;
       color: #94a3b8;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+    }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
     label {
       display: block;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: #cbd5e1;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
-    input[type="text"], select {
+    input[type="text"], input[type="date"], select {
       width: 100%;
-      padding: 12px 14px;
+      padding: 11px 13px;
       background: #090d16;
       border: 1px solid #26334d;
       border-radius: 10px;
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
     }
-    input[type="text"]:focus, select:focus {
+    input[type="text"]:focus, input[type="date"]:focus, select:focus {
       border-color: #38bdf8;
     }
     .color-grid {
@@ -72,15 +77,15 @@
       background: #090d16;
       border: 1px solid #26334d;
       border-radius: 10px;
-      padding: 8px 12px;
+      padding: 6px 10px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     input[type="color"] {
       border: none;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 6px;
       cursor: pointer;
       background: transparent;
@@ -95,21 +100,21 @@
       font-size: 15px;
       font-weight: 800;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 12px;
       box-shadow: 0 6px 20px rgba(56, 189, 248, 0.3);
     }
     .btn-create:active { transform: scale(0.98); }
 
     .result {
       display: none;
-      margin-top: 24px;
+      margin-top: 22px;
       padding-top: 20px;
       border-top: 1px solid #26334d;
       text-align: center;
     }
     .qr-box {
       background: #ffffff;
-      padding: 14px;
+      padding: 16px;
       border-radius: 14px;
       display: inline-block;
       margin-bottom: 14px;
@@ -119,17 +124,18 @@
       border: 1px solid #26334d;
       padding: 10px;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 11px;
       color: #38bdf8;
       word-break: break-all;
       margin-bottom: 14px;
     }
-    .btn-row {
-      display: flex;
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
+      margin-bottom: 10px;
     }
     .action-btn {
-      flex: 1;
       padding: 12px;
       border-radius: 10px;
       font-size: 13px;
@@ -139,15 +145,18 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
       border: 1px solid #38bdf8;
     }
-    .action-btn.primary {
-      background: #38bdf8;
+    .action-btn.primary { background: #38bdf8; color: #000; }
+    .action-btn.secondary { background: rgba(56, 189, 248, 0.1); color: #38bdf8; }
+    .action-btn.download-qr {
+      grid-column: span 2;
+      background: #10b981;
+      border-color: #10b981;
       color: #000;
-    }
-    .action-btn.secondary {
-      background: rgba(56, 189, 248, 0.1);
-      color: #38bdf8;
+      font-size: 14px;
+      font-weight: 800;
     }
   </style>
 </head>
@@ -155,47 +164,60 @@
 
   <div class="panel">
     <h1>Event Studio</h1>
-    <p class="desc">Generate live dynamic event galleries & instant QR codes</p>
+    <p class="desc">Generate live event albums & download print-ready QR codes</p>
 
-    <div class="form-group">
-      <label>Event Category / Type</label>
-      <select id="evType">
-        <option value="Wedding">💍 Wedding</option>
-        <option value="Engagement">💍 Engagement</option>
-        <option value="Birthday">🎂 Birthday Party</option>
-        <option value="Real Estate Launch">🏢 Real Estate Launch</option>
-        <option value="Corporate Event">💼 Corporate / Conference</option>
-        <option value="Concert">🎵 Concert / Music Festival</option>
-        <option value="Graduation">🎓 Graduation Ceremony</option>
-        <option value="VIP Gathering">⭐ VIP Exclusive Event</option>
-      </select>
+    <div class="row-2">
+      <div class="form-group">
+        <label>Event Type</label>
+        <select id="evType">
+          <option value="Wedding">💍 Wedding</option>
+          <option value="Engagement">💍 Engagement</option>
+          <option value="Birthday">🎂 Birthday</option>
+          <option value="Real Estate">🏢 Real Estate</option>
+          <option value="Corporate">💼 Corporate</option>
+          <option value="Concert">🎵 Concert</option>
+          <option value="Graduation">🎓 Graduation</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Event Date (Optional)</label>
+        <input type="date" id="evDate" />
+      </div>
+    </div>
+
+    <div class="row-2">
+      <div class="form-group">
+        <label>Event Name / Title</label>
+        <input type="text" id="evTitle" placeholder="e.g. Omar & Nour" value="Omar & Nour" />
+      </div>
+
+      <div class="form-group">
+        <label>Venue / Hall (Optional)</label>
+        <input type="text" id="evVenue" placeholder="e.g. Four Seasons" />
+      </div>
     </div>
 
     <div class="form-group">
-      <label>Event Name / Title</label>
-      <input type="text" id="evTitle" placeholder="e.g. Omar & Nour" value="Omar & Nour" />
+      <label>Subtitle / Note</label>
+      <input type="text" id="evSub" placeholder="e.g. Share your moments" value="Share your live moments with us" />
     </div>
 
     <div class="form-group">
-      <label>Subtitle / Note (Optional)</label>
-      <input type="text" id="evSub" placeholder="e.g. Share your live memories" value="Share your live moments with us" />
-    </div>
-
-    <div class="form-group">
-      <label>Color Customization</label>
+      <label>Color Palette</label>
       <div class="color-grid">
         <div class="color-item">
           <input type="color" id="primaryColor" value="#4a6342" onchange="syncHex('primaryColor', 'primaryHex')" />
           <div>
-            <div style="font-size: 11px; color:#94a3b8;">Primary Color</div>
-            <input type="text" id="primaryHex" value="#4a6342" style="padding:4px; font-size:12px;" onchange="syncColor('primaryHex', 'primaryColor')" />
+            <div style="font-size: 10px; color:#94a3b8;">Primary Color</div>
+            <input type="text" id="primaryHex" value="#4a6342" style="padding:2px 4px; font-size:11px;" onchange="syncColor('primaryHex', 'primaryColor')" />
           </div>
         </div>
         <div class="color-item">
           <input type="color" id="bgColor" value="#f8faf7" onchange="syncHex('bgColor', 'bgHex')" />
           <div>
-            <div style="font-size: 11px; color:#94a3b8;">Background Color</div>
-            <input type="text" id="bgHex" value="#f8faf7" style="padding:4px; font-size:12px;" onchange="syncColor('bgHex', 'bgColor')" />
+            <div style="font-size: 10px; color:#94a3b8;">Background</div>
+            <input type="text" id="bgHex" value="#f8faf7" style="padding:2px 4px; font-size:11px;" onchange="syncColor('bgHex', 'bgColor')" />
           </div>
         </div>
       </div>
@@ -206,7 +228,9 @@
     <div class="result" id="resultArea">
       <div class="qr-box" id="qrcode"></div>
       <div class="link-display" id="generatedLink"></div>
-      <div class="btn-row">
+      
+      <div class="btn-grid">
+        <button class="action-btn download-qr" onclick="downloadQRCodeImage()">📥 Download QR Image (PNG)</button>
         <a href="#" id="openLinkBtn" target="_blank" class="action-btn primary">🚀 Open Album</a>
         <button onclick="copyGeneratedLink()" class="action-btn secondary">📋 Copy Link</button>
       </div>
@@ -217,7 +241,6 @@
     function syncHex(colId, hexId) {
       document.getElementById(hexId).value = document.getElementById(colId).value;
     }
-
     function syncColor(hexId, colId) {
       const val = document.getElementById(hexId).value;
       if (val.startsWith('#') && (val.length === 7 || val.length === 4)) {
@@ -225,26 +248,31 @@
       }
     }
 
-    // دالة توليد كود فريد مستحيل يتكرر
     function getUniqueCode() {
-      return Math.random().toString(36).substring(2, 7);
+      return Math.random().toString(36).substring(2, 6);
     }
+
+    let currentEventSlug = 'qr_event';
 
     function generateSystem() {
       const type = document.getElementById('evType').value;
       const title = document.getElementById('evTitle').value.trim() || 'Live Event';
+      const venue = document.getElementById('evVenue').value.trim();
+      const dateVal = document.getElementById('evDate').value;
       const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
       
-      let pCol = document.getElementById('primaryHex').value.replace('#', '').trim();
-      let bCol = document.getElementById('bgHex').value.replace('#', '').trim();
-      if (!pCol) pCol = '4a6342';
-      if (!bCol) bCol = 'f8faf7';
+      let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
+      let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-      // دمج الاسم والنوع مع الكود العشوائي الفريد
-      const cleanTitle = title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-      const uniqueTag = `${cleanTitle}_${getUniqueCode()}`;
+      // بناء معرّف واضح ومميز لكل فرح
+      let cleanTagParts = [title.replace(/\s+/g, '_')];
+      if (venue) cleanTagParts.push(venue.replace(/\s+/g, '_'));
+      if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
+      cleanTagParts.push(getUniqueCode());
 
-      // الرابط الرسمي الدائم على GitHub Pages
+      const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
+      currentEventSlug = uniqueTag;
+
       const hostUrl = "https://marwanselim360-web.github.io/events-app";
       const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
 
@@ -255,14 +283,39 @@
       qrBox.innerHTML = '';
       new QRCode(qrBox, {
         text: fullUrl,
-        width: 200,
-        height: 200,
+        width: 220,
+        height: 220,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
       });
 
       document.getElementById('resultArea').style.display = 'block';
+    }
+
+    // تنزيل صورة الـ QR بجودة عالية فوراً
+    function downloadQRCodeImage() {
+      const qrImg = document.querySelector('#qrcode img');
+      const qrCanvas = document.querySelector('#qrcode canvas');
+      let dataUrl = '';
+
+      if (qrImg && qrImg.src) {
+        dataUrl = qrImg.src;
+      } else if (qrCanvas) {
+        dataUrl = qrCanvas.toDataURL("image/png");
+      }
+
+      if (!dataUrl) {
+        alert("Please generate QR first!");
+        return;
+      }
+
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `QR_${currentEventSlug}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     function copyGeneratedLink() {
