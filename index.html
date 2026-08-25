@@ -183,13 +183,11 @@
     </div>
 
     <div class="gallery-grid" id="galleryGrid">
-      <div class="empty-state" id="emptyState">Loading shared memories...</div>
+      <div class="empty-state" id="emptyState">No memories yet. Be the first to share!</div>
     </div>
   </div>
 
   <script>
-    const BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
-    const CHAT_ID = "-1004372146565";
     const WORKER_URL = "https://nameless-king-3d15.marwanselim360.workers.dev";
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -239,41 +237,21 @@
 
     async function fetchSharedLiveGallery() {
       try {
-        const res = await fetch(WORKER_URL);
+        const res = await fetch(`${WORKER_URL}?tag=${encodeURIComponent(eventTag)}`);
         const data = await res.json();
         
-        if (!data.ok || !data.result) {
-          renderGallery();
-          return;
-        }
+        if (!data.ok || !data.result) return;
 
         const newPhotos = [];
         const newVideos = [];
 
-        data.result.forEach(update => {
-          const msg = update.message || update.channel_post;
-          if (!msg) return;
-
-          const caption = msg.caption || '';
-          if (!caption.includes(eventTag)) return;
-
-          if (msg.photo && msg.photo.length > 0) {
-            const bestPhoto = msg.photo[msg.photo.length - 1];
-            newPhotos.unshift({
-              url: `${WORKER_URL}?file_id=${bestPhoto.file_id}`,
-              type: 'photo'
-            });
-          } else if (msg.video) {
-            newVideos.unshift({
-              url: `${WORKER_URL}?file_id=${msg.video.file_id}`,
-              type: 'video'
-            });
-          } else if (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith('image/')) {
-            newPhotos.unshift({
-              url: `${WORKER_URL}?file_id=${msg.document.file_id}`,
-              type: 'photo'
-            });
-          }
+        data.result.forEach(item => {
+          const mediaObj = {
+            url: `${WORKER_URL}?file_id=${item.file_id}`,
+            type: item.type
+          };
+          if (item.type === 'video') newVideos.push(mediaObj);
+          else newPhotos.push(mediaObj);
         });
 
         photos = newPhotos;
@@ -282,9 +260,7 @@
         document.getElementById('photoCount').innerText = photos.length;
         document.getElementById('videoCount').innerText = videos.length;
         renderGallery();
-      } catch (err) {
-        renderGallery();
-      }
+      } catch (err) {}
     }
 
     fileInput.addEventListener('change', async (e) => {
@@ -298,26 +274,40 @@
       for (const file of files) {
         const isVideo = file.type.startsWith('video');
         const formData = new FormData();
-        formData.append('chat_id', CHAT_ID);
-        formData.append('caption', `✨ Event: ${eventName}\n${eventTag}\n📅 ${new Date().toLocaleTimeString('ar-EG')}`);
+        formData.append('file', file);
+        formData.append('tag', eventTag);
+        formData.append('is_video', isVideo ? 'true' : 'false');
 
-        if (isVideo) {
-          formData.append('video', file, file.name || 'video.mp4');
-          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
-        } else {
-          formData.append('photo', file, file.name || 'photo.jpg');
-          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: formData });
-        }
+        try {
+          const res = await fetch(WORKER_URL, {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          if (data.ok && data.item) {
+            const mediaObj = {
+              url: `${WORKER_URL}?file_id=${data.item.file_id}`,
+              type: data.item.type
+            };
+            if (isVideo) {
+              videos.unshift(mediaObj);
+              switchTab('videos');
+            } else {
+              photos.unshift(mediaObj);
+              switchTab('photos');
+            }
+            renderGallery();
+          }
+        } catch (err) {}
       }
 
       uploadBtn.innerHTML = `<span>📸 / 🎥 Add Memories</span>`;
       uploadBtn.disabled = false;
       fileInput.value = '';
-      fetchSharedLiveGallery();
     });
 
     fetchSharedLiveGallery();
-    setInterval(fetchSharedLiveGallery, 6000);
+    setInterval(fetchSharedLiveGallery, 5000);
   </script>
 </body>
 </html>
