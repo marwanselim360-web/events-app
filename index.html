@@ -7,14 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #F7F8F5;
+      --bg-color: #F8FAF7;
       --card-bg: #FFFFFF;
-      --text-main: #2C3E2D;
-      --text-muted: #657566;
-      --olive-primary: #526E48;
-      --olive-dark: #3B5332;
-      --olive-light: #EBF0E9;
-      --card-border: #D8E2D6;
+      --text-main: #233324;
+      --text-muted: #5D705E;
+      --olive-primary: #4A6342;
+      --olive-dark: #374B31;
+      --olive-light: #EDF3EC;
+      --card-border: #D5E2D3;
       --accent-gold: #C2A649;
     }
 
@@ -62,17 +62,8 @@
       align-items: center;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .sparkle {
-      color: var(--accent-gold);
-      font-size: 26px;
-      margin-bottom: 6px;
-    }
-
+    .header { text-align: center; margin-bottom: 24px; }
+    .sparkle { color: var(--accent-gold); font-size: 24px; margin-bottom: 6px; }
     .event-title {
       font-family: 'Cinzel', serif;
       font-size: 24px;
@@ -81,23 +72,16 @@
       text-transform: uppercase;
       color: var(--olive-primary);
     }
-
-    .event-subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 6px;
-      letter-spacing: 0.5px;
-    }
+    .event-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
 
     .upload-card {
       width: 100%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 20px 16px;
-      box-shadow: 0 10px 25px rgba(82, 110, 72, 0.08);
-      text-align: center;
-      margin-bottom: 24px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(74, 99, 66, 0.08);
+      margin-bottom: 20px;
     }
 
     .upload-btn {
@@ -106,50 +90,42 @@
       color: #FFFFFF;
       font-size: 15px;
       font-weight: 600;
-      padding: 14px 12px;
-      border-radius: 14px;
+      padding: 14px;
+      border-radius: 12px;
       border: none;
       cursor: pointer;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(82, 110, 72, 0.25);
-      transition: all 0.2s ease;
-    }
-
-    .upload-btn:active {
-      background: var(--olive-dark);
-      transform: scale(0.98);
     }
 
     .tabs {
       display: flex;
       width: 100%;
       background: var(--olive-light);
-      border-radius: 14px;
+      border-radius: 12px;
       padding: 4px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       border: 1px solid var(--card-border);
     }
 
     .tab-btn {
       flex: 1;
       padding: 10px;
-      border-radius: 10px;
+      border-radius: 8px;
       border: none;
       background: transparent;
       font-size: 14px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
-      transition: all 0.2s ease;
     }
 
     .tab-btn.active {
       background: var(--card-bg);
       color: var(--olive-primary);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
     .gallery-grid {
@@ -161,30 +137,17 @@
 
     .gallery-item {
       position: relative;
-      border-radius: 14px;
+      border-radius: 12px;
       overflow: hidden;
       aspect-ratio: 1;
       background: var(--olive-light);
       border: 1px solid var(--card-border);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
     }
 
     .gallery-item img, .gallery-item video {
       width: 100%;
       height: 100%;
       object-fit: cover;
-    }
-
-    .status-badge {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: rgba(44, 62, 45, 0.85);
-      color: #fff;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 8px;
-      backdrop-filter: blur(4px);
     }
 
     .empty-state {
@@ -220,7 +183,7 @@
     </div>
 
     <div class="gallery-grid" id="galleryGrid">
-      <div class="empty-state" id="emptyState">No photos uploaded yet.<br>Be the first to share a moment!</div>
+      <div class="empty-state" id="emptyState">No photos uploaded yet.<br>Be the first to share!</div>
     </div>
   </div>
 
@@ -263,13 +226,10 @@
       items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'gallery-item';
-        
         if (item.type === 'photo') {
-          div.innerHTML = `<img src="${item.url}" alt="Memory" />
-                           <div class="status-badge">${item.status}</div>`;
+          div.innerHTML = `<img src="${item.url}" alt="Memory" />`;
         } else {
-          div.innerHTML = `<video src="${item.url}" muted playsinline loop autoplay></video>
-                           <div class="status-badge">${item.status}</div>`;
+          div.innerHTML = `<video src="${item.url}" muted playsinline loop autoplay></video>`;
         }
         grid.appendChild(div);
       });
@@ -285,8 +245,7 @@
         
         const memoryItem = {
           url: previewUrl,
-          type: isVideo ? 'video' : 'photo',
-          status: '✅ Added'
+          type: isVideo ? 'video' : 'photo'
         };
 
         if (isVideo) {
