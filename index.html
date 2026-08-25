@@ -18,7 +18,6 @@
       --accent-gold: #C2A649;
     }
 
-    /* Themes dynamic */
     body.theme-gold {
       --bg-color: #FAF8F5;
       --card-bg: #FFFFFF;
@@ -101,17 +100,11 @@
       margin-bottom: 24px;
     }
 
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
     .upload-btn {
-      flex: 1;
+      width: 100%;
       background: var(--olive-primary);
       color: #FFFFFF;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       padding: 14px 12px;
       border-radius: 14px;
@@ -215,11 +208,9 @@
     </div>
 
     <div class="upload-card">
-      <div class="btn-group">
-        <button class="upload-btn" onclick="triggerUpload('all')">
-          <span>📸 / 🎥 Add Memories</span>
-        </button>
-      </div>
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+        <span>📸 / 🎥 Add Memories</span>
+      </button>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple />
     </div>
 
@@ -237,7 +228,6 @@
     const BOT_TOKEN = "8921464117:AAFXf6K_2B48xI1D084z-ZJ4lZ47Y2-xR2w";
     const CHAT_ID = "-1003893309503";
 
-    // URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const eventName = urlParams.get('event') ? decodeURIComponent(urlParams.get('event').replace(/_/g, ' ')) : 'Omar & Merna';
     const themeName = urlParams.get('theme') || 'olive';
@@ -252,10 +242,6 @@
     let currentTab = 'photos';
 
     const fileInput = document.getElementById('fileInput');
-
-    function triggerUpload(type) {
-      fileInput.click();
-    }
 
     function switchTab(tab) {
       currentTab = tab;
@@ -289,59 +275,51 @@
       });
     }
 
-    fileInput.addEventListener('change', async (e) => {
+    fileInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      for (const file of files) {
+      files.forEach(file => {
         const isVideo = file.type.startsWith('video');
         const previewUrl = URL.createObjectURL(file);
         
         const memoryItem = {
           url: previewUrl,
           type: isVideo ? 'video' : 'photo',
-          status: '⏳ Sending...'
+          status: '✅ Added'
         };
 
         if (isVideo) {
           videos.unshift(memoryItem);
           document.getElementById('videoCount').innerText = videos.length;
+          switchTab('videos');
         } else {
           photos.unshift(memoryItem);
           document.getElementById('photoCount').innerText = photos.length;
+          switchTab('photos');
         }
 
         renderGallery();
+        uploadToTelegram(file);
+      });
 
-        // Send to Telegram
-        uploadToTelegram(file, memoryItem);
-      }
       fileInput.value = '';
     });
 
-    async function uploadToTelegram(file, memoryItem) {
-      const isVideo = file.type.startsWith('video');
-      const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
+    async function uploadToTelegram(file) {
       const formData = new FormData();
       formData.append('chat_id', CHAT_ID);
-      formData.append(isVideo ? 'video' : 'photo', file);
-      formData.append('caption', `🎉 ${eventName}\nType: ${isVideo ? 'Video' : 'Photo'}`);
+      formData.append('document', file);
+      formData.append('caption', `🎉 ${eventName}\nType: ${file.type.startsWith('video') ? 'Video' : 'Photo'}`);
 
       try {
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${endpoint}`, {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
           method: 'POST',
           body: formData
         });
-        const result = await response.json();
-        if (result.ok) {
-          memoryItem.status = '✅ Sent';
-        } else {
-          memoryItem.status = '⚠️ Error';
-        }
       } catch (err) {
-        memoryItem.status = '⚠️ Error';
+        console.error(err);
       }
-      renderGallery();
     }
   </script>
 </body>
