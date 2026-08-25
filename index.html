@@ -171,7 +171,7 @@
     </div>
 
     <div class="upload-card">
-      <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+      <button class="upload-btn" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
         <span>📸 / 🎥 Add Memories</span>
       </button>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple />
@@ -183,16 +183,19 @@
     </div>
 
     <div class="gallery-grid" id="galleryGrid">
-      <div class="empty-state" id="emptyState">No photos uploaded yet.<br>Be the first to share!</div>
+      <div class="empty-state" id="emptyState">Loading shared memories...</div>
     </div>
   </div>
 
   <script>
     const BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
     const CHAT_ID = "-1004372146565";
+    const WORKER_URL = "https://nameless-king-3d15.marwanselim360.workers.dev";
 
     const urlParams = new URLSearchParams(window.location.search);
-    const eventName = urlParams.get('event') ? decodeURIComponent(urlParams.get('event').replace(/_/g, ' ')) : 'Omar & Nour';
+    const rawEvent = urlParams.get('event') || 'Omar_Nour';
+    const eventName = decodeURIComponent(rawEvent.replace(/_/g, ' '));
+    const eventTag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
     const themeName = urlParams.get('theme') || 'olive';
 
     document.getElementById('eventTitle').innerText = eventName;
@@ -200,29 +203,10 @@
       document.body.classList.add('theme-' + themeName);
     }
 
-    const storageKey = `memories_${eventName}`;
-    let savedData = JSON.parse(localStorage.getItem(storageKey) || '{"photos":[], "videos":[]}');
-    let photos = savedData.photos || [];
-    let videos = savedData.videos || [];
+    let photos = [];
+    let videos = [];
     let currentTab = 'photos';
-
-    updateCounts();
-    renderGallery();
-
     const fileInput = document.getElementById('fileInput');
-
-    function updateCounts() {
-      document.getElementById('photoCount').innerText = photos.length;
-      document.getElementById('videoCount').innerText = videos.length;
-    }
-
-    function saveToLocalStorage() {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify({ photos, videos }));
-      } catch (e) {
-        console.warn('Storage quota reached');
-      }
-    }
 
     function switchTab(tab) {
       currentTab = tab;
@@ -237,7 +221,7 @@
       const items = currentTab === 'photos' ? photos : videos;
 
       if (items.length === 0) {
-        grid.innerHTML = `<div class="empty-state">No ${currentTab} uploaded yet.<br>Be the first to share!</div>`;
+        grid.innerHTML = `<div class="empty-state">No ${currentTab} uploaded yet for this event.<br>Be the first to share!</div>`;
         return;
       }
 
@@ -245,69 +229,95 @@
         const div = document.createElement('div');
         div.className = 'gallery-item';
         if (item.type === 'photo') {
-          div.innerHTML = `<img src="${item.url}" alt="Memory" />`;
+          div.innerHTML = `<img src="${item.url}" alt="Memory" loading="lazy" />`;
         } else {
-          div.innerHTML = `<video src="${item.url}" muted playsinline loop autoplay></video>`;
+          div.innerHTML = `<video src="${item.url}" muted playsinline loop autoplay controls></video>`;
         }
         grid.appendChild(div);
       });
     }
 
-    fileInput.addEventListener('change', (e) => {
+    async function fetchSharedLiveGallery() {
+      try {
+        const res = await fetch(WORKER_URL);
+        const data = await res.json();
+        
+        if (!data.ok || !data.result) {
+          renderGallery();
+          return;
+        }
+
+        const newPhotos = [];
+        const newVideos = [];
+
+        data.result.forEach(update => {
+          const msg = update.message || update.channel_post;
+          if (!msg) return;
+
+          const caption = msg.caption || '';
+          if (!caption.includes(eventTag)) return;
+
+          if (msg.photo && msg.photo.length > 0) {
+            const bestPhoto = msg.photo[msg.photo.length - 1];
+            newPhotos.unshift({
+              url: `${WORKER_URL}?file_id=${bestPhoto.file_id}`,
+              type: 'photo'
+            });
+          } else if (msg.video) {
+            newVideos.unshift({
+              url: `${WORKER_URL}?file_id=${msg.video.file_id}`,
+              type: 'video'
+            });
+          } else if (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith('image/')) {
+            newPhotos.unshift({
+              url: `${WORKER_URL}?file_id=${msg.document.file_id}`,
+              type: 'photo'
+            });
+          }
+        });
+
+        photos = newPhotos;
+        videos = newVideos;
+
+        document.getElementById('photoCount').innerText = photos.length;
+        document.getElementById('videoCount').innerText = videos.length;
+        renderGallery();
+      } catch (err) {
+        renderGallery();
+      }
+    }
+
+    fileInput.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      files.forEach(file => {
+      const uploadBtn = document.getElementById('uploadBtn');
+      uploadBtn.innerHTML = `<span>⏳ Uploading...</span>`;
+      uploadBtn.disabled = true;
+
+      for (const file of files) {
         const isVideo = file.type.startsWith('video');
-        const reader = new FileReader();
+        const formData = new FormData();
+        formData.append('chat_id', CHAT_ID);
+        formData.append('caption', `✨ Event: ${eventName}\n${eventTag}\n📅 ${new Date().toLocaleTimeString('ar-EG')}`);
 
-        reader.onload = function(event) {
-          const base64Url = event.target.result;
-          const memoryItem = {
-            url: base64Url,
-            type: isVideo ? 'video' : 'photo'
-          };
+        if (isVideo) {
+          formData.append('video', file, file.name || 'video.mp4');
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
+        } else {
+          formData.append('photo', file, file.name || 'photo.jpg');
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: formData });
+        }
+      }
 
-          if (isVideo) {
-            videos.unshift(memoryItem);
-            switchTab('videos');
-          } else {
-            photos.unshift(memoryItem);
-            switchTab('photos');
-          }
-
-          updateCounts();
-          renderGallery();
-          saveToLocalStorage();
-        };
-
-        reader.readAsDataURL(file);
-        uploadToTelegram(file);
-      });
-
+      uploadBtn.innerHTML = `<span>📸 / 🎥 Add Memories</span>`;
+      uploadBtn.disabled = false;
       fileInput.value = '';
+      fetchSharedLiveGallery();
     });
 
-    async function uploadToTelegram(file) {
-      const isVideo = file.type.startsWith('video');
-      const formData = new FormData();
-      formData.append('chat_id', CHAT_ID);
-      formData.append('caption', `✨ Event: ${eventName}\n📅 ${new Date().toLocaleTimeString('ar-EG')}`);
-      formData.append('document', file, file.name || (isVideo ? 'video.mp4' : 'photo.jpg'));
-
-      try {
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
-          method: 'POST',
-          body: formData
-        });
-        const resData = await response.json();
-        if (!resData.ok) {
-          alert('Telegram Alert: ' + resData.description);
-        }
-      } catch (err) {
-        alert('Upload Error: ' + err.message);
-      }
-    }
+    fetchSharedLiveGallery();
+    setInterval(fetchSharedLiveGallery, 6000);
   </script>
 </body>
 </html>
