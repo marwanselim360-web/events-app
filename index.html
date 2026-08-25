@@ -188,11 +188,11 @@
   </div>
 
   <script>
-    const BOT_TOKEN = "8921464117:AAFXf6K_2B48xI1D084z-ZJ4lZ47Y2-xR2w";
+    const BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
     const CHAT_ID = "-1003893309503";
 
     const urlParams = new URLSearchParams(window.location.search);
-    const eventName = urlParams.get('event') ? decodeURIComponent(urlParams.get('event').replace(/_/g, ' ')) : 'Omar & Merna';
+    const eventName = urlParams.get('event') ? decodeURIComponent(urlParams.get('event').replace(/_/g, ' ')) : 'Omar & Nour';
     const themeName = urlParams.get('theme') || 'olive';
 
     document.getElementById('eventTitle').innerText = eventName;
@@ -200,11 +200,29 @@
       document.body.classList.add('theme-' + themeName);
     }
 
-    let photos = [];
-    let videos = [];
+    const storageKey = `memories_${eventName}`;
+    let savedData = JSON.parse(localStorage.getItem(storageKey) || '{"photos":[], "videos":[]}');
+    let photos = savedData.photos || [];
+    let videos = savedData.videos || [];
     let currentTab = 'photos';
 
+    updateCounts();
+    renderGallery();
+
     const fileInput = document.getElementById('fileInput');
+
+    function updateCounts() {
+      document.getElementById('photoCount').innerText = photos.length;
+      document.getElementById('videoCount').innerText = videos.length;
+    }
+
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ photos, videos }));
+      } catch (e) {
+        console.warn('Storage quota reached');
+      }
+    }
 
     function switchTab(tab) {
       currentTab = tab;
@@ -241,24 +259,29 @@
 
       files.forEach(file => {
         const isVideo = file.type.startsWith('video');
-        const previewUrl = URL.createObjectURL(file);
-        
-        const memoryItem = {
-          url: previewUrl,
-          type: isVideo ? 'video' : 'photo'
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+          const base64Url = event.target.result;
+          const memoryItem = {
+            url: base64Url,
+            type: isVideo ? 'video' : 'photo'
+          };
+
+          if (isVideo) {
+            videos.unshift(memoryItem);
+            switchTab('videos');
+          } else {
+            photos.unshift(memoryItem);
+            switchTab('photos');
+          }
+
+          updateCounts();
+          renderGallery();
+          saveToLocalStorage();
         };
 
-        if (isVideo) {
-          videos.unshift(memoryItem);
-          document.getElementById('videoCount').innerText = videos.length;
-          switchTab('videos');
-        } else {
-          photos.unshift(memoryItem);
-          document.getElementById('photoCount').innerText = photos.length;
-          switchTab('photos');
-        }
-
-        renderGallery();
+        reader.readAsDataURL(file);
         uploadToTelegram(file);
       });
 
@@ -285,7 +308,6 @@
           body: formData
         });
         const resData = await response.json();
-        
         if (!resData.ok) {
           alert('Telegram Error: ' + resData.description);
         }
