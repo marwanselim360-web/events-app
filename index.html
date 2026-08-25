@@ -3,18 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wedding Live Album</title>
+  <title>Live Event Album</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
-  
+
   <style>
     :root {
-      --bg: #090a0f;
+      /* الثيم الذهبي الافتراضي */
+      --bg-base: #090a0f;
+      --bg-radial: radial-gradient(circle at 50% 0%, #1c1917 0%, #0c0a09 100%);
       --gold-primary: #d4af37;
       --gold-gradient: linear-gradient(135deg, #f5d77f 0%, #d4af37 50%, #aa7c11 100%);
       --card-bg: rgba(255, 255, 255, 0.03);
       --card-border: rgba(212, 175, 55, 0.25);
       --text: #f8fafc;
       --text-muted: #a1a1aa;
+    }
+
+    /* ثيم Olive & White المخصص */
+    body.theme-olive {
+      --bg-base: #1c231a;
+      --bg-radial: radial-gradient(circle at 50% 0%, #2e382b 0%, #171d15 100%);
+      --gold-primary: #879b76;
+      --gold-gradient: linear-gradient(135deg, #a3b892 0%, #70825f 50%, #526045 100%);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(163, 184, 146, 0.3);
+      --text: #fdfdfd;
+      --text-muted: #c2cdba;
     }
 
     * {
@@ -26,7 +40,8 @@
     }
 
     body {
-      background: radial-gradient(circle at 50% 0%, #1c1917 0%, #0c0a09 100%);
+      background: var(--bg-radial);
+      background-color: var(--bg-base);
       color: var(--text);
       min-height: 100vh;
       padding: 24px 16px 80px;
@@ -45,260 +60,81 @@
     .monogram {
       font-family: 'Great Vibes', cursive;
       font-size: 42px;
-      color: #f5d77f;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+      color: var(--gold-primary);
       margin-bottom: 4px;
-      letter-spacing: 2px;
     }
 
-    .wedding-names {
+    .wedding-title {
       font-family: 'Cinzel', serif;
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      background: var(--gold-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 20px;
+      letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 6px;
     }
 
     .wedding-subtitle {
-      font-size: 12px;
       color: var(--text-muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    .action-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--card-border);
-      border-radius: 28px;
-      padding: 24px 20px;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      margin-bottom: 28px;
-    }
-
-    .button-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .upload-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 16px 12px;
-      border-radius: 18px;
-      font-weight: 600;
       font-size: 13px;
-      cursor: pointer;
-      border: none;
-      color: #000;
-      transition: transform 0.15s ease, opacity 0.2s;
     }
 
-    .btn-photo {
+    .upload-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 30px;
+      backdrop-filter: blur(8px);
+    }
+
+    .custom-upload-btn {
       background: var(--gold-gradient);
-      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+      color: #0b0c10;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 28px;
+      border-radius: 30px;
+      display: inline-block;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
     }
 
-    .btn-video {
-      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-gallery {
-      grid-column: span 2;
-      flex-direction: row;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px dashed rgba(212, 175, 55, 0.4);
-      color: #f5d77f;
-      padding: 14px;
-    }
-
-    .upload-btn:active {
+    .custom-upload-btn:active {
       transform: scale(0.96);
     }
 
-    .tab-bar {
-      display: flex;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 4px;
-      border-radius: 16px;
-      margin-bottom: 18px;
-      border: 1px solid var(--card-border);
+    #fileInput {
+      display: none;
     }
 
-    .tab-btn {
-      flex: 1;
-      text-align: center;
-      padding: 11px 0;
-      border-radius: 12px;
+    .status-msg {
+      margin-top: 12px;
       font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      transition: 0.2s;
+      color: var(--gold-primary);
+      display: none;
     }
 
-    .tab-btn.active {
-      background: var(--gold-gradient);
-      color: #0c0a09;
-      font-weight: 700;
-    }
-
-    .media-grid {
+    .gallery-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
+      gap: 12px;
     }
 
     .media-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      border-radius: 18px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    }
-
-    .media-preview {
       position: relative;
-      width: 100%;
-      height: 165px;
-      background: #000;
-      cursor: pointer;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      background: #111;
+      border: 1px solid var(--card-border);
     }
 
-    .media-preview img, .media-preview video {
+    .media-card img, .media-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-    }
-
-    .video-play-icon {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      background: rgba(0,0,0,0.3);
-    }
-
-    .save-btn {
-      padding: 11px;
-      background: rgba(212, 175, 55, 0.1);
-      border: none;
-      border-top: 1px solid rgba(212, 175, 55, 0.15);
-      color: #f5d77f;
-      font-size: 12px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .save-btn:active {
-      background: rgba(212, 175, 55, 0.25);
-    }
-
-    .uploading-badge {
-      padding: 10px;
-      background: rgba(212, 175, 55, 0.15);
-      color: #fde047;
-      font-size: 11px;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .empty-state {
-      grid-column: span 2;
-      text-align: center;
-      padding: 45px 10px;
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.96);
-      backdrop-filter: blur(16px);
-      z-index: 9999;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-box {
-      width: 100%;
-      max-width: 480px;
-      max-height: 80vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-box img, .modal-box video {
-      max-width: 100%;
-      max-height: 75vh;
-      border-radius: 18px;
-      object-fit: contain;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.15);
-      border: none;
-      color: #fff;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    .upload-toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1c1917;
-      border: 1px solid var(--gold-primary);
-      color: #f5d77f;
-      padding: 12px 22px;
-      border-radius: 999px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      font-size: 13px;
-      font-weight: 600;
-      display: none;
-      z-index: 1000;
-      align-items: center;
-      gap: 8px;
     }
   </style>
 </head>
@@ -306,297 +142,106 @@
 
   <div class="container">
     <div class="wedding-header">
-      <div class="monogram">💍</div>
-      <div class="wedding-names" id="coupleNames">MARWAN & NOOR</div>
-      <div class="wedding-subtitle">Live Wedding Album</div>
+      <div class="monogram" id="displayMonogram">✨</div>
+      <h1 class="wedding-title" id="displayTitle">Live Event Album</h1>
+      <p class="wedding-subtitle">Share your live moments with us</p>
     </div>
 
-    <div class="action-card">
-      <div class="button-group">
-        <label for="photoInput" class="upload-btn btn-photo">
-          <span style="font-size: 20px;">📸</span>
-          <span>Take Photo</span>
-        </label>
-        <label for="videoInput" class="upload-btn btn-video">
-          <span style="font-size: 20px;">🎥</span>
-          <span>Record Video</span>
-        </label>
-        <label for="galleryInput" class="upload-btn btn-gallery">
-          <span style="font-size: 18px;">📁</span>
-          <span>Upload Memories</span>
-        </label>
-      </div>
-
-      <input type="file" id="photoInput" accept="image/*" capture="environment">
-      <input type="file" id="videoInput" accept="video/*" capture="environment">
-      <input type="file" id="galleryInput" accept="image/*,video/*" multiple>
+    <div class="upload-card">
+      <label for="fileInput" class="custom-upload-btn">📸 Add Photos & Videos</label>
+      <input type="file" id="fileInput" multiple accept="image/*,video/*">
+      <div id="statusMsg" class="status-msg"></div>
     </div>
 
-    <div class="tab-bar">
-      <button class="tab-btn active" id="photosTab" onclick="switchTab('photos')">📸 Photos (<span id="photoCount">0</span>)</button>
-      <button class="tab-btn" id="videosTab" onclick="switchTab('videos')">🎥 Videos (<span id="videoCount">0</span>)</button>
-    </div>
-
-    <div class="media-grid" id="photosGrid">
-      <div class="empty-state">No wedding photos yet! Be the first to snap a shot. ✨</div>
-    </div>
-
-    <div class="media-grid" id="videosGrid" style="display: none;">
-      <div class="empty-state">No wedding videos yet! Record a moment now. 🥂</div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="mediaModal" onclick="closeModal(event)">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-box" id="modalTarget"></div>
-  </div>
-
-  <div id="uploadToast" class="upload-toast">
-    <span>⏳</span> <span id="toastText">Uploading in background...</span>
+    <div class="gallery-grid" id="galleryGrid"></div>
   </div>
 
   <script>
+    // بيانات تيليجرام
+    const TELEGRAM_BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
+    const TELEGRAM_CHAT_ID = "-1004372146565";
+
+    // قراءة باراميترات الرابط تلقائياً
     const urlParams = new URLSearchParams(window.location.search);
-    const rawEvent = urlParams.get('event');
-    const eventName = rawEvent ? rawEvent.trim().toLowerCase().replace(/\s+/g, '_') : 'marwan_and_noor';
-    
-    let formattedNames = eventName
-      .replace(/^wedding_/, '')
-      .replace(/_and_/g, ' & ')
-      .replace(/_/g, ' ')
-      .toUpperCase();
-      
-    document.getElementById('coupleNames').innerText = formattedNames;
+    const eventName = urlParams.get('event') || 'Our Wedding';
+    const themeName = urlParams.get('theme');
 
-    const CLOUD_NAME = "qwmaeyjl";
-    const UPLOAD_PRESET = "events_upload";
-
-    let activeTab = 'photos';
-    
-    // استرجاع الصور المحفوظة محلياً فوراً
-    const storageKey = `media_cache_${eventName}`;
-    let cachedMedia = { photos: [], videos: [] };
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) cachedMedia = JSON.parse(saved);
-    } catch(e) {}
-
-    let mediaState = { 
-      photos: cachedMedia.photos || [], 
-      videos: cachedMedia.videos || [] 
-    };
-    let pendingUploads = 0;
-
-    function saveState() {
-      try {
-        const cleanState = {
-          photos: mediaState.photos.filter(p => !p.uploading),
-          videos: mediaState.videos.filter(v => !v.uploading)
-        };
-        localStorage.setItem(storageKey, JSON.stringify(cleanState));
-      } catch(e) {}
+    // تطبيق الثيم
+    if (themeName === 'olive') {
+      document.body.classList.add('theme-olive');
     }
 
-    function updateToast() {
-      const toast = document.getElementById('uploadToast');
-      const toastText = document.getElementById('toastText');
-      if (pendingUploads > 0) {
-        toastText.innerText = `Uploading ${pendingUploads} item(s)...`;
-        toast.style.display = 'flex';
-      } else {
-        toast.style.display = 'none';
-      }
-    }
+    // عرض اسم الإيفنت
+    const formattedTitle = eventName.replace(/_/g, ' ');
+    document.getElementById('displayTitle').innerText = formattedTitle;
 
-    function switchTab(tab) {
-      activeTab = tab;
-      document.getElementById('photosTab').classList.toggle('active', tab === 'photos');
-      document.getElementById('videosTab').classList.toggle('active', tab === 'videos');
-      document.getElementById('photosGrid').style.display = tab === 'photos' ? 'grid' : 'none';
-      document.getElementById('videosGrid').style.display = tab === 'videos' ? 'grid' : 'none';
-    }
+    const fileInput = document.getElementById('fileInput');
+    const statusMsg = document.getElementById('statusMsg');
+    const galleryGrid = document.getElementById('galleryGrid');
 
-    function openModal(url, type) {
-      const modal = document.getElementById('mediaModal');
-      const target = document.getElementById('modalTarget');
-      if (type === 'image') {
-        target.innerHTML = `<img src="${url}" alt="Wedding Moment">`;
-      } else {
-        target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
-      }
-      modal.style.display = 'flex';
-    }
+    // رفع الملفات لتيليجرام
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
 
-    function closeModal(e) {
-      if (!e || e.target.id === 'mediaModal' || e.target.className === 'modal-close') {
-        const modal = document.getElementById('mediaModal');
-        const target = document.getElementById('modalTarget');
-        target.innerHTML = '';
-        modal.style.display = 'none';
-      }
-    }
+      statusMsg.style.display = 'block';
 
-    function triggerDownload(url, type) {
-      let downloadUrl = url;
-      if (url.includes('/upload/')) {
-        downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
-      }
-      window.location.href = downloadUrl;
-    }
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        statusMsg.innerText = `Uploading ${i + 1} of ${files.length}...`;
 
-    function render() {
-      document.getElementById('photoCount').innerText = mediaState.photos.length;
-      document.getElementById('videoCount').innerText = mediaState.videos.length;
+        // عرض فوري على الشاشة
+        displayLocalMedia(file);
 
-      const pGrid = document.getElementById('photosGrid');
-      pGrid.innerHTML = mediaState.photos.length === 0 
-        ? '<div class="empty-state">No wedding photos yet! Be the first to snap a shot. ✨</div>'
-        : mediaState.photos.map(item => renderCard(item, 'image')).join('');
+        // رفع لسيرفر تيليجرام
+        const formData = new FormData();
+        formData.append("chat_id", TELEGRAM_CHAT_ID);
+        formData.append("caption", `✨ Event: ${formattedTitle}\n📅 Date: ${new Date().toLocaleString('ar-EG')}`);
 
-      const vGrid = document.getElementById('videosGrid');
-      vGrid.innerHTML = mediaState.videos.length === 0 
-        ? '<div class="empty-state">No wedding videos yet! Record a moment now. 🥂</div>'
-        : mediaState.videos.map(item => renderCard(item, 'video')).join('');
-    }
+        let endpoint = "sendDocument";
+        if (file.type.startsWith("image/")) {
+          endpoint = "sendPhoto";
+          formData.append("photo", file);
+        } else if (file.type.startsWith("video/")) {
+          endpoint = "sendVideo";
+          formData.append("video", file);
+        } else {
+          formData.append("document", file);
+        }
 
-    function renderCard(item, type) {
-      const isVid = type === 'video';
-      const preview = isVid 
-        ? `<video src="${item.url}" playsinline muted></video><div class="video-play-icon">▶️</div>`
-        : `<img src="${item.url}" loading="lazy">`;
-
-      const bottomBar = item.uploading
-        ? `<div class="uploading-badge">⏳ Uploading...</div>`
-        : `<button class="save-btn" onclick="triggerDownload('${item.url}', '${type}')">⬇️ Save ${isVid ? 'Video' : 'Photo'}</button>`;
-
-      return `
-        <div class="media-card">
-          <div class="media-preview" onclick="openModal('${item.url}', '${type}')">${preview}</div>
-          ${bottomBar}
-        </div>
-      `;
-    }
-
-    function broadcastMedia(newItem) {
-      fetch(`https://ntfy.sh/event_feed_${eventName}`, {
-        method: 'POST',
-        body: JSON.stringify(newItem)
-      }).catch(e => console.error(e));
-    }
-
-    function listenToLiveFeed() {
-      const eventSource = new EventSource(`https://ntfy.sh/event_feed_${eventName}/sse`);
-      eventSource.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data);
-          if (msg && msg.message) {
-            const data = JSON.parse(msg.message);
-            if (data && data.url) {
-              const list = data.type === 'video' ? mediaState.videos : mediaState.photos;
-              if (!list.some(i => i.url === data.url)) {
-                list.unshift(data);
-                saveState();
-                render();
-              }
-            }
-          }
-        } catch (e) {}
-      };
-    }
-
-    async function uploadWorker(file) {
-      const isVideo = file.type.startsWith('video') || file.name.match(/\.(mov|mp4|avi)$/i);
-      const tempId = 'temp_' + Date.now() + Math.random();
-      const localUrl = URL.createObjectURL(file);
-
-      const tempItem = { id: tempId, url: localUrl, type: isVideo ? 'video' : 'image', uploading: true };
-      if (isVideo) mediaState.videos.unshift(tempItem);
-      else mediaState.photos.unshift(tempItem);
-
-      render();
-      pendingUploads++;
-      updateToast();
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", eventName);
-      formData.append("tags", eventName);
-
-      try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${isVideo ? 'video' : 'image'}/upload`, {
-          method: "POST",
-          body: formData
-        });
-        const data = await res.json();
-        
-        const list = isVideo ? mediaState.videos : mediaState.photos;
-        const target = list.find(i => i.id === tempId);
-        if (target && data.secure_url) {
-          target.url = data.secure_url;
-          target.uploading = false;
-
-          saveState();
-
-          broadcastMedia({
-            id: data.public_id,
-            url: data.secure_url,
-            type: isVideo ? 'video' : 'image',
-            uploading: false
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${endpoint}`, {
+            method: "POST",
+            body: formData
           });
+        } catch (err) {
+          console.error("Upload error:", err);
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        pendingUploads--;
-        updateToast();
-        render();
       }
-    }
 
-    function handleFiles(files) {
-      if (!files) return;
-      Array.from(files).forEach(uploadWorker);
-    }
+      statusMsg.innerText = "✨ Upload Complete!";
+      setTimeout(() => { statusMsg.style.display = 'none'; }, 3000);
+      fileInput.value = '';
+    });
 
-    document.getElementById('photoInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
-    document.getElementById('videoInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
-    document.getElementById('galleryInput').addEventListener('change', (e) => { handleFiles(e.target.files); e.target.value = ''; });
+    function displayLocalMedia(file) {
+      const card = document.createElement('div');
+      card.className = 'media-card';
+      const fileUrl = URL.createObjectURL(file);
 
-    async function loadCloudMedia() {
-      try {
-        const [imgs, vids] = await Promise.allSettled([
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${eventName}.json?cb=${Date.now()}`).then(r => r.json()),
-          fetch(`https://res.cloudinary.com/${CLOUD_NAME}/video/list/${eventName}.json?cb=${Date.now()}`).then(r => r.json())
-        ]);
-
-        if (imgs.status === 'fulfilled' && imgs.value.resources) {
-          imgs.value.resources.forEach(r => {
-            const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/v${r.version}/${r.public_id}.${r.format}`;
-            if (!mediaState.photos.some(p => p.url === url)) {
-              mediaState.photos.push({ id: r.public_id, url, type: 'image', uploading: false });
-            }
-          });
-        }
-
-        if (vids.status === 'fulfilled' && vids.value.resources) {
-          vids.value.resources.forEach(r => {
-            const url = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v${r.version}/${r.public_id}.${r.format}`;
-            if (!mediaState.videos.some(v => v.url === url)) {
-              mediaState.videos.push({ id: r.public_id, url, type: 'video', uploading: false });
-            }
-          });
-        }
-        saveState();
-        render();
-      } catch (e) {
-        console.error(e);
+      if (file.type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.src = fileUrl;
+        video.controls = true;
+        card.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = fileUrl;
+        card.appendChild(img);
       }
-    }
 
-    render();
-    loadCloudMedia();
-    listenToLiveFeed();
+      galleryGrid.prepend(card);
+    }
   </script>
 </body>
 </html>

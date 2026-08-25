@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event QR & Table Card Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: #0f1117; color: #fff; padding: 30px 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .card { background: #1a1d24; border: 1px solid #333; padding: 24px; border-radius: 12px; width: 100%; max-width: 440px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    h2 { font-family: 'Cinzel', serif; font-size: 20px; color: #d4af37; margin-bottom: 20px; text-align: center; }
+    .form-group { margin-bottom: 14px; text-align: left; }
+    label { font-size: 12px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; display: block; }
+    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222630; color: #fff; font-size: 14px; outline: none; }
+    button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #f5d77f, #d4af37); color: #000; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    
+    /* Table Card Print Preview */
+    .print-area { display: none; margin-top: 30px; text-align: center; }
+    .table-tent {
+      width: 320px;
+      padding: 30px 20px;
+      border-radius: 16px;
+      border: 2px solid #d4af37;
+      background: #090a0f;
+      color: #fff;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .table-tent.olive { border-color: #879b76; background: #171d15; }
+    .tent-title { font-family: 'Cinzel', serif; font-size: 18px; margin-bottom: 8px; color: #d4af37; }
+    .table-tent.olive .tent-title { color: #a3b892; }
+    .tent-subtitle { font-size: 12px; color: #ccc; margin-bottom: 20px; }
+    .qr-box { display: flex; justify-content: center; margin-bottom: 15px; }
+    .qr-box img { border-radius: 8px; }
+    .print-btn { background: #22c55e; color: #fff; margin-top: 15px; width: auto; padding: 10px 24px; display: inline-block; }
+
+    @media print {
+      body * { visibility: hidden; }
+      .print-area, .print-area * { visibility: visible; }
+      .print-area { position: absolute; left: 50%; top: 20%; transform: translate(-50%, -20%); display: block !important; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Event Card Generator</h2>
+    <div class="form-group">
+      <label>Event Type</label>
+      <select id="eventType">
+        <option value="wedding">Wedding (فرح)</option>
+        <option value="corporate">Corporate / Company Event (شركة)</option>
+        <option value="birthday">Birthday (عيد ميلاد)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Names / Event Title</label>
+      <input type="text" id="eventTitle" placeholder="e.g. Omar & Nour" value="Omar & Nour">
+    </div>
+    <div class="form-group">
+      <label>Theme Color</label>
+      <select id="eventTheme">
+        <option value="olive">Olive & White</option>
+        <option value="gold">Luxury Gold</option>
+      </select>
+    </div>
+    <button onclick="generateCard()">Generate Table QR Card ✨</button>
+  </div>
+
+  <div class="print-area" id="printArea">
+    <div class="table-tent" id="tableTent">
+      <h3 class="tent-title" id="cardHeading">Celebrating the Wedding of</h3>
+      <h2 class="tent-title" id="cardEventName" style="font-size: 22px; margin-bottom: 12px;">Omar & Nour</h2>
+      <p class="tent-subtitle">Scan to share your photos & videos live with us 📸</p>
+      <div class="qr-box" id="qrcode"></div>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+  </div>
+
+  <script>
+    function generateCard() {
+      const type = document.getElementById('eventType').value;
+      const title = document.getElementById('eventTitle').value.trim();
+      const theme = document.getElementById('eventTheme').value;
+      
+      const formattedSlug = encodeURIComponent(title.replace(/\s+/g, '_'));
+      
+      // ضع هنا رابط حسابك الأساسي على GitHub Pages
+      // لو اسم حسابك مختلف عن marwan، عدل اسم اليوزر فقط
+      const githubUrl = `https://marwan292.github.io/events-app/index.html?event=${formattedSlug}&theme=${theme}`;
+      
+      // تحديث مظهر الكارت
+      const cardHeading = document.getElementById('cardHeading');
+      if (type === 'wedding') cardHeading.innerText = "Celebrating the Wedding of";
+      else if (type === 'corporate') cardHeading.innerText = "Welcome to";
+      else cardHeading.innerText = "Celebrating";
+      
+      document.getElementById('cardEventName').innerText = title;
+      
+      const tableTent = document.getElementById('tableTent');
+      if (theme === 'olive') {
+        tableTent.className = "table-tent olive";
+      } else {
+        tableTent.className = "table-tent";
+      }
+
+      // توليد الـ QR برابط إنترنت حقيقي
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: githubUrl,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+
+      document.getElementById('printArea').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
