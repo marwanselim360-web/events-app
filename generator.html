@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Event QR & Gallery Studio</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -119,6 +119,10 @@
       display: inline-block;
       margin-bottom: 14px;
     }
+    #qrCanvas {
+      display: block;
+      margin: 0 auto;
+    }
     .link-display {
       background: #090d16;
       border: 1px solid #26334d;
@@ -193,7 +197,7 @@
       </div>
 
       <div class="form-group">
-        <label>Venue / Hall (Optional)</label>
+        <label>Venue / Location (Optional)</label>
         <input type="text" id="evVenue" placeholder="e.g. Four Seasons" />
       </div>
     </div>
@@ -223,16 +227,18 @@
       </div>
     </div>
 
-    <button class="btn-create" onclick="generateSystem()">⚡ Generate Live QR & Link</button>
+    <button class="btn-create" type="button" onclick="generateSystem()">⚡ Generate Live QR & Link</button>
 
     <div class="result" id="resultArea">
-      <div class="qr-box" id="qrcode"></div>
+      <div class="qr-box">
+        <canvas id="qrCanvas"></canvas>
+      </div>
       <div class="link-display" id="generatedLink"></div>
       
       <div class="btn-grid">
-        <button class="action-btn download-qr" onclick="downloadQRCodeImage()">📥 Download QR Image (PNG)</button>
+        <button class="action-btn download-qr" type="button" onclick="downloadQRCodeImage()">📥 Download QR Image (PNG)</button>
         <a href="#" id="openLinkBtn" target="_blank" class="action-btn primary">🚀 Open Album</a>
-        <button onclick="copyGeneratedLink()" class="action-btn secondary">📋 Copy Link</button>
+        <button type="button" onclick="copyGeneratedLink()" class="action-btn secondary">📋 Copy Link</button>
       </div>
     </div>
   </div>
@@ -255,61 +261,51 @@
     let currentEventSlug = 'qr_event';
 
     function generateSystem() {
-      const type = document.getElementById('evType').value;
-      const title = document.getElementById('evTitle').value.trim() || 'Live Event';
-      const venue = document.getElementById('evVenue').value.trim();
-      const dateVal = document.getElementById('evDate').value;
-      const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
-      
-      let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
-      let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
+      try {
+        const type = document.getElementById('evType').value;
+        const title = document.getElementById('evTitle').value.trim() || 'Live Event';
+        const venue = document.getElementById('evVenue').value.trim();
+        const dateVal = document.getElementById('evDate').value;
+        const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
+        
+        let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
+        let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-      // بناء معرّف واضح ومميز لكل فرح
-      let cleanTagParts = [title.replace(/\s+/g, '_')];
-      if (venue) cleanTagParts.push(venue.replace(/\s+/g, '_'));
-      if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
-      cleanTagParts.push(getUniqueCode());
+        let cleanTagParts = [title.replace(/\s+/g, '_')];
+        if (venue) cleanTagParts.push(venue.replace(/\s+/g, '_'));
+        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
+        cleanTagParts.push(getUniqueCode());
 
-      const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
-      currentEventSlug = uniqueTag;
+        const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
+        currentEventSlug = uniqueTag;
 
-      const hostUrl = "https://marwanselim360-web.github.io/events-app";
-      const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
+        const hostUrl = "https://marwanselim360-web.github.io/events-app";
+        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
 
-      document.getElementById('generatedLink').innerText = fullUrl;
-      document.getElementById('openLinkBtn').href = fullUrl;
+        document.getElementById('generatedLink').innerText = fullUrl;
+        document.getElementById('openLinkBtn').href = fullUrl;
 
-      const qrBox = document.getElementById('qrcode');
-      qrBox.innerHTML = '';
-      new QRCode(qrBox, {
-        text: fullUrl,
-        width: 220,
-        height: 220,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
+        // توليد الـ QR الفوري
+        new QRious({
+          element: document.getElementById('qrCanvas'),
+          value: fullUrl,
+          size: 240,
+          level: 'H'
+        });
 
-      document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('resultArea').style.display = 'block';
+      } catch (e) {
+        alert("Error generating QR: " + e.message);
+      }
     }
 
-    // تنزيل صورة الـ QR بجودة عالية فوراً
     function downloadQRCodeImage() {
-      const qrImg = document.querySelector('#qrcode img');
-      const qrCanvas = document.querySelector('#qrcode canvas');
-      let dataUrl = '';
-
-      if (qrImg && qrImg.src) {
-        dataUrl = qrImg.src;
-      } else if (qrCanvas) {
-        dataUrl = qrCanvas.toDataURL("image/png");
-      }
-
-      if (!dataUrl) {
+      const canvas = document.getElementById('qrCanvas');
+      if (!canvas) {
         alert("Please generate QR first!");
         return;
       }
-
+      const dataUrl = canvas.toDataURL("image/png");
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = `QR_${currentEventSlug}.png`;
