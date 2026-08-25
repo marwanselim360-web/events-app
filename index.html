@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Live Event Album</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Live Event Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #4a6342;
       --bg: #f8faf7;
-      --text: #1e293b;
-      --card-bg: rgba(255, 255, 255, 0.9);
+      --text: #111827;
+      --card-bg: #ffffff;
       --card-border: rgba(0, 0, 0, 0.08);
       --muted: #64748b;
     }
 
-    body.dark-mode {
+    body.dark-theme {
       --text: #f8fafc;
-      --card-bg: rgba(255, 255, 255, 0.06);
-      --card-border: rgba(255, 255, 255, 0.12);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
       --muted: #94a3b8;
     }
 
@@ -36,7 +36,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .container {
+    .wrapper {
       width: 100%;
       max-width: 480px;
       display: flex;
@@ -49,39 +49,45 @@
       margin-bottom: 20px;
     }
 
-    .sparkle {
-      color: var(--primary);
-      font-size: 20px;
-      letter-spacing: 4px;
-      margin-bottom: 4px;
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--primary);
+      color: #fff;
+      margin-bottom: 8px;
     }
 
-    .event-title {
+    .title {
       font-family: 'Cinzel', serif;
       font-size: 26px;
       font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
       color: var(--primary);
+      letter-spacing: 1px;
+      line-height: 1.2;
     }
 
     .subtitle {
       font-size: 13px;
       color: var(--muted);
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
-    .upload-card {
+    .upload-container {
       width: 100%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
+      border-radius: 18px;
       padding: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
       margin-bottom: 18px;
     }
 
-    .upload-btn {
+    .btn-upload {
       width: 100%;
       background: var(--primary);
       color: #fff;
@@ -95,10 +101,9 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    .upload-btn:active { transform: scale(0.98); }
+    .btn-upload:active { transform: scale(0.98); }
 
     .tabs {
       display: flex;
@@ -110,31 +115,31 @@
       border: 1px solid var(--card-border);
     }
 
-    .tab-btn {
+    .tab {
       flex: 1;
       padding: 10px;
       border-radius: 8px;
       border: none;
       background: transparent;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--muted);
       cursor: pointer;
     }
 
-    .tab-btn.active {
+    .tab.active {
       background: var(--primary);
       color: #fff;
     }
 
-    .gallery-grid {
+    .gallery {
       width: 100%;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
     }
 
-    .gallery-item {
+    .media-card {
       position: relative;
       border-radius: 14px;
       overflow: hidden;
@@ -144,14 +149,14 @@
       cursor: pointer;
     }
 
-    .gallery-item img, .gallery-item video {
+    .media-card img, .media-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .empty-state {
+    .empty {
       grid-column: span 2;
       text-align: center;
       padding: 40px 16px;
@@ -164,7 +169,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.94);
+      background: rgba(0, 0, 0, 0.95);
       z-index: 9999;
       flex-direction: column;
       align-items: center;
@@ -172,9 +177,9 @@
       padding: 16px;
     }
 
-    .lightbox.show { display: flex; }
+    .lightbox.active { display: flex; }
 
-    .lightbox-body {
+    .lightbox-content {
       max-width: 100%;
       max-height: 80vh;
       display: flex;
@@ -182,14 +187,14 @@
       justify-content: center;
     }
 
-    .lightbox-body img, .lightbox-body video {
+    .lightbox-content img, .lightbox-content video {
       max-width: 100%;
       max-height: 80vh;
       border-radius: 12px;
       object-fit: contain;
     }
 
-    .lightbox-actions {
+    .lightbox-controls {
       display: flex;
       gap: 12px;
       margin-top: 16px;
@@ -208,185 +213,175 @@
       gap: 6px;
     }
 
-    .btn-dl { background: var(--primary); color: #fff; }
-    .btn-close { background: rgba(255,255,255,0.2); color: #fff; }
+    .btn-save { background: var(--primary); color: #fff; }
+    .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
-    #fileInput { display: none; }
+    #picker { display: none; }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="wrapper">
     <div class="header">
-      <div class="sparkle">✦ ✧ ✦</div>
-      <h1 class="event-title" id="eventTitle">Live Moments</h1>
-      <p class="subtitle">Share your live memories with everyone</p>
+      <div class="badge" id="eventBadge">Event</div>
+      <h1 class="title" id="eventTitle">Live Moments</h1>
+      <p class="subtitle" id="eventSub">Capture and share live memories</p>
     </div>
 
-    <div class="upload-card">
-      <button class="upload-btn" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-container">
+      <button class="btn-upload" id="uploadAction" onclick="document.getElementById('picker').click()">
         <span>📸 Add Photo / Video</span>
       </button>
-      <input type="file" id="fileInput" accept="image/*,video/*" multiple />
+      <input type="file" id="picker" accept="image/*,video/*" multiple />
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" id="tabPhoto" onclick="switchTab('photo')">📷 Photos (<span id="photoCount">0</span>)</button>
-      <button class="tab-btn" id="tabVideo" onclick="switchTab('video')">🎥 Videos (<span id="videoCount">0</span>)</button>
+      <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
+      <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
     </div>
 
-    <div class="gallery-grid" id="galleryGrid">
-      <div class="empty-state">Loading live album...</div>
+    <div class="gallery" id="mediaGrid">
+      <div class="empty">Loading live stream...</div>
     </div>
   </div>
 
-  <div class="lightbox" id="modalBox" onclick="if(event.target === this) closeModal()">
-    <div class="lightbox-body" id="modalTarget"></div>
-    <div class="lightbox-actions">
-      <a href="#" id="modalDl" download class="btn-ctrl btn-dl">⬇ Download</a>
-      <button class="btn-ctrl btn-close" onclick="closeModal()">✕ Close</button>
+  <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
+    <div class="lightbox-content" id="viewerTarget"></div>
+    <div class="lightbox-controls">
+      <a href="#" id="viewerDl" download class="btn-ctrl btn-save">⬇ Download</a>
+      <button class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
     </div>
   </div>
 
   <script>
-    const API_BASE = "https://nameless-king-3d15.marwanselim360.workers.dev";
-    
-    // Dynamic URL Customizer (No code changes needed!)
-    const urlParams = new URLSearchParams(window.location.search);
-    const rawName = urlParams.get('event') || 'Omar_Nour';
-    const primaryColor = '#' + (urlParams.get('p') || '4a6342');
-    const bgColor = '#' + (urlParams.get('bg') || 'f8faf7');
+    const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
+    const q = new URLSearchParams(window.location.search);
 
-    const eventName = decodeURIComponent(rawName.replace(/_/g, ' '));
-    const eventTag = '#event_' + rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const tag = '#event_' + (q.get('event') || 'general').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const title = q.get('title') || 'Live Event';
+    const type = q.get('type') || 'Celebration';
+    const sub = q.get('sub') || 'Live shared album';
+    const pCol = '#' + (q.get('p') || '4a6342');
+    const bCol = '#' + (q.get('bg') || 'f8faf7');
 
-    document.getElementById('eventTitle').innerText = eventName;
-    document.documentElement.style.setProperty('--primary', primaryColor);
-    document.documentElement.style.setProperty('--bg', bgColor);
+    document.getElementById('eventTitle').innerText = decodeURIComponent(title);
+    document.getElementById('eventBadge').innerText = decodeURIComponent(type);
+    document.getElementById('eventSub').innerText = decodeURIComponent(sub);
+    document.documentElement.style.setProperty('--primary', pCol);
+    document.documentElement.style.setProperty('--bg', bCol);
 
-    // Auto detect dark/light background
     function isDark(hex) {
-      const c = hex.substring(1);
+      const c = hex.replace('#', '');
       const rgb = parseInt(c, 16);
       const r = (rgb >> 16) & 0xff;
       const g = (rgb >> 8) & 0xff;
       const b = (rgb >> 0) & 0xff;
-      const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      return luma < 128;
+      return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128;
     }
-    if (isDark(bgColor)) {
-      document.body.classList.add('dark-mode');
-    }
+    if (isDark(bCol)) document.body.classList.add('dark-theme');
 
-    let activeTab = 'photo';
-    let photos = [];
-    let videos = [];
+    let current = 'p';
+    let photoData = [];
+    let videoData = [];
 
-    function switchTab(t) {
-      activeTab = t;
-      document.getElementById('tabPhoto').classList.toggle('active', t === 'photo');
-      document.getElementById('tabVideo').classList.toggle('active', t === 'video');
-      render();
+    function switchMedia(t) {
+      current = t;
+      document.getElementById('tabP').classList.toggle('active', t === 'p');
+      document.getElementById('tabV').classList.toggle('active', t === 'v');
+      draw();
     }
 
-    function openModal(url, type) {
-      const box = document.getElementById('modalBox');
-      const target = document.getElementById('modalTarget');
-      const dl = document.getElementById('modalDl');
+    function openViewer(url, isVideo) {
+      const box = document.getElementById('viewer');
+      const target = document.getElementById('viewerTarget');
+      const dl = document.getElementById('viewerDl');
       dl.href = url;
-      dl.setAttribute('download', type === 'video' ? 'video.mp4' : 'photo.jpg');
+      dl.setAttribute('download', isVideo ? 'video.mp4' : 'photo.jpg');
 
-      if (type === 'video') {
+      if (isVideo) {
         target.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
       } else {
         target.innerHTML = `<img src="${url}" alt="Memory" />`;
       }
-      box.classList.add('show');
+      box.classList.add('active');
     }
 
-    function closeModal() {
-      const box = document.getElementById('modalBox');
-      document.getElementById('modalTarget').innerHTML = '';
-      box.classList.remove('show');
+    function closeViewer() {
+      document.getElementById('viewerTarget').innerHTML = '';
+      document.getElementById('viewer').classList.remove('active');
     }
 
-    function render() {
-      const grid = document.getElementById('galleryGrid');
+    function draw() {
+      const grid = document.getElementById('mediaGrid');
       grid.innerHTML = '';
-      const list = activeTab === 'photo' ? photos : videos;
+      const list = current === 'p' ? photoData : videoData;
 
       if (!list.length) {
-        grid.innerHTML = `<div class="empty-state">No ${activeTab}s uploaded yet.<br>Be the first to capture the moment!</div>`;
+        grid.innerHTML = `<div class="empty">No ${current === 'p' ? 'photos' : 'videos'} uploaded yet.<br>Be the first to share!</div>`;
         return;
       }
 
       list.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'gallery-item';
+        const d = document.createElement('div');
+        d.className = 'media-card';
         if (item.type === 'video') {
-          div.innerHTML = `<video src="${item.url}" playsinline preload="metadata" muted></video>`;
-          div.onclick = () => openModal(item.url, 'video');
+          d.innerHTML = `<video src="${item.url}" playsinline preload="metadata" muted></video>`;
+          d.onclick = () => openViewer(item.url, true);
         } else {
-          div.innerHTML = `<img src="${item.url}" loading="lazy" alt="Photo" />`;
-          div.onclick = () => openModal(item.url, 'photo');
+          d.innerHTML = `<img src="${item.url}" loading="lazy" alt="Media" />`;
+          d.onclick = () => openViewer(item.url, false);
         }
-        grid.appendChild(div);
+        grid.appendChild(d);
       });
     }
 
-    async function syncData() {
+    async function fetchStream() {
       try {
-        const res = await fetch(`${API_BASE}?tag=${encodeURIComponent(eventTag)}`);
-        const json = await res.json();
-        if (json.ok && json.result) {
+        const res = await fetch(`${API}?tag=${encodeURIComponent(tag)}`);
+        const data = await res.json();
+        if (data.ok && data.result) {
           const p = [];
           const v = [];
-          json.result.forEach(item => {
-            const entry = {
-              url: `${API_BASE}?file_id=${item.file_id}`,
-              type: item.type
-            };
+          data.result.forEach(item => {
+            const entry = { url: `${API}?file_id=${item.file_id}`, type: item.type };
             if (item.type === 'video') v.push(entry);
             else p.push(entry);
           });
-          photos = p;
-          videos = v;
-          document.getElementById('photoCount').innerText = p.length;
-          document.getElementById('videoCount').innerText = v.length;
-          render();
+          photoData = p;
+          videoData = v;
+          document.getElementById('countP').innerText = p.length;
+          document.getElementById('countV').innerText = v.length;
+          draw();
         }
       } catch (e) {}
     }
 
-    document.getElementById('fileInput').addEventListener('change', async (e) => {
+    document.getElementById('picker').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      const btn = document.getElementById('uploadBtn');
+      const btn = document.getElementById('uploadAction');
       btn.innerHTML = `<span>⏳ Uploading...</span>`;
       btn.disabled = true;
 
       for (const file of files) {
         const isVideo = file.type.startsWith('video');
-        const form = new FormData();
-        form.append('file', file);
-        form.append('tag', eventTag);
-        form.append('is_video', isVideo ? 'true' : 'false');
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('tag', tag);
+        fd.append('is_video', isVideo ? 'true' : 'false');
 
         try {
-          const res = await fetch(API_BASE, { method: 'POST', body: form });
-          const data = await res.json();
-          if (data.ok && data.item) {
-            const entry = {
-              url: `${API_BASE}?file_id=${data.item.file_id}`,
-              type: data.item.type
-            };
+          const res = await fetch(API, { method: 'POST', body: fd });
+          const resData = await res.json();
+          if (resData.ok && resData.item) {
+            const entry = { url: `${API}?file_id=${resData.item.file_id}`, type: resData.item.type };
             if (isVideo) {
-              videos.unshift(entry);
-              switchTab('video');
+              videoData.unshift(entry);
+              switchMedia('v');
             } else {
-              photos.unshift(entry);
-              switchTab('photo');
+              photoData.unshift(entry);
+              switchMedia('p');
             }
           }
         } catch (err) {}
@@ -395,11 +390,11 @@
       btn.innerHTML = `<span>📸 Add Photo / Video</span>`;
       btn.disabled = false;
       e.target.value = '';
-      syncData();
+      fetchStream();
     });
 
-    syncData();
-    setInterval(syncData, 3500);
+    fetchStream();
+    setInterval(fetchStream, 3500);
   </script>
 </body>
 </html>

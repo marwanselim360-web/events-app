@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Event QR & Theme Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Event QR & Gallery Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0f172a;
-      color: #f8fafc;
+      background: #090d16;
+      color: #f1f5f9;
       font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
       padding: 30px 16px;
@@ -18,44 +18,44 @@
       justify-content: center;
       align-items: center;
     }
-    .card {
-      background: #1e293b;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 32px;
+    .panel {
+      background: #131b2e;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 28px;
       width: 100%;
       max-width: 520px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
     h1 {
       font-family: 'Cinzel', serif;
       font-size: 24px;
       text-align: center;
       color: #38bdf8;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    p.sub {
+    p.desc {
       text-align: center;
       font-size: 13px;
       color: #94a3b8;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     label {
       display: block;
       font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-weight: 700;
       color: #cbd5e1;
+      margin-bottom: 6px;
     }
     input[type="text"], select {
       width: 100%;
-      padding: 12px 16px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
+      padding: 12px 14px;
+      background: #090d16;
+      border: 1px solid #26334d;
+      border-radius: 10px;
       color: #fff;
       font-size: 14px;
       outline: none;
@@ -63,190 +63,198 @@
     input[type="text"]:focus, select:focus {
       border-color: #38bdf8;
     }
-    .color-pickers {
+    .color-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 10px;
+      gap: 10px;
     }
-    .color-field {
+    .color-item {
+      background: #090d16;
+      border: 1px solid #26334d;
+      border-radius: 10px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: #0f172a;
-      padding: 8px 12px;
-      border-radius: 12px;
-      border: 1px solid #334155;
+      gap: 8px;
     }
     input[type="color"] {
       border: none;
       width: 32px;
       height: 32px;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       background: transparent;
     }
-    .btn-generate {
+    .btn-create {
       width: 100%;
       padding: 14px;
       background: linear-gradient(135deg, #38bdf8, #0284c7);
       border: none;
-      border-radius: 14px;
+      border-radius: 12px;
       color: #000;
-      font-weight: 700;
       font-size: 15px;
+      font-weight: 800;
       cursor: pointer;
       margin-top: 10px;
-      transition: opacity 0.2s;
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.3);
     }
-    .btn-generate:hover { opacity: 0.9; }
+    .btn-create:active { transform: scale(0.98); }
 
-    .result-section {
+    .result {
       display: none;
       margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid #334155;
+      padding-top: 20px;
+      border-top: 1px solid #26334d;
       text-align: center;
     }
-    .qr-wrapper {
-      background: #fff;
-      padding: 16px;
-      border-radius: 16px;
+    .qr-box {
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 14px;
       display: inline-block;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .link-box {
-      background: #0f172a;
+    .link-display {
+      background: #090d16;
+      border: 1px solid #26334d;
       padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #334155;
+      border-radius: 8px;
       font-size: 12px;
-      word-break: break-all;
       color: #38bdf8;
-      margin-bottom: 12px;
+      word-break: break-all;
+      margin-bottom: 14px;
     }
-    .action-links {
+    .btn-row {
       display: flex;
       gap: 10px;
     }
-    .btn-action {
+    .action-btn {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       border-radius: 10px;
       font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
+      font-weight: 700;
       cursor: pointer;
-      border: 1px solid #38bdf8;
-      background: rgba(56, 189, 248, 0.1);
-      color: #38bdf8;
+      text-decoration: none;
       display: inline-flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      border: 1px solid #38bdf8;
     }
-    .btn-action.primary {
+    .action-btn.primary {
       background: #38bdf8;
       color: #000;
+    }
+    .action-btn.secondary {
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h1>Event Generator</h1>
-    <p class="sub">Create custom QR codes & live album links instantly</p>
+  <div class="panel">
+    <h1>Event Studio</h1>
+    <p class="desc">Generate live dynamic event galleries & instant QR codes</p>
 
     <div class="form-group">
-      <label>Wedding / Event Name</label>
-      <input type="text" id="evName" placeholder="e.g. Omar & Nour" value="Omar & Nour" />
-    </div>
-
-    <div class="form-group">
-      <label>Preset Aesthetic Themes</label>
-      <select id="presetSelect" onchange="applyPreset()">
-        <option value="custom">Custom Colors (Pick Below)</option>
-        <option value="olive_gold" selected>🌿 Olive Green & Gold (White Theme)</option>
-        <option value="emerald_luxury">💎 Emerald Green & Gold (Dark Luxury)</option>
-        <option value="classic_gold">✨ Pure White & Royal Gold</option>
-        <option value="midnight_blue">🌌 Midnight Navy & Silver Blue</option>
-        <option value="rose_elegance">🌸 Rose Gold & Velvet Noir</option>
+      <label>Event Category / Type</label>
+      <select id="evType">
+        <option value="Wedding">💍 Wedding</option>
+        <option value="Engagement">💍 Engagement</option>
+        <option value="Birthday">🎂 Birthday Party</option>
+        <option value="Real Estate Launch">🏢 Real Estate Launch</option>
+        <option value="Corporate Event">💼 Corporate / Conference</option>
+        <option value="Concert">🎵 Concert / Music Festival</option>
+        <option value="Graduation">🎓 Graduation Ceremony</option>
+        <option value="VIP Gathering">⭐ VIP Exclusive Event</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label>Custom Color Palette</label>
-      <div class="color-pickers">
-        <div class="color-field">
-          <input type="color" id="primaryCol" value="#4a6342" />
-          <span style="font-size: 12px;">Primary / Accent</span>
+      <label>Event Name / Title</label>
+      <input type="text" id="evTitle" placeholder="e.g. Omar & Nour" value="Omar & Nour" />
+    </div>
+
+    <div class="form-group">
+      <label>Subtitle / Note (Optional)</label>
+      <input type="text" id="evSub" placeholder="e.g. Share your live memories" value="Share your live moments with us" />
+    </div>
+
+    <div class="form-group">
+      <label>Color Customization</label>
+      <div class="color-grid">
+        <div class="color-item">
+          <input type="color" id="primaryColor" value="#4a6342" onchange="syncHex('primaryColor', 'primaryHex')" />
+          <div>
+            <div style="font-size: 11px; color:#94a3b8;">Primary Color</div>
+            <input type="text" id="primaryHex" value="#4a6342" style="padding:4px; font-size:12px;" onchange="syncColor('primaryHex', 'primaryColor')" />
+          </div>
         </div>
-        <div class="color-field">
-          <input type="color" id="bgCol" value="#f8faf7" />
-          <span style="font-size: 12px;">Page Background</span>
+        <div class="color-item">
+          <input type="color" id="bgColor" value="#f8faf7" onchange="syncHex('bgColor', 'bgHex')" />
+          <div>
+            <div style="font-size: 11px; color:#94a3b8;">Background Color</div>
+            <input type="text" id="bgHex" value="#f8faf7" style="padding:4px; font-size:12px;" onchange="syncColor('bgHex', 'bgColor')" />
+          </div>
         </div>
       </div>
     </div>
 
-    <button class="btn-generate" onclick="generateQR()">⚡ Generate Live Album & QR</button>
+    <button class="btn-create" onclick="generateSystem()">⚡ Generate Live QR & Link</button>
 
-    <div class="result-section" id="resultBox">
-      <div class="qr-wrapper" id="qrcode"></div>
-      <div class="link-box" id="albumLink"></div>
-      <div class="action-links">
-        <a href="#" id="openBtn" target="_blank" class="btn-action primary">🚀 Open Album</a>
-        <button onclick="copyLink()" class="btn-action">📋 Copy Link</button>
+    <div class="result" id="resultArea">
+      <div class="qr-box" id="qrcode"></div>
+      <div class="link-display" id="generatedLink"></div>
+      <div class="btn-row">
+        <a href="#" id="openLinkBtn" target="_blank" class="action-btn primary">🚀 Open Album</a>
+        <button onclick="copyGeneratedLink()" class="action-btn secondary">📋 Copy Link</button>
       </div>
     </div>
   </div>
 
   <script>
-    const presets = {
-      olive_gold: { primary: "#4a6342", bg: "#f8faf7" },
-      emerald_luxury: { primary: "#10b981", bg: "#06281e" },
-      classic_gold: { primary: "#c2a649", bg: "#ffffff" },
-      midnight_blue: { primary: "#38bdf8", bg: "#0b1329" },
-      rose_elegance: { primary: "#e07a5f", bg: "#1f1d24" }
-    };
-
-    function applyPreset() {
-      const val = document.getElementById('presetSelect').value;
-      if (val !== 'custom' && presets[val]) {
-        document.getElementById('primaryCol').value = presets[val].primary;
-        document.getElementById('bgCol').value = presets[val].bg;
+    function syncHex(colId, hexId) {
+      document.getElementById(hexId).value = document.getElementById(colId).value;
+    }
+    function syncColor(hexId, colId) {
+      const val = document.getElementById(hexId).value;
+      if (val.startsWith('#') && (val.length === 7 || val.length === 4)) {
+        document.getElementById(colId).value = val;
       }
     }
 
-    function generateQR() {
-      const name = document.getElementById('evName').value.trim() || 'Wedding';
-      const pCol = document.getElementById('primaryCol').value.replace('#', '');
-      const bCol = document.getElementById('bgCol').value.replace('#', '');
-      const rawTag = name.replace(/\s+/g, '_');
+    function generateSystem() {
+      const type = document.getElementById('evType').value;
+      const title = document.getElementById('evTitle').value.trim() || 'Live Event';
+      const sub = document.getElementById('evSub').value.trim() || 'Live Shared Album';
+      
+      let pCol = document.getElementById('primaryHex').value.replace('#', '').trim();
+      let bCol = document.getElementById('bgHex').value.replace('#', '').trim();
+      if (!pCol) pCol = '4a6342';
+      if (!bCol) bCol = 'f8faf7';
 
-      // رابط الـ GitHub Pages الأساسي بتاعك
-      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-      const fullUrl = `${baseUrl}/index.html?event=${encodeURIComponent(rawTag)}&p=${pCol}&bg=${bCol}`;
+      const cleanTag = (title + '_' + type).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
 
-      document.getElementById('albumLink').innerText = fullUrl;
-      document.getElementById('openBtn').href = fullUrl;
+      // الرابط الرسمي الدائم على GitHub Pages ليعمل على أي موبايل
+      const hostUrl = "https://marwanselim360-web.github.io/events-app";
+      const fullUrl = `${hostUrl}/index.html?event=${cleanTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
 
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
+      document.getElementById('generatedLink').innerText = fullUrl;
+      document.getElementById('openLinkBtn').href = fullUrl;
+
+      const qrBox = document.getElementById('qrcode');
+      qrBox.innerHTML = '';
+      new QRCode(qrBox, {
         text: fullUrl,
-        width: 180,
-        height: 180,
+        width: 200,
+        height: 200,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
       });
 
-      document.getElementById('resultBox').style.display = 'block';
-    }
-
-    function copyLink() {
-      const text = document.getElementById('albumLink').innerText;
-      navigator.clipboard.writeText(text);
-      alert('Link copied to clipboard!');
+      document.getElementById('resultArea').style.display = 'block';
     }
   </script>
 </body>
