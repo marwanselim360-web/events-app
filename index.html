@@ -46,7 +46,7 @@
     }
 
     .header { text-align: center; margin-bottom: 22px; }
-    .wedding-icon { font-size: 34px; margin-bottom: 6px; display: inline-block; color: var(--gold); }
+    .wedding-icon { font-size: 38px; margin-bottom: 6px; display: inline-block; color: var(--gold); }
     .title {
       font-family: 'Cinzel', serif;
       font-size: 26px;
@@ -263,9 +263,31 @@
     const tag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
     const title = q.get('title') || decodeURIComponent(rawEvent.replace(/_/g, ' '));
     const sub = q.get('sub') || 'Share your live moments with us';
+    const eventType = (q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
+    // اختيار الأيقونة الذكية المناسبة لكل نوع إيفينت
+    const icons = {
+      'wedding': '💍',
+      'engagement': '💎',
+      'birthday': '🎂',
+      'real estate': '🏢',
+      'corporate': '💼',
+      'concert': '🎤',
+      'graduation': '🎓',
+      'vip': '⭐'
+    };
+
+    let matchedIcon = '💍';
+    for (const key in icons) {
+      if (eventType.includes(key)) {
+        matchedIcon = icons[key];
+        break;
+      }
+    }
+
+    document.getElementById('eventIcon').innerText = matchedIcon;
     document.getElementById('eventTitle').innerText = decodeURIComponent(title);
     document.getElementById('eventSub').innerText = decodeURIComponent(sub);
     document.documentElement.style.setProperty('--primary', pCol);
@@ -308,7 +330,6 @@
       }
     }
 
-    // تنزيل مباشر حقيقي للموبايل
     document.getElementById('btnDl').onclick = async (e) => {
       e.stopPropagation();
       if (!currentUrl) return;
