@@ -166,6 +166,7 @@
       font-size: 14px;
     }
 
+    /* Lightbox */
     .lightbox {
       display: none;
       position: fixed;
@@ -181,16 +182,17 @@
 
     .lightbox-content {
       max-width: 100%;
-      max-height: 75vh;
+      max-height: 70vh;
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
+      margin-bottom: 20px;
     }
 
     .lightbox-content img, .lightbox-content video {
       max-width: 100%;
-      max-height: 75vh;
+      max-height: 70vh;
       border-radius: 12px;
       object-fit: contain;
     }
@@ -198,17 +200,16 @@
     .lightbox-controls {
       display: flex;
       gap: 12px;
-      margin-top: 20px;
+      z-index: 10000;
     }
 
     .btn-ctrl {
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: 30px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       border: none;
       cursor: pointer;
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -281,6 +282,7 @@
     let photoData = [];
     let videoData = [];
     let currentUrl = '';
+    let isCurrentVideo = false;
 
     function switchMedia(t) {
       current = t;
@@ -293,9 +295,9 @@
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
       currentUrl = url;
+      isCurrentVideo = isVideo;
 
       if (isVideo) {
-        // بدون autoplay وبأمر play() المباشر لتشغيل iOS فوراً
         target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline preload="auto"></video>`;
         box.classList.add('active');
         const v = document.getElementById('activeVid');
@@ -306,9 +308,32 @@
       }
     }
 
-    document.getElementById('btnDl').onclick = () => {
+    // تنزيل مباشر حقيقي للموبايل
+    document.getElementById('btnDl').onclick = async (e) => {
+      e.stopPropagation();
       if (!currentUrl) return;
-      window.location.href = `${currentUrl}&dl=1`;
+
+      const btn = document.getElementById('btnDl');
+      const oldText = btn.innerHTML;
+      btn.innerHTML = "⏳ Downloading...";
+
+      try {
+        const response = await fetch(currentUrl);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = isCurrentVideo ? `video_${Date.now()}.mp4` : `photo_${Date.now()}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      } catch (err) {
+        window.open(`${currentUrl}&dl=1`, '_blank');
+      }
+
+      btn.innerHTML = oldText;
     };
 
     function closeViewer() {
