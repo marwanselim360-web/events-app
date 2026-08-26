@@ -16,10 +16,9 @@
       background-color: #0f172a;
       color: #f8fafc;
       min-height: 100vh;
-      padding-bottom: 40px;
+      padding-bottom: 80px;
     }
 
-    /* Header */
     header {
       position: sticky;
       top: 0;
@@ -34,7 +33,6 @@
     header h1 {
       font-size: 1.25rem;
       font-weight: 600;
-      letter-spacing: 0.5px;
       background: linear-gradient(135deg, #fbbf24, #f59e0b);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -46,7 +44,6 @@
       margin-top: 4px;
     }
 
-    /* Gallery Grid */
     .gallery-container {
       max-width: 1200px;
       margin: 0 auto;
@@ -55,14 +52,14 @@
 
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
 
     @media (min-width: 768px) {
       .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 14px;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
       }
     }
 
@@ -70,10 +67,9 @@
       position: relative;
       width: 100%;
       aspect-ratio: 1 / 1;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
       background-color: #1e293b;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
       cursor: pointer;
     }
 
@@ -83,50 +79,29 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 0.2s ease;
     }
 
-    .media-card:hover img,
-    .media-card:hover video {
-      transform: scale(1.04);
+    /* Floating Upload Button */
+    .upload-btn {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 14px 28px;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 10px 25px rgba(251, 191, 36, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 60;
     }
 
-    .video-badge {
-      position: absolute;
-      bottom: 6px;
-      right: 6px;
-      background: rgba(0, 0, 0, 0.7);
-      color: #fff;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      backdrop-filter: blur(4px);
-    }
-
-    /* Status & Loading */
-    .status-container {
-      text-align: center;
-      padding: 24px;
-      color: #94a3b8;
-      font-size: 0.9rem;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      border: 3px solid rgba(251, 191, 36, 0.2);
-      border-radius: 50%;
-      border-top-color: #fbbf24;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 8px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Modal / Lightbox */
+    /* Lightbox Modal */
     .modal {
       display: none;
       position: fixed;
@@ -135,13 +110,13 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(0, 0, 0, 0.95);
       align-items: center;
       justify-content: center;
     }
 
     .modal-content {
-      max-width: 90vw;
+      max-width: 95vw;
       max-height: 85vh;
       border-radius: 8px;
     }
@@ -165,132 +140,73 @@
 
   <main class="gallery-container">
     <div id="gallery" class="gallery-grid"></div>
-
-    <div id="status" class="status-container">
-      <div id="spinner" class="spinner"></div>
-      <div id="status-text">Loading live moments... ✨</div>
-    </div>
   </main>
 
-  <!-- Lightbox Modal -->
+  <label for="fileInput" class="upload-btn">
+    📷 Add Photos / Videos
+  </label>
+  <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display: none;">
+
+  <!-- Modal -->
   <div id="mediaModal" class="modal" onclick="closeModal()">
     <span class="close-btn">&times;</span>
     <div id="modalBody"></div>
   </div>
 
   <script>
-    /* ==========================================================
-       CONFIGURATION & STATE
-       ========================================================== */
-    const API_ENDPOINT = '/api/gallery'; // مسار الـ API بتاعك
-    const BATCH_SIZE = 24;               // عدد الصور في كل دفعة تحميل
-    
-    let currentPage = 1;
-    let isFetching = false;
-    let hasMore = true;
+    // صور تجريبية مبدئية عشان الديمو ميكونش فاضي للعميل
+    const sampleMedia = [
+      { type: 'image', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=500&auto=format&fit=crop' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=500&auto=format&fit=crop' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=500&auto=format&fit=crop' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=500&auto=format&fit=crop' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=500&auto=format&fit=crop' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=500&auto=format&fit=crop' }
+    ];
 
-    const galleryElement = document.getElementById('gallery');
-    const statusContainer = document.getElementById('status');
-    const spinner = document.getElementById('spinner');
-    const statusText = document.getElementById('status-text');
+    const gallery = document.getElementById('gallery');
 
-    /* ==========================================================
-       FETCH & RENDER LOGIC (Infinite Scroll)
-       ========================================================== */
-    async function loadMoreMedia() {
-      if (isFetching || !hasMore) return;
-      
-      isFetching = true;
-      spinner.style.display = 'inline-block';
-      statusText.innerText = 'Loading more moments... ✨';
-
-      try {
-        const response = await fetch(`${API_ENDPOINT}?page=${currentPage}&limit=${BATCH_SIZE}`);
-        const data = await response.json();
-
-        if (!data.media || data.media.length === 0) {
-          hasMore = false;
-          spinner.style.display = 'none';
-          statusText.innerText = 'You’ve reached the end of the album 🤍';
-          return;
-        }
-
-        renderItems(data.media);
-        currentPage++;
-
-      } catch (error) {
-        console.error('Error fetching media:', error);
-        statusText.innerText = 'Tap to retry loading ✨';
-      } finally {
-        isFetching = false;
-        if (hasMore) {
-          spinner.style.display = 'none';
-          statusText.innerText = '';
-        }
+    function renderMedia(item) {
+      const card = document.createElement('div');
+      card.className = 'media-card';
+      if (item.type === 'video') {
+        card.innerHTML = `<video src="${item.url}#t=0.001" preload="metadata" muted playsinline></video>`;
+        card.onclick = () => openModal('video', item.url);
+      } else {
+        card.innerHTML = `<img src="${item.url}" loading="lazy" alt="wedding moment">`;
+        card.onclick = () => openModal('image', item.url);
       }
+      gallery.prepend(card);
     }
 
-    function renderItems(items) {
-      const fragment = document.createDocumentFragment();
+    // عرض الصور المبدئية
+    sampleMedia.forEach(renderMedia);
 
-      items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'media-card';
-
-        if (item.type === 'video') {
-          card.innerHTML = `
-            <video src="${item.url}#t=0.001" preload="metadata" muted playsinline></video>
-            <span class="video-badge">▶ Video</span>
-          `;
-          card.onclick = () => openModal('video', item.url);
-        } else {
-          card.innerHTML = `
-            <img src="${item.url}" loading="lazy" alt="Guest photo">
-          `;
-          card.onclick = () => openModal('photo', item.url);
-        }
-
-        fragment.appendChild(card);
+    // رفع صور لايف من الموبايل في الديمو
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        const type = file.type.startsWith('video') ? 'video' : 'image';
+        renderMedia({ type, url });
       });
-
-      galleryElement.appendChild(fragment);
-    }
-
-    /* ==========================================================
-       SCROLL EVENT LISTENER
-       ========================================================== */
-    window.addEventListener('scroll', () => {
-      if ((window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 600)) {
-        loadMoreMedia();
-      }
     });
 
-    /* ==========================================================
-       LIGHTBOX / PREVIEW HANDLER
-       ========================================================== */
     function openModal(type, url) {
       const modal = document.getElementById('mediaModal');
-      const modalBody = document.getElementById('modalBody');
+      const body = document.getElementById('modalBody');
       modal.style.display = 'flex';
-
       if (type === 'video') {
-        modalBody.innerHTML = `<video class="modal-content" src="${url}" controls autoplay playsinline></video>`;
+        body.innerHTML = `<video class="modal-content" src="${url}" controls autoplay playsinline></video>`;
       } else {
-        modalBody.innerHTML = `<img class="modal-content" src="${url}" alt="Full size preview">`;
+        body.innerHTML = `<img class="modal-content" src="${url}">`;
       }
     }
 
     function closeModal() {
-      const modal = document.getElementById('mediaModal');
-      const modalBody = document.getElementById('modalBody');
-      modal.style.display = 'none';
-      modalBody.innerHTML = '';
+      document.getElementById('mediaModal').style.display = 'none';
+      document.getElementById('modalBody').innerHTML = '';
     }
-
-    // Initial Load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadMoreMedia();
-    });
   </script>
 </body>
 </html>
