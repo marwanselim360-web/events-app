@@ -325,11 +325,15 @@
     const FIXED_CHAT_ID = "-1003837109142";
 
     const q = new URLSearchParams(window.location.search);
+    const eventSlug = q.get('event') || 'default_event';
     const title = q.get('title') || 'Live Moments';
     const sub = q.get('sub') || 'Share your live moments with us';
     const eventType = (q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
+
+    const photoLimit = q.get('plimit') || 'unlimited';
+    const videoLimit = q.get('vlimit') || 'unlimited';
 
     const icons = {
       'wedding': '💍', 'engagement': '💎', 'birthday': '🎂',
@@ -457,7 +461,7 @@
 
     async function fetchStream() {
       try {
-        const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}&_t=${Date.now()}`);
+        const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}&event=${encodeURIComponent(eventSlug)}&_t=${Date.now()}`);
         const data = await res.json();
         if (data.ok && data.media) {
           const p = [];
@@ -524,15 +528,16 @@
       const fd = new FormData();
       fd.append("file", file);
       fd.append("chat_id", FIXED_CHAT_ID);
+      fd.append("event", eventSlug);
       fd.append("type", type);
 
       const res = await fetch(API, { method: "POST", body: fd });
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات العادية
+    // رفع الصور والفيديوهات العادية مع التحقق من الـ Limit
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
+      let files = Array.from(e.target.files);
       if (!files.length) return;
 
       const btn = document.getElementById('uploadAction');
@@ -541,6 +546,13 @@
 
       const tasks = files.map(async (file) => {
         const isVid = file.type.startsWith('video');
+        if (isVid && videoLimit !== 'unlimited' && videoData.length >= parseInt(videoLimit)) {
+          return null;
+        }
+        if (!isVid && photoLimit !== 'unlimited' && photoData.length >= parseInt(photoLimit)) {
+          return null;
+        }
+
         const processed = isVid ? file : await compressImage(file);
         return uploadToWorker(processed, isVid ? "video" : "photo");
       });
@@ -570,7 +582,7 @@
       fetchStream();
     });
 
-    // مسجل الصوت المتوافق مع iOS و Android
+    // مسجل الصوت
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
