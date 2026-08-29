@@ -40,9 +40,7 @@
       color: #94a3b8;
       margin-bottom: 20px;
     }
-    .form-group {
-      margin-bottom: 14px;
-    }
+    .form-group { margin-bottom: 14px; }
     .row-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -69,7 +67,6 @@
       border-color: #38bdf8;
     }
 
-    /* Feature Checkboxes */
     .features-box {
       background: #090d16;
       border: 1px solid #26334d;
@@ -145,10 +142,7 @@
       display: inline-block;
       margin-bottom: 14px;
     }
-    #qrCanvas {
-      display: block;
-      margin: 0 auto;
-    }
+    #qrCanvas { display: block; margin: 0 auto; }
     .link-display {
       background: #090d16;
       border: 1px solid #26334d;
@@ -211,8 +205,8 @@
       </div>
 
       <div class="form-group">
-        <label>Telegram Chat ID (Channel/Group)</label>
-        <input type="text" id="evChatId" placeholder="-100xxxxxxx" value="-100" />
+        <label>Event Date (Optional)</label>
+        <input type="date" id="evDate" />
       </div>
     </div>
 
@@ -224,7 +218,7 @@
 
       <div class="form-group">
         <label>Venue / Location (Optional)</label>
-        <input type="text" id="evVenue" placeholder="e.g. Four Seasons" />
+        <input type="text" id="evVenue" placeholder="e.g. Dusit Thani" />
       </div>
     </div>
 
@@ -294,14 +288,18 @@
       }
     }
 
+    function getUniqueCode() {
+      return Math.random().toString(36).substring(2, 6);
+    }
+
     let currentEventSlug = 'qr_event';
 
     function generateSystem() {
       try {
         const type = document.getElementById('evType').value;
-        const chatId = document.getElementById('evChatId').value.trim();
         const title = document.getElementById('evTitle').value.trim() || 'Live Event';
         const venue = document.getElementById('evVenue').value.trim();
+        const dateVal = document.getElementById('evDate').value;
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
         
         const allowVoice = document.getElementById('featVoice').checked;
@@ -310,15 +308,17 @@
         let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
         let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-        if (!chatId || chatId === '-100') {
-          alert('Please enter a valid Telegram Chat ID!');
-          return;
-        }
+        // توليد التاج التلقائي الخاص بالفرح
+        let cleanTagParts = [title.replace(/\s+/g, '')];
+        if (venue) cleanTagParts.push(venue.replace(/\s+/g, ''));
+        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
+        cleanTagParts.push(getUniqueCode());
 
-        currentEventSlug = title.replace(/[^a-zA-Z0-9]/g, '_');
+        const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
+        currentEventSlug = uniqueTag;
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        const fullUrl = `${hostUrl}/index.html?chat_id=${encodeURIComponent(chatId)}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
+        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
 
         document.getElementById('generatedLink').innerText = fullUrl;
         document.getElementById('openLinkBtn').href = fullUrl;
