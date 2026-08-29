@@ -378,7 +378,12 @@
         target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline autoplay style="max-height:70vh; width:100%;"></video>`;
         box.classList.add('active');
       } else if (type === 'voice') {
-        target.innerHTML = `<audio id="activeAud" src="${url}" controls autoplay style="width: 280px;"></audio>`;
+        target.innerHTML = `
+          <div style="background:#1e293b; padding:20px; border-radius:16px; display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <div style="font-size:32px;">🎙️</div>
+            <audio id="activeAud" src="${url}" controls autoplay playsinline style="width:260px;"></audio>
+          </div>
+        `;
         box.classList.add('active');
       } else {
         target.innerHTML = `<img src="${url}" alt="Memory" />`;
@@ -525,7 +530,7 @@
       return await res.json();
     }
 
-    // 1. رفع الصور والفيديوهات العادية
+    // رفع الصور والفيديوهات العادية
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -547,7 +552,7 @@
       fetchStream();
     });
 
-    // 2. رفع Video Wish
+    // رفع Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -565,7 +570,7 @@
       fetchStream();
     });
 
-    // 3. رفع Voice Note
+    // مسجل الصوت المتوافق مع iOS و Android
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -577,15 +582,29 @@
       if (!isRecording) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
+          
+          let options = {};
+          if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
+          } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm;codecs=opus' };
+          }
+
+          mediaRecorder = new MediaRecorder(stream, options);
           audioChunks = [];
 
-          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
           mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+            const recordedType = mediaRecorder.mimeType || 'audio/mp4';
+            const ext = recordedType.includes('mp4') ? 'm4a' : 'webm';
+            const audioBlob = new Blob(audioChunks, { type: recordedType });
             voiceTxt.innerText = "⏳ Sending...";
 
-            await uploadToWorker(audioBlob, "voice");
+            const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: recordedType });
+            await uploadToWorker(file, "voice");
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
