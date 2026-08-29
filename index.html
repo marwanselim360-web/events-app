@@ -30,7 +30,7 @@
       color: var(--text);
       font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
-      padding: 24px 14px 40px;
+      padding: 20px 14px 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -45,32 +45,35 @@
       align-items: center;
     }
 
-    .header { text-align: center; margin-bottom: 22px; }
-    .wedding-icon { font-size: 38px; margin-bottom: 6px; display: inline-block; color: var(--gold); }
+    .header { text-align: center; margin-bottom: 20px; }
+    .wedding-icon { font-size: 36px; margin-bottom: 4px; display: inline-block; color: var(--gold); }
     .title {
       font-family: 'Cinzel', serif;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
       color: var(--primary);
       letter-spacing: 2px;
       line-height: 1.2;
       text-transform: uppercase;
-      margin-top: 4px;
     }
     body.dark-theme .title { color: #ffffff; }
-    .subtitle { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-    .upload-container {
+    /* Action Grid for Uploads */
+    .actions-box {
       width: 100%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-      margin-bottom: 18px;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .btn-upload {
+    .btn-main-upload {
       width: 100%;
       background: var(--primary);
       color: #ffffff;
@@ -84,33 +87,69 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
-    .btn-upload:active { transform: scale(0.98); }
 
+    .sub-actions {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #fff;
+    }
+
+    .btn-video-wish { background: #3b82f6; }
+    .btn-voice { background: #e11d48; }
+
+    .btn-voice.recording {
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.96); opacity: 0.8; }
+    }
+
+    /* Tabs */
     .tabs {
       display: flex;
       width: 100%;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 4px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       border: 1px solid var(--card-border);
+      gap: 4px;
     }
 
     .tab {
       flex: 1;
-      padding: 10px;
+      padding: 9px 2px;
       border-radius: 8px;
       border: none;
       background: transparent;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--muted);
       cursor: pointer;
+      text-align: center;
     }
     .tab.active { background: var(--primary); color: #ffffff; }
 
+    /* Gallery Grid */
     .gallery {
       width: 100%;
       display: grid;
@@ -133,7 +172,7 @@
 
     .media-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .video-card-inner {
+    .card-badge-inner {
       width: 100%;
       height: 100%;
       display: flex;
@@ -145,11 +184,10 @@
       background: linear-gradient(135deg, #1e293b, #0f172a);
     }
 
-    .play-circle {
+    .badge-icon {
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -166,7 +204,7 @@
       font-size: 14px;
     }
 
-    /* Lightbox */
+    /* Lightbox Viewer */
     .lightbox {
       display: none;
       position: fixed;
@@ -204,9 +242,9 @@
     }
 
     .btn-ctrl {
-      padding: 14px 28px;
+      padding: 12px 24px;
       border-radius: 30px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       border: none;
       cursor: pointer;
@@ -218,7 +256,7 @@
     .btn-save { background: var(--primary); color: #fff; }
     .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
-    #picker { display: none; }
+    #pickerPhotos, #pickerVideoWish { display: none; }
   </style>
 </head>
 <body>
@@ -230,23 +268,41 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <div class="upload-container">
-      <button class="btn-upload" id="uploadAction" onclick="document.getElementById('picker').click()">
-        <span>📸 Add Photo / Video</span>
+    <div class="actions-box">
+      <!-- 1. زر رفع الصور الأساسي (Unlimited Multi-Select) -->
+      <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerPhotos').click()">
+        <span>📸 Upload Photos (Unlimited)</span>
       </button>
-      <input type="file" id="picker" accept="image/*,video/*" multiple />
+
+      <!-- 2. أزرار الـ Guestbook المنفصلة -->
+      <div class="sub-actions">
+        <button class="btn-action btn-video-wish" id="btnVideoWish" onclick="document.getElementById('pickerVideoWish').click()">
+          <span>🎥 Video Wish</span>
+        </button>
+        <button class="btn-action btn-voice" id="btnVoice" onclick="toggleVoiceRecording()">
+          <span id="voiceTxt">🎙️ Voice Note</span>
+        </button>
+      </div>
+
+      <!-- Inputs -->
+      <input type="file" id="pickerPhotos" accept="image/*" multiple />
+      <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
+    <!-- تابات التصفح -->
     <div class="tabs">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
-      <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
+      <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Wishes (<span id="countV">0</span>)</button>
+      <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
+    <!-- المعرض -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
+  <!-- Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -257,26 +313,33 @@
 
   <script>
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
-    const q = new URLSearchParams(window.location.search);
+    const BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
 
-    const rawEvent = q.get('event') || 'event';
-    const tag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const title = q.get('title') || decodeURIComponent(rawEvent.replace(/_/g, ' '));
+    const q = new URLSearchParams(window.location.search);
+    const chatId = q.get('chat_id') || q.get('event') || '';
+    const title = q.get('title') || 'Live Moments';
     const sub = q.get('sub') || 'Share your live moments with us';
     const eventType = (q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
-    // اختيار الأيقونة الذكية المناسبة لكل نوع إيفينت
+    // تفعيل/إخفاء الميزات بناءً على الباقة في الرابط
+    const allowVoice = q.get('voice') !== 'false';
+    const allowVideos = q.get('video') !== 'false';
+
+    if (!allowVoice) {
+      document.getElementById('btnVoice').style.display = 'none';
+      document.getElementById('tabA').style.display = 'none';
+    }
+    if (!allowVideos) {
+      document.getElementById('btnVideoWish').style.display = 'none';
+      document.getElementById('tabV').style.display = 'none';
+    }
+
     const icons = {
-      'wedding': '💍',
-      'engagement': '💎',
-      'birthday': '🎂',
-      'real estate': '🏢',
-      'corporate': '💼',
-      'concert': '🎤',
-      'graduation': '🎓',
-      'vip': '⭐'
+      'wedding': '💍', 'engagement': '💎', 'birthday': '🎂',
+      'real estate': '🏢', 'corporate': '💼', 'concert': '🎤',
+      'graduation': '🎓', 'vip': '⭐'
     };
 
     let matchedIcon = '💍';
@@ -303,27 +366,30 @@
     let current = 'p';
     let photoData = [];
     let videoData = [];
+    let audioData = [];
     let currentUrl = '';
-    let isCurrentVideo = false;
+    let currentType = 'photo';
 
     function switchMedia(t) {
       current = t;
       document.getElementById('tabP').classList.toggle('active', t === 'p');
       document.getElementById('tabV').classList.toggle('active', t === 'v');
+      document.getElementById('tabA').classList.toggle('active', t === 'a');
       draw();
     }
 
-    function openViewer(url, isVideo) {
+    function openViewer(url, type) {
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
       currentUrl = url;
-      isCurrentVideo = isVideo;
+      currentType = type;
 
-      if (isVideo) {
-        target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline preload="auto"></video>`;
+      if (type === 'video') {
+        target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline autoplay style="max-height:70vh;"></video>`;
         box.classList.add('active');
-        const v = document.getElementById('activeVid');
-        if (v) v.play().catch(() => {});
+      } else if (type === 'voice') {
+        target.innerHTML = `<audio id="activeAud" src="${url}" controls autoplay style="width: 280px;"></audio>`;
+        box.classList.add('active');
       } else {
         target.innerHTML = `<img src="${url}" alt="Memory" />`;
         box.classList.add('active');
@@ -345,7 +411,10 @@
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = blobUrl;
-        a.download = isCurrentVideo ? `video_${Date.now()}.mp4` : `photo_${Date.now()}.jpg`;
+        let ext = 'jpg';
+        if (currentType === 'video') ext = 'mp4';
+        if (currentType === 'voice') ext = 'ogg';
+        a.download = `memory_${Date.now()}.${ext}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(blobUrl);
@@ -360,7 +429,9 @@
     function closeViewer() {
       const target = document.getElementById('viewerTarget');
       const v = document.getElementById('activeVid');
+      const a = document.getElementById('activeAud');
       if (v) v.pause();
+      if (a) a.pause();
       target.innerHTML = '';
       document.getElementById('viewer').classList.remove('active');
     }
@@ -368,10 +439,13 @@
     function draw() {
       const grid = document.getElementById('mediaGrid');
       grid.innerHTML = '';
-      const list = current === 'p' ? photoData : videoData;
+      let list = photoData;
+      if (current === 'v') list = videoData;
+      if (current === 'a') list = audioData;
 
       if (!list.length) {
-        grid.innerHTML = `<div class="empty">No ${current === 'p' ? 'photos' : 'videos'} uploaded yet.<br>Be the first to share!</div>`;
+        let label = current === 'p' ? 'photos' : (current === 'v' ? 'video wishes' : 'voice messages');
+        grid.innerHTML = `<div class="empty">No ${label} uploaded yet.<br>Be the first to share!</div>`;
         return;
       }
 
@@ -380,77 +454,185 @@
         d.className = 'media-card';
         if (item.type === 'video') {
           d.innerHTML = `
-            <div class="video-card-inner">
-              <div class="play-circle">▶</div>
-              <span style="font-size:12px; font-weight:700;">Watch Video</span>
+            <div class="card-badge-inner">
+              <div class="badge-icon" style="background:#3b82f6;">🎥</div>
+              <span style="font-size:12px; font-weight:700;">Watch Wish</span>
             </div>
           `;
-          d.onclick = () => openViewer(item.url, true);
+          d.onclick = () => openViewer(item.url, 'video');
+        } else if (item.type === 'voice') {
+          d.innerHTML = `
+            <div class="card-badge-inner">
+              <div class="badge-icon" style="background:#e11d48;">🎙️</div>
+              <span style="font-size:12px; font-weight:700;">Listen Voice</span>
+            </div>
+          `;
+          d.onclick = () => openViewer(item.url, 'voice');
         } else {
-          d.innerHTML = `<img src="${item.url}" loading="lazy" alt="Photo" />`;
-          d.onclick = () => openViewer(item.url, false);
+          d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
+          d.onclick = () => openViewer(item.url, 'photo');
         }
         grid.appendChild(d);
       });
     }
 
     async function fetchStream() {
+      if (!chatId) return;
       try {
-        const res = await fetch(`${API}?tag=${encodeURIComponent(tag)}`);
+        const res = await fetch(`${API}?chat_id=${encodeURIComponent(chatId)}`);
         const data = await res.json();
-        if (data.ok && data.result) {
+        if (data.ok && data.media) {
           const p = [];
           const v = [];
-          data.result.forEach(item => {
-            const entry = { url: `${API}?file_id=${item.file_id}`, type: item.type };
-            if (item.type === 'video') v.push(entry);
-            else p.push(entry);
+          const a = [];
+          data.media.forEach(item => {
+            if (item.type === 'video') v.push(item);
+            else if (item.type === 'voice') a.push(item);
+            else p.push(item);
           });
           photoData = p;
           videoData = v;
+          audioData = a;
           document.getElementById('countP').innerText = p.length;
           document.getElementById('countV').innerText = v.length;
+          document.getElementById('countA').innerText = a.length;
           draw();
         }
       } catch (e) {}
     }
 
-    document.getElementById('picker').addEventListener('change', async (e) => {
+    // ضغط الصور السريع في ثوانٍ
+    async function compressImage(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1920;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file);
+            }, 'image/jpeg', 0.85);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // رفع الصور المتوازي (Unlimited Photos)
+    document.getElementById('pickerPhotos').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
-      if (!files.length) return;
+      if (!files.length || !chatId) return;
 
       const btn = document.getElementById('uploadAction');
-      btn.innerHTML = `<span>⏳ Uploading...</span>`;
+      btn.innerHTML = `<span>⏳ Uploading (${files.length})...</span>`;
       btn.disabled = true;
 
-      for (const file of files) {
-        const isVideo = file.type.startsWith('video');
+      const uploadTasks = files.map(async (file) => {
+        const compressed = await compressImage(file);
         const fd = new FormData();
-        fd.append('file', file);
-        fd.append('tag', tag);
-        fd.append('is_video', isVideo ? 'true' : 'false');
-
+        fd.append('chat_id', chatId);
+        fd.append('photo', compressed);
         try {
-          const res = await fetch(API, { method: 'POST', body: fd });
-          const resData = await res.json();
-          if (resData.ok && resData.item) {
-            const entry = { url: `${API}?file_id=${resData.item.file_id}`, type: resData.item.type };
-            if (isVideo) {
-              videoData.unshift(entry);
-              switchMedia('v');
-            } else {
-              photoData.unshift(entry);
-              switchMedia('p');
-            }
-          }
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
         } catch (err) {}
-      }
+      });
 
-      btn.innerHTML = `<span>📸 Add Photo / Video</span>`;
+      await Promise.allSettled(uploadTasks);
+
+      btn.innerHTML = `<span>📸 Upload Photos (Unlimited)</span>`;
       btn.disabled = false;
       e.target.value = '';
       fetchStream();
     });
+
+    // رفع Video Wish منفصل
+    document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file || !chatId) return;
+
+      const btn = document.getElementById('btnVideoWish');
+      btn.innerHTML = `<span>⏳ Sending...</span>`;
+      btn.disabled = true;
+
+      const fd = new FormData();
+      fd.append('chat_id', chatId);
+      fd.append('video', file);
+
+      try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: fd });
+      } catch (err) {}
+
+      btn.innerHTML = `<span>🎥 Video Wish</span>`;
+      btn.disabled = false;
+      e.target.value = '';
+      switchMedia('v');
+      fetchStream();
+    });
+
+    // مسجل الفويس نوت المباشر
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+
+    async function toggleVoiceRecording() {
+      if (!chatId) return alert('Chat ID is missing');
+      const voiceBtn = document.getElementById('btnVoice');
+      const voiceTxt = document.getElementById('voiceTxt');
+
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+            voiceTxt.innerText = "⏳ Sending...";
+            
+            const fd = new FormData();
+            fd.append('chat_id', chatId);
+            fd.append('voice', audioBlob, 'voice_wish.oga');
+
+            try {
+              await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVoice`, { method: 'POST', body: fd });
+            } catch (err) {}
+
+            voiceBtn.classList.remove('recording');
+            voiceTxt.innerText = "🎙️ Voice Note";
+            isRecording = false;
+            switchMedia('a');
+            fetchStream();
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          voiceBtn.classList.add('recording');
+          voiceTxt.innerText = "⏹ Stop & Send";
+        } catch (err) {
+          alert('Microphone access denied or not supported.');
+        }
+      } else {
+        mediaRecorder.stop();
+      }
+    }
 
     fetchStream();
     setInterval(fetchStream, 3500);

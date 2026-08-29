@@ -68,6 +68,32 @@
     input[type="text"]:focus, input[type="date"]:focus, select:focus {
       border-color: #38bdf8;
     }
+
+    /* Feature Checkboxes */
+    .features-box {
+      background: #090d16;
+      border: 1px solid #26334d;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 14px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .feature-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+
     .color-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -175,7 +201,7 @@
         <label>Event Type</label>
         <select id="evType">
           <option value="Wedding">💍 Wedding</option>
-          <option value="Engagement">💍 Engagement</option>
+          <option value="Engagement">💎 Engagement</option>
           <option value="Birthday">🎂 Birthday</option>
           <option value="Real Estate">🏢 Real Estate</option>
           <option value="Corporate">💼 Corporate</option>
@@ -185,8 +211,8 @@
       </div>
 
       <div class="form-group">
-        <label>Event Date (Optional)</label>
-        <input type="date" id="evDate" />
+        <label>Telegram Chat ID (Channel/Group)</label>
+        <input type="text" id="evChatId" placeholder="-100xxxxxxx" value="-100" />
       </div>
     </div>
 
@@ -199,6 +225,20 @@
       <div class="form-group">
         <label>Venue / Location (Optional)</label>
         <input type="text" id="evVenue" placeholder="e.g. Four Seasons" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Package Features</label>
+      <div class="features-box">
+        <label class="feature-item">
+          <input type="checkbox" id="featVoice" checked />
+          <span>🎙️ Voice Guestbook</span>
+        </label>
+        <label class="feature-item">
+          <input type="checkbox" id="featVideo" checked />
+          <span>🎥 Video Wishes</span>
+        </label>
       </div>
     </div>
 
@@ -254,38 +294,35 @@
       }
     }
 
-    function getUniqueCode() {
-      return Math.random().toString(36).substring(2, 6);
-    }
-
     let currentEventSlug = 'qr_event';
 
     function generateSystem() {
       try {
         const type = document.getElementById('evType').value;
+        const chatId = document.getElementById('evChatId').value.trim();
         const title = document.getElementById('evTitle').value.trim() || 'Live Event';
         const venue = document.getElementById('evVenue').value.trim();
-        const dateVal = document.getElementById('evDate').value;
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
         
+        const allowVoice = document.getElementById('featVoice').checked;
+        const allowVideo = document.getElementById('featVideo').checked;
+
         let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
         let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-        let cleanTagParts = [title.replace(/\s+/g, '_')];
-        if (venue) cleanTagParts.push(venue.replace(/\s+/g, '_'));
-        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
-        cleanTagParts.push(getUniqueCode());
+        if (!chatId || chatId === '-100') {
+          alert('Please enter a valid Telegram Chat ID!');
+          return;
+        }
 
-        const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
-        currentEventSlug = uniqueTag;
+        currentEventSlug = title.replace(/[^a-zA-Z0-9]/g, '_');
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&p=${pCol}&bg=${bCol}`;
+        const fullUrl = `${hostUrl}/index.html?chat_id=${encodeURIComponent(chatId)}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
 
         document.getElementById('generatedLink').innerText = fullUrl;
         document.getElementById('openLinkBtn').href = fullUrl;
 
-        // توليد الـ QR الفوري
         new QRious({
           element: document.getElementById('qrCanvas'),
           value: fullUrl,
