@@ -135,20 +135,21 @@
       100% { transform: scale(0.96); opacity: 0.8; }
     }
 
+    /* Tabs Bar Dynamic */
     .tabs {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: flex;
       width: 100%;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 4px;
       margin-bottom: 14px;
       border: 1px solid var(--card-border);
-      gap: 2px;
+      gap: 4px;
     }
 
     .tab {
-      padding: 8px 2px;
+      flex: 1;
+      padding: 8px 4px;
       border-radius: 8px;
       border: none;
       background: transparent;
@@ -158,8 +159,6 @@
       cursor: pointer;
       text-align: center;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     .tab.active { background: var(--primary); color: #ffffff; }
 
@@ -280,6 +279,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
+    <!-- رفع الصور والفيديوهات العادية -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span>📸 Add Photos & Videos</span>
@@ -287,6 +287,7 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
+    <!-- قسم الـ Guestbook المنفصل (يختفي بالكامل لو ملغي) -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -300,18 +301,21 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
-    <div class="tabs">
+    <!-- تابات المعرض -->
+    <div class="tabs" id="tabsBar">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
       <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
       <button class="tab" id="tabVW" onclick="switchMedia('vw')">🤳 Wishes (<span id="countVW">0</span>)</button>
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
+    <!-- المعرض -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
+  <!-- Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -334,6 +338,26 @@
 
     const photoLimit = q.get('plimit') || 'unlimited';
     const videoLimit = q.get('vlimit') || 'unlimited';
+
+    // فحص دقيق للـ Boolean لمنع الظهور عند التعطيل
+    const allowVoice = q.get('voice') === 'true';
+    const allowVideoWish = q.get('video') === 'true';
+
+    // إخفاء الأزرار والتابات تماماً
+    if (!allowVoice && !allowVideoWish) {
+      document.getElementById('guestbookSection').style.display = 'none';
+      document.getElementById('tabVW').style.display = 'none';
+      document.getElementById('tabA').style.display = 'none';
+    } else {
+      if (!allowVoice) {
+        document.getElementById('btnVoice').style.display = 'none';
+        document.getElementById('tabA').style.display = 'none';
+      }
+      if (!allowVideoWish) {
+        document.getElementById('btnVideoWish').style.display = 'none';
+        document.getElementById('tabVW').style.display = 'none';
+      }
+    }
 
     const icons = {
       'wedding': '💍', 'engagement': '💎', 'birthday': '🎂',
@@ -535,7 +559,7 @@
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات العادية مع التحقق من الـ Limit
+    // رفع الصور والفيديوهات العادية مع الـ Limits
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
