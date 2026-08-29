@@ -53,7 +53,7 @@
       color: #cbd5e1;
       margin-bottom: 5px;
     }
-    input[type="text"], input[type="date"], select {
+    input[type="text"], input[type="date"], input[type="number"], select {
       width: 100%;
       padding: 11px 13px;
       background: #090d16;
@@ -63,7 +63,7 @@
       font-size: 13px;
       outline: none;
     }
-    input[type="text"]:focus, input[type="date"]:focus, select:focus {
+    input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus {
       border-color: #38bdf8;
     }
 
@@ -205,9 +205,17 @@
       </div>
 
       <div class="form-group">
-        <label>Event Date (Optional)</label>
-        <input type="date" id="evDate" />
+        <label>Photos Limit Capacity</label>
+        <select id="evLimitSelect" onchange="toggleLimitInput()">
+          <option value="unlimited">♾️ Unlimited Photos</option>
+          <option value="custom">🔢 Custom Limit</option>
+        </select>
       </div>
+    </div>
+
+    <div class="form-group" id="customLimitBox" style="display: none;">
+      <label>Max Allowed Photos (Limit)</label>
+      <input type="number" id="evLimitValue" placeholder="e.g. 500" value="500" />
     </div>
 
     <div class="row-2">
@@ -278,6 +286,11 @@
   </div>
 
   <script>
+    function toggleLimitInput() {
+      const mode = document.getElementById('evLimitSelect').value;
+      document.getElementById('customLimitBox').style.display = mode === 'custom' ? 'block' : 'none';
+    }
+
     function syncHex(colId, hexId) {
       document.getElementById(hexId).value = document.getElementById(colId).value;
     }
@@ -299,26 +312,26 @@
         const type = document.getElementById('evType').value;
         const title = document.getElementById('evTitle').value.trim() || 'Live Event';
         const venue = document.getElementById('evVenue').value.trim();
-        const dateVal = document.getElementById('evDate').value;
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
         
+        const limitMode = document.getElementById('evLimitSelect').value;
+        const limitVal = limitMode === 'custom' ? document.getElementById('evLimitValue').value : 'unlimited';
+
         const allowVoice = document.getElementById('featVoice').checked;
         const allowVideo = document.getElementById('featVideo').checked;
 
         let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
         let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-        // توليد التاج التلقائي الخاص بالفرح
         let cleanTagParts = [title.replace(/\s+/g, '')];
         if (venue) cleanTagParts.push(venue.replace(/\s+/g, ''));
-        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
         cleanTagParts.push(getUniqueCode());
 
         const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
         currentEventSlug = uniqueTag;
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
+        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&limit=${limitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
 
         document.getElementById('generatedLink').innerText = fullUrl;
         document.getElementById('openLinkBtn').href = fullUrl;

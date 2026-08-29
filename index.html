@@ -59,7 +59,6 @@
     body.dark-theme .title { color: #ffffff; }
     .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-    /* 1. قسم رفع الميديا العادية */
     .upload-main-card {
       width: 100%;
       background: var(--card-bg);
@@ -86,7 +85,6 @@
       gap: 8px;
     }
 
-    /* 2. قسم الـ Guestbook المنفصل */
     .guestbook-card {
       width: 100%;
       background: var(--card-bg);
@@ -137,7 +135,6 @@
       100% { transform: scale(0.96); opacity: 0.8; }
     }
 
-    /* Tabs Bar (4 تابات منظمة) */
     .tabs {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -166,7 +163,6 @@
     }
     .tab.active { background: var(--primary); color: #ffffff; }
 
-    /* Gallery Grid */
     .gallery {
       width: 100%;
       display: grid;
@@ -221,7 +217,6 @@
       font-size: 14px;
     }
 
-    /* Lightbox Viewer */
     .lightbox {
       display: none;
       position: fixed;
@@ -327,34 +322,14 @@
 
   <script>
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
-    const BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
     const FIXED_CHAT_ID = "-1003837109142";
 
     const q = new URLSearchParams(window.location.search);
-    const rawEvent = q.get('event') || 'event';
-    const tag = '#event_' + rawEvent.toLowerCase().replace(/[^a-z0-9]/g, '');
-
     const title = q.get('title') || 'Live Moments';
     const sub = q.get('sub') || 'Share your live moments with us';
     const eventType = (q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
-
-    const allowVoice = q.get('voice') !== 'false';
-    const allowVideoWish = q.get('video') !== 'false';
-
-    if (!allowVoice && !allowVideoWish) {
-      document.getElementById('guestbookSection').style.display = 'none';
-    } else {
-      if (!allowVoice) {
-        document.getElementById('btnVoice').style.display = 'none';
-        document.getElementById('tabA').style.display = 'none';
-      }
-      if (!allowVideoWish) {
-        document.getElementById('btnVideoWish').style.display = 'none';
-        document.getElementById('tabVW').style.display = 'none';
-      }
-    }
 
     const icons = {
       'wedding': '💍', 'engagement': '💎', 'birthday': '🎂',
@@ -375,13 +350,6 @@
     document.getElementById('eventSub').innerText = decodeURIComponent(sub);
     document.documentElement.style.setProperty('--primary', pCol);
     document.documentElement.style.setProperty('--bg', bCol);
-
-    function isDark(hex) {
-      const c = hex.replace('#', '');
-      const rgb = parseInt(c, 16);
-      return (0.2126 * ((rgb >> 16) & 0xff) + 0.7152 * ((rgb >> 8) & 0xff) + 0.0722 * (rgb & 0xff)) < 128;
-    }
-    if (isDark(bCol)) document.body.classList.add('dark-theme');
 
     let current = 'p';
     let photoData = [];
@@ -407,7 +375,7 @@
       currentType = type;
 
       if (type === 'video' || type === 'videowish') {
-        target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline autoplay style="max-height:70vh;"></video>`;
+        target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline autoplay style="max-height:70vh; width:100%;"></video>`;
         box.classList.add('active');
       } else if (type === 'voice') {
         target.innerHTML = `<audio id="activeAud" src="${url}" controls autoplay style="width: 280px;"></audio>`;
@@ -418,34 +386,9 @@
       }
     }
 
-    document.getElementById('btnDl').onclick = async (e) => {
-      e.stopPropagation();
+    document.getElementById('btnDl').onclick = () => {
       if (!currentUrl) return;
-
-      const btn = document.getElementById('btnDl');
-      const oldText = btn.innerHTML;
-      btn.innerHTML = "⏳ Downloading...";
-
-      try {
-        const response = await fetch(currentUrl);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = blobUrl;
-        let ext = 'jpg';
-        if (currentType === 'video' || currentType === 'videowish') ext = 'mp4';
-        if (currentType === 'voice') ext = 'ogg';
-        a.download = `memory_${Date.now()}.${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(blobUrl);
-        document.body.removeChild(a);
-      } catch (err) {
-        window.open(`${currentUrl}&dl=1`, '_blank');
-      }
-
-      btn.innerHTML = oldText;
+      window.open(currentUrl, '_blank');
     };
 
     function closeViewer() {
@@ -509,29 +452,19 @@
 
     async function fetchStream() {
       try {
-        const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}`);
+        const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}&_t=${Date.now()}`);
         const data = await res.json();
         if (data.ok && data.media) {
           const p = [];
           const v = [];
           const vw = [];
           const a = [];
-          
+
           data.media.forEach(item => {
-            const cap = (item.caption || '').toLowerCase();
-            if (!cap || cap.includes(tag)) {
-              if (item.type === 'voice') {
-                a.push(item);
-              } else if (item.type === 'video') {
-                if (cap.includes('#wish')) {
-                  vw.push({ ...item, type: 'videowish' });
-                } else {
-                  v.push(item);
-                }
-              } else {
-                p.push(item);
-              }
-            }
+            if (item.type === 'voice') a.push(item);
+            else if (item.type === 'videowish') vw.push(item);
+            else if (item.type === 'video') v.push(item);
+            else p.push(item);
           });
 
           photoData = p;
@@ -582,7 +515,17 @@
       });
     }
 
-    // 1. رفع الصور والفيديوهات العادية من الجاليري
+    async function uploadToWorker(file, type) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("chat_id", FIXED_CHAT_ID);
+      fd.append("type", type);
+
+      const res = await fetch(API, { method: "POST", body: fd });
+      return await res.json();
+    }
+
+    // 1. رفع الصور والفيديوهات العادية
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -591,36 +534,20 @@
       btn.innerHTML = `<span>⏳ Uploading (${files.length})...</span>`;
       btn.disabled = true;
 
-      const uploadTasks = files.map(async (file) => {
-        const isVideo = file.type.startsWith('video');
-        const processedFile = isVideo ? file : await compressImage(file);
-
-        const fd = new FormData();
-        fd.append('chat_id', FIXED_CHAT_ID);
-        fd.append('caption', tag);
-
-        let endpoint = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
-        if (isVideo) {
-          endpoint = `https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`;
-          fd.append('video', processedFile);
-        } else {
-          fd.append('photo', processedFile);
-        }
-
-        try {
-          await fetch(endpoint, { method: 'POST', body: fd });
-        } catch (err) {}
+      const tasks = files.map(async (file) => {
+        const isVid = file.type.startsWith('video');
+        const processed = isVid ? file : await compressImage(file);
+        return uploadToWorker(processed, isVid ? "video" : "photo");
       });
 
-      await Promise.allSettled(uploadTasks);
-
+      await Promise.allSettled(tasks);
       btn.innerHTML = `<span>📸 Add Photos & Videos</span>`;
       btn.disabled = false;
       e.target.value = '';
       fetchStream();
     });
 
-    // 2. رفع Video Wish المخصص للتهنئة
+    // 2. رفع Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -629,14 +556,7 @@
       btn.innerHTML = `<span>⏳ Sending Wish...</span>`;
       btn.disabled = true;
 
-      const fd = new FormData();
-      fd.append('chat_id', FIXED_CHAT_ID);
-      fd.append('caption', `${tag} #wish`);
-      fd.append('video', file);
-
-      try {
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: fd });
-      } catch (err) {}
+      await uploadToWorker(file, "videowish");
 
       btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
@@ -645,7 +565,7 @@
       fetchStream();
     });
 
-    // 3. تسجيل وإرسال Voice Note
+    // 3. رفع Voice Note
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -664,15 +584,8 @@
           mediaRecorder.onstop = async () => {
             const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
             voiceTxt.innerText = "⏳ Sending...";
-            
-            const fd = new FormData();
-            fd.append('chat_id', FIXED_CHAT_ID);
-            fd.append('caption', `${tag} #wish`);
-            fd.append('voice', audioBlob, 'voice_wish.oga');
 
-            try {
-              await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVoice`, { method: 'POST', body: fd });
-            } catch (err) {}
+            await uploadToWorker(audioBlob, "voice");
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
@@ -686,7 +599,7 @@
           voiceBtn.classList.add('recording');
           voiceTxt.innerText = "⏹ Stop & Send";
         } catch (err) {
-          alert('Microphone access denied or not supported.');
+          alert('Microphone permission required.');
         }
       } else {
         mediaRecorder.stop();
@@ -694,7 +607,7 @@
     }
 
     fetchStream();
-    setInterval(fetchStream, 3500);
+    setInterval(fetchStream, 3000);
   </script>
 </body>
 </html>
