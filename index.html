@@ -45,7 +45,7 @@
       align-items: center;
     }
 
-    .header { text-align: center; margin-bottom: 20px; }
+    .header { text-align: center; margin-bottom: 18px; }
     .wedding-icon { font-size: 36px; margin-bottom: 4px; display: inline-block; color: var(--gold); }
     .title {
       font-family: 'Cinzel', serif;
@@ -59,17 +59,15 @@
     body.dark-theme .title { color: #ffffff; }
     .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-    .actions-box {
+    /* 1. قسم رفع الميديا العادية */
+    .upload-main-card {
       width: 100%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      padding: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      margin-bottom: 12px;
     }
 
     .btn-main-upload {
@@ -78,7 +76,7 @@
       color: #ffffff;
       font-size: 15px;
       font-weight: 700;
-      padding: 14px;
+      padding: 13px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
@@ -86,18 +84,38 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
 
-    .sub-actions {
+    /* 2. قسم الـ Guestbook المنفصل */
+    .guestbook-card {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px dashed var(--gold);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .guestbook-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .guestbook-actions {
       display: flex;
       gap: 8px;
       width: 100%;
     }
 
-    .btn-action {
+    .btn-gb {
       flex: 1;
-      padding: 11px 8px;
+      padding: 11px 6px;
       border-radius: 10px;
       border: none;
       font-size: 13px;
@@ -110,43 +128,45 @@
       color: #fff;
     }
 
-    .btn-video-wish { background: #3b82f6; }
+    .btn-video-wish { background: #2563eb; }
     .btn-voice { background: #e11d48; }
 
-    .btn-voice.recording {
-      animation: pulse 1s infinite alternate;
-    }
-
+    .btn-voice.recording { animation: pulse 1s infinite alternate; }
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       100% { transform: scale(0.96); opacity: 0.8; }
     }
 
+    /* Tabs Bar (4 تابات منظمة) */
     .tabs {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       width: 100%;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 4px;
       margin-bottom: 14px;
       border: 1px solid var(--card-border);
-      gap: 4px;
+      gap: 2px;
     }
 
     .tab {
-      flex: 1;
-      padding: 9px 2px;
+      padding: 8px 2px;
       border-radius: 8px;
       border: none;
       background: transparent;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--muted);
       cursor: pointer;
       text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .tab.active { background: var(--primary); color: #ffffff; }
 
+    /* Gallery Grid */
     .gallery {
       width: 100%;
       display: grid;
@@ -182,8 +202,8 @@
     }
 
     .badge-icon {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -201,6 +221,7 @@
       font-size: 14px;
     }
 
+    /* Lightbox Viewer */
     .lightbox {
       display: none;
       position: fixed;
@@ -252,7 +273,7 @@
     .btn-save { background: var(--primary); color: #fff; }
     .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
-    #pickerPhotos, #pickerVideoWish { display: none; }
+    #pickerMedia, #pickerVideoWish { display: none; }
   </style>
 </head>
 <body>
@@ -264,27 +285,30 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <div class="actions-box">
-      <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerPhotos').click()">
-        <span>📸 Upload Photos (Unlimited)</span>
+    <div class="upload-main-card">
+      <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
+        <span>📸 Add Photos & Videos</span>
       </button>
+      <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
+    </div>
 
-      <div class="sub-actions">
-        <button class="btn-action btn-video-wish" id="btnVideoWish" onclick="document.getElementById('pickerVideoWish').click()">
-          <span>🎥 Video Wish</span>
+    <div class="guestbook-card" id="guestbookSection">
+      <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
+      <div class="guestbook-actions">
+        <button class="btn-gb btn-video-wish" id="btnVideoWish" onclick="document.getElementById('pickerVideoWish').click()">
+          <span>🤳 Video Wish</span>
         </button>
-        <button class="btn-action btn-voice" id="btnVoice" onclick="toggleVoiceRecording()">
+        <button class="btn-gb btn-voice" id="btnVoice" onclick="toggleVoiceRecording()">
           <span id="voiceTxt">🎙️ Voice Note</span>
         </button>
       </div>
-
-      <input type="file" id="pickerPhotos" accept="image/*" multiple />
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
     <div class="tabs">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
-      <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Wishes (<span id="countV">0</span>)</button>
+      <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
+      <button class="tab" id="tabVW" onclick="switchMedia('vw')">🤳 Wishes (<span id="countVW">0</span>)</button>
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
@@ -304,7 +328,7 @@
   <script>
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
     const BOT_TOKEN = "8921464117:AAE-EDpZ09tXc0hiCInYr3bN9s8ZLkr8p_w";
-    const FIXED_CHAT_ID = "-1003837109142"; // جروب التخزين الأساسي الثابت
+    const FIXED_CHAT_ID = "-1003837109142";
 
     const q = new URLSearchParams(window.location.search);
     const rawEvent = q.get('event') || 'event';
@@ -317,15 +341,19 @@
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
     const allowVoice = q.get('voice') !== 'false';
-    const allowVideos = q.get('video') !== 'false';
+    const allowVideoWish = q.get('video') !== 'false';
 
-    if (!allowVoice) {
-      document.getElementById('btnVoice').style.display = 'none';
-      document.getElementById('tabA').style.display = 'none';
-    }
-    if (!allowVideos) {
-      document.getElementById('btnVideoWish').style.display = 'none';
-      document.getElementById('tabV').style.display = 'none';
+    if (!allowVoice && !allowVideoWish) {
+      document.getElementById('guestbookSection').style.display = 'none';
+    } else {
+      if (!allowVoice) {
+        document.getElementById('btnVoice').style.display = 'none';
+        document.getElementById('tabA').style.display = 'none';
+      }
+      if (!allowVideoWish) {
+        document.getElementById('btnVideoWish').style.display = 'none';
+        document.getElementById('tabVW').style.display = 'none';
+      }
     }
 
     const icons = {
@@ -358,6 +386,7 @@
     let current = 'p';
     let photoData = [];
     let videoData = [];
+    let videoWishData = [];
     let audioData = [];
     let currentUrl = '';
     let currentType = 'photo';
@@ -366,6 +395,7 @@
       current = t;
       document.getElementById('tabP').classList.toggle('active', t === 'p');
       document.getElementById('tabV').classList.toggle('active', t === 'v');
+      document.getElementById('tabVW').classList.toggle('active', t === 'vw');
       document.getElementById('tabA').classList.toggle('active', t === 'a');
       draw();
     }
@@ -376,7 +406,7 @@
       currentUrl = url;
       currentType = type;
 
-      if (type === 'video') {
+      if (type === 'video' || type === 'videowish') {
         target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline autoplay style="max-height:70vh;"></video>`;
         box.classList.add('active');
       } else if (type === 'voice') {
@@ -404,7 +434,7 @@
         a.style.display = 'none';
         a.href = blobUrl;
         let ext = 'jpg';
-        if (currentType === 'video') ext = 'mp4';
+        if (currentType === 'video' || currentType === 'videowish') ext = 'mp4';
         if (currentType === 'voice') ext = 'ogg';
         a.download = `memory_${Date.now()}.${ext}`;
         document.body.appendChild(a);
@@ -433,10 +463,11 @@
       grid.innerHTML = '';
       let list = photoData;
       if (current === 'v') list = videoData;
+      if (current === 'vw') list = videoWishData;
       if (current === 'a') list = audioData;
 
       if (!list.length) {
-        let label = current === 'p' ? 'photos' : (current === 'v' ? 'video wishes' : 'voice messages');
+        let label = current === 'p' ? 'photos' : (current === 'v' ? 'videos' : (current === 'vw' ? 'video wishes' : 'voice messages'));
         grid.innerHTML = `<div class="empty">No ${label} uploaded yet.<br>Be the first to share!</div>`;
         return;
       }
@@ -447,11 +478,19 @@
         if (item.type === 'video') {
           d.innerHTML = `
             <div class="card-badge-inner">
-              <div class="badge-icon" style="background:#3b82f6;">🎥</div>
-              <span style="font-size:12px; font-weight:700;">Watch Wish</span>
+              <div class="badge-icon" style="background:var(--primary);">▶</div>
+              <span style="font-size:12px; font-weight:700;">Watch Video</span>
             </div>
           `;
           d.onclick = () => openViewer(item.url, 'video');
+        } else if (item.type === 'videowish') {
+          d.innerHTML = `
+            <div class="card-badge-inner">
+              <div class="badge-icon" style="background:#2563eb;">🤳</div>
+              <span style="font-size:12px; font-weight:700;">Video Wish</span>
+            </div>
+          `;
+          d.onclick = () => openViewer(item.url, 'videowish');
         } else if (item.type === 'voice') {
           d.innerHTML = `
             <div class="card-badge-inner">
@@ -475,21 +514,34 @@
         if (data.ok && data.media) {
           const p = [];
           const v = [];
+          const vw = [];
           const a = [];
           
-          // فلترة الميديا بناءً على تاج الفرح
           data.media.forEach(item => {
-            if (!item.caption || item.caption.toLowerCase().includes(tag)) {
-              if (item.type === 'video') v.push(item);
-              else if (item.type === 'voice') a.push(item);
-              else p.push(item);
+            const cap = (item.caption || '').toLowerCase();
+            if (!cap || cap.includes(tag)) {
+              if (item.type === 'voice') {
+                a.push(item);
+              } else if (item.type === 'video') {
+                if (cap.includes('#wish')) {
+                  vw.push({ ...item, type: 'videowish' });
+                } else {
+                  v.push(item);
+                }
+              } else {
+                p.push(item);
+              }
             }
           });
+
           photoData = p;
           videoData = v;
+          videoWishData = vw;
           audioData = a;
+
           document.getElementById('countP').innerText = p.length;
           document.getElementById('countV').innerText = v.length;
+          document.getElementById('countVW').innerText = vw.length;
           document.getElementById('countA').innerText = a.length;
           draw();
         }
@@ -497,6 +549,7 @@
     }
 
     async function compressImage(file) {
+      if (!file.type.startsWith('image/')) return file;
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -529,8 +582,8 @@
       });
     }
 
-    // رفع الصور المتوازي مع التاج التلقائي
-    document.getElementById('pickerPhotos').addEventListener('change', async (e) => {
+    // 1. رفع الصور والفيديوهات العادية من الجاليري
+    document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
@@ -539,50 +592,60 @@
       btn.disabled = true;
 
       const uploadTasks = files.map(async (file) => {
-        const compressed = await compressImage(file);
+        const isVideo = file.type.startsWith('video');
+        const processedFile = isVideo ? file : await compressImage(file);
+
         const fd = new FormData();
         fd.append('chat_id', FIXED_CHAT_ID);
         fd.append('caption', tag);
-        fd.append('photo', compressed);
+
+        let endpoint = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+        if (isVideo) {
+          endpoint = `https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`;
+          fd.append('video', processedFile);
+        } else {
+          fd.append('photo', processedFile);
+        }
+
         try {
-          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+          await fetch(endpoint, { method: 'POST', body: fd });
         } catch (err) {}
       });
 
       await Promise.allSettled(uploadTasks);
 
-      btn.innerHTML = `<span>📸 Upload Photos (Unlimited)</span>`;
+      btn.innerHTML = `<span>📸 Add Photos & Videos</span>`;
       btn.disabled = false;
       e.target.value = '';
       fetchStream();
     });
 
-    // رفع Video Wish مع التاج التلقائي
+    // 2. رفع Video Wish المخصص للتهنئة
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const btn = document.getElementById('btnVideoWish');
-      btn.innerHTML = `<span>⏳ Sending...</span>`;
+      btn.innerHTML = `<span>⏳ Sending Wish...</span>`;
       btn.disabled = true;
 
       const fd = new FormData();
       fd.append('chat_id', FIXED_CHAT_ID);
-      fd.append('caption', tag);
+      fd.append('caption', `${tag} #wish`);
       fd.append('video', file);
 
       try {
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: fd });
       } catch (err) {}
 
-      btn.innerHTML = `<span>🎥 Video Wish</span>`;
+      btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
       e.target.value = '';
-      switchMedia('v');
+      switchMedia('vw');
       fetchStream();
     });
 
-    // تسجيل الفويس نوت مع التاج التلقائي
+    // 3. تسجيل وإرسال Voice Note
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -604,7 +667,7 @@
             
             const fd = new FormData();
             fd.append('chat_id', FIXED_CHAT_ID);
-            fd.append('caption', tag);
+            fd.append('caption', `${tag} #wish`);
             fd.append('voice', audioBlob, 'voice_wish.oga');
 
             try {
