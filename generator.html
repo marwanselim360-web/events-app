@@ -205,17 +205,30 @@
       </div>
 
       <div class="form-group">
-        <label>Photos Limit Capacity</label>
-        <select id="evLimitSelect" onchange="toggleLimitInput()">
-          <option value="unlimited">♾️ Unlimited Photos</option>
-          <option value="custom">🔢 Custom Limit</option>
-        </select>
+        <label>Event Date (Optional)</label>
+        <input type="date" id="evDate" />
       </div>
     </div>
 
-    <div class="form-group" id="customLimitBox" style="display: none;">
-      <label>Max Allowed Photos (Limit)</label>
-      <input type="number" id="evLimitValue" placeholder="e.g. 500" value="500" />
+    <!-- التحكم في سعة الصور والفيديوهات -->
+    <div class="row-2">
+      <div class="form-group">
+        <label>Photos Limit</label>
+        <select id="evPhotoLimitSelect" onchange="togglePhotoLimit()">
+          <option value="unlimited">♾️ Unlimited Photos</option>
+          <option value="custom">🔢 Custom Limit</option>
+        </select>
+        <input type="number" id="evPhotoLimitVal" placeholder="Max photos (e.g. 500)" value="500" style="display: none; margin-top: 6px;" />
+      </div>
+
+      <div class="form-group">
+        <label>Videos Limit</label>
+        <select id="evVideoLimitSelect" onchange="toggleVideoLimit()">
+          <option value="unlimited">♾️ Unlimited Videos</option>
+          <option value="custom">🔢 Custom Limit</option>
+        </select>
+        <input type="number" id="evVideoLimitVal" placeholder="Max videos (e.g. 50)" value="50" style="display: none; margin-top: 6px;" />
+      </div>
     </div>
 
     <div class="row-2">
@@ -239,7 +252,7 @@
         </label>
         <label class="feature-item">
           <input type="checkbox" id="featVideo" checked />
-          <span>🎥 Video Wishes</span>
+          <span>🤳 Video Wishes</span>
         </label>
       </div>
     </div>
@@ -249,22 +262,19 @@
       <input type="text" id="evSub" placeholder="e.g. Share your moments" value="Share your live moments with us" />
     </div>
 
-    <div class="form-group">
-      <label>Color Palette</label>
-      <div class="color-grid">
-        <div class="color-item">
-          <input type="color" id="primaryColor" value="#4a6342" onchange="syncHex('primaryColor', 'primaryHex')" />
-          <div>
-            <div style="font-size: 10px; color:#94a3b8;">Primary Color</div>
-            <input type="text" id="primaryHex" value="#4a6342" style="padding:2px 4px; font-size:11px;" onchange="syncColor('primaryHex', 'primaryColor')" />
-          </div>
+    <div class="color-grid">
+      <div class="color-item">
+        <input type="color" id="primaryColor" value="#4a6342" onchange="syncHex('primaryColor', 'primaryHex')" />
+        <div>
+          <div style="font-size: 10px; color:#94a3b8;">Primary Color</div>
+          <input type="text" id="primaryHex" value="#4a6342" style="padding:2px 4px; font-size:11px;" onchange="syncColor('primaryHex', 'primaryColor')" />
         </div>
-        <div class="color-item">
-          <input type="color" id="bgColor" value="#f8faf7" onchange="syncHex('bgColor', 'bgHex')" />
-          <div>
-            <div style="font-size: 10px; color:#94a3b8;">Background</div>
-            <input type="text" id="bgHex" value="#f8faf7" style="padding:2px 4px; font-size:11px;" onchange="syncColor('bgHex', 'bgColor')" />
-          </div>
+      </div>
+      <div class="color-item">
+        <input type="color" id="bgColor" value="#f8faf7" onchange="syncHex('bgColor', 'bgHex')" />
+        <div>
+          <div style="font-size: 10px; color:#94a3b8;">Background</div>
+          <input type="text" id="bgHex" value="#f8faf7" style="padding:2px 4px; font-size:11px;" onchange="syncColor('bgHex', 'bgColor')" />
         </div>
       </div>
     </div>
@@ -286,9 +296,14 @@
   </div>
 
   <script>
-    function toggleLimitInput() {
-      const mode = document.getElementById('evLimitSelect').value;
-      document.getElementById('customLimitBox').style.display = mode === 'custom' ? 'block' : 'none';
+    function togglePhotoLimit() {
+      const mode = document.getElementById('evPhotoLimitSelect').value;
+      document.getElementById('evPhotoLimitVal').style.display = mode === 'custom' ? 'block' : 'none';
+    }
+
+    function toggleVideoLimit() {
+      const mode = document.getElementById('evVideoLimitSelect').value;
+      document.getElementById('evVideoLimitVal').style.display = mode === 'custom' ? 'block' : 'none';
     }
 
     function syncHex(colId, hexId) {
@@ -312,10 +327,14 @@
         const type = document.getElementById('evType').value;
         const title = document.getElementById('evTitle').value.trim() || 'Live Event';
         const venue = document.getElementById('evVenue').value.trim();
+        const dateVal = document.getElementById('evDate').value;
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
         
-        const limitMode = document.getElementById('evLimitSelect').value;
-        const limitVal = limitMode === 'custom' ? document.getElementById('evLimitValue').value : 'unlimited';
+        const photoLimitMode = document.getElementById('evPhotoLimitSelect').value;
+        const photoLimitVal = photoLimitMode === 'custom' ? document.getElementById('evPhotoLimitVal').value : 'unlimited';
+
+        const videoLimitMode = document.getElementById('evVideoLimitSelect').value;
+        const videoLimitVal = videoLimitMode === 'custom' ? document.getElementById('evVideoLimitVal').value : 'unlimited';
 
         const allowVoice = document.getElementById('featVoice').checked;
         const allowVideo = document.getElementById('featVideo').checked;
@@ -325,13 +344,14 @@
 
         let cleanTagParts = [title.replace(/\s+/g, '')];
         if (venue) cleanTagParts.push(venue.replace(/\s+/g, ''));
+        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
         cleanTagParts.push(getUniqueCode());
 
         const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
         currentEventSlug = uniqueTag;
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&limit=${limitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
+        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
 
         document.getElementById('generatedLink').innerText = fullUrl;
         document.getElementById('openLinkBtn').href = fullUrl;
