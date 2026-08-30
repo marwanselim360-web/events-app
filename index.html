@@ -325,7 +325,7 @@
     const q = new URLSearchParams(window.location.search);
     const eventSlug = q.get('e') || q.get('event') || 'default_event';
     const title = q.get('t') || q.get('title') || 'Live Moments';
-    const sub = q.get('sub') || 'Share your live moments with us';
+    const sub = q.get('sub') || 'Share your live memories with us';
     const eventType = (q.get('ty') || q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
@@ -376,7 +376,7 @@
     let videoData = [];
     let videoWishData = [];
     let audioData = [];
-    let renderedIds = new Set(); // لمنع وميض المربعات الكحلية وإعادة الرسم
+    let renderedIds = new Set();
     let currentUrl = '';
     let currentType = 'photo';
 
@@ -429,7 +429,6 @@
       document.getElementById('viewer').classList.remove('active');
     }
 
-    // رسم ذكي وسلس يمنع الوميض والمربعات الكحلية
     function draw() {
       const grid = document.getElementById('mediaGrid');
       let list = photoData;
@@ -443,11 +442,9 @@
         return;
       }
 
-      // مسح شاشة الـ Empty إذا وُجدت عناصر
       const emptyBox = grid.querySelector('.empty');
       if (emptyBox) emptyBox.remove();
 
-      // إضافة الميديا الجديدة في بداية الشبكة بدون إعادة تحميل القديم
       list.slice().reverse().forEach(item => {
         if (!renderedIds.has(item.file_id)) {
           renderedIds.add(item.file_id);
@@ -530,7 +527,7 @@
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
-            const maxDim = 1920;
+            const maxDim = 1200;
             if (width > maxDim || height > maxDim) {
               if (width > height) {
                 height = Math.round((height * maxDim) / width);
@@ -546,7 +543,7 @@
             ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob((blob) => {
               resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file);
-            }, 'image/jpeg', 0.85);
+            }, 'image/jpeg', 0.75);
           };
           img.src = e.target.result;
         };
@@ -565,7 +562,7 @@
       return await res.json();
     }
 
-    // طابور رفع سريع (3 في نفس الوقت) لرفع 100+ صورة بدون تهنيج
+    // طابور الرفع السلس والسريع المتزامن
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -573,12 +570,11 @@
       const btn = document.getElementById('uploadAction');
       btn.disabled = true;
 
-      let uploadedCount = 0;
-      const total = files.length;
+      let total = files.length;
+      let completed = 0;
       btn.innerHTML = `<span>⏳ Uploading (0/${total})...</span>`;
 
-      // معالجة الملفات في مجموعات متتالية من 3 لضمان السرعة وتفادي Rate Limit
-      const CHUNK_SIZE = 3;
+      const CHUNK_SIZE = 4;
       for (let i = 0; i < files.length; i += CHUNK_SIZE) {
         const chunk = files.slice(i, i + CHUNK_SIZE);
         await Promise.allSettled(
@@ -589,11 +585,11 @@
 
             const processed = isVid ? file : await compressImage(file);
             await uploadToWorker(processed, isVid ? "video" : "photo");
-            uploadedCount++;
-            btn.innerHTML = `<span>⏳ Uploading (${uploadedCount}/${total})...</span>`;
+            completed++;
+            btn.innerHTML = `<span>⏳ Uploading (${completed}/${total})...</span>`;
           })
         );
-        fetchStream(); // تحديث فوري للجاليري أثناء الرفع
+        fetchStream();
       }
 
       btn.innerHTML = `<span>📸 Add Photos & Videos</span>`;
