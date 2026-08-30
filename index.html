@@ -278,6 +278,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
+    <!-- رفع الصور والفيديوهات -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span>📸 Add Photos & Videos</span>
@@ -285,6 +286,7 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
+    <!-- قسم التهاني (يختفي أوتوماتيك لو ملغي في QR) -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -298,6 +300,7 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
+    <!-- التابات -->
     <div class="tabs" id="tabsBar">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
       <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
@@ -305,11 +308,13 @@
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
+    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
+  <!-- العارض Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
