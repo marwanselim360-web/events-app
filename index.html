@@ -73,47 +73,15 @@
       width: 100%;
       background: var(--primary);
       color: #ffffff;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 13px;
+      padding: 11px 14px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-    }
-
-    .limit-badge-box {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: rgba(74, 99, 66, 0.08);
-      border: 1px dashed var(--primary);
-      padding: 8px 12px;
-      border-radius: 10px;
-      margin-top: 10px;
-    }
-
-    .limit-badge-text {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--primary);
-      letter-spacing: 0.3px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .limit-pill {
-      background: var(--primary);
-      color: #ffffff;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 800;
+      gap: 3px;
     }
 
     .guestbook-card {
@@ -309,21 +277,16 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
+    <!-- بطاقة رفع الصور مع النص المدمج بالزر -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
-        <span>📸 Add Photos & Videos</span>
+        <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Max 30 items per upload • Unlimited uploads)</span>
       </button>
-
-      <div class="limit-badge-box">
-        <span style="font-size: 14px;">⚡</span>
-        <div class="limit-badge-text">
-          Upload Limit: <span class="limit-pill">Max 30 / batch</span>
-        </div>
-      </div>
-
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
+    <!-- قسم التهاني الخاصة -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -337,6 +300,7 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
+    <!-- التابات -->
     <div class="tabs" id="tabsBar">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
       <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
@@ -344,11 +308,13 @@
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
+    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
+  <!-- عارض الصور والفيديو Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -375,7 +341,6 @@
     const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
     const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
 
-    // إخفاء أو إظهار أقسام التهاني بحسب خيارات الـ QR
     if (!allowVoice && !allowVideoWish) {
       document.getElementById('guestbookSection').style.display = 'none';
       document.getElementById('tabVW').style.display = 'none';
@@ -602,7 +567,7 @@
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات بحد أقصى 30 ملف وتتابع سريع بدون أخطاء
+    // رفع الصور والفيديوهات بحد أقصى 30 ملف
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -619,7 +584,7 @@
 
       let total = files.length;
       let completed = 0;
-      btn.innerHTML = `<span>⏳ Uploading (0/${total})...</span>`;
+      btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (0/${total})...</span>`;
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -632,7 +597,7 @@
           const processed = isVid ? file : await compressImage(file);
           await uploadToWorker(processed, isVid ? "video" : "photo");
           completed++;
-          btn.innerHTML = `<span>⏳ Uploading (${completed}/${total})...</span>`;
+          btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
           if (completed % 2 === 0 || completed === total) {
             fetchStream();
           }
@@ -641,7 +606,10 @@
         }
       }
 
-      btn.innerHTML = `<span>📸 Add Photos & Videos</span>`;
+      btn.innerHTML = `
+        <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Max 30 items per upload • Unlimited uploads)</span>
+      `;
       btn.disabled = false;
       e.target.value = '';
       fetchStream();
