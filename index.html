@@ -85,12 +85,35 @@
       gap: 8px;
     }
 
-    .upload-hint {
-      text-align: center;
+    .limit-badge-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(74, 99, 66, 0.08);
+      border: 1px dashed var(--primary);
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .limit-badge-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .limit-pill {
+      background: var(--primary);
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 6px;
       font-size: 11px;
-      color: var(--muted);
-      margin-top: 6px;
-      font-weight: 600;
+      font-weight: 800;
     }
 
     .guestbook-card {
@@ -290,7 +313,14 @@
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span>📸 Add Photos & Videos</span>
       </button>
-      <div class="upload-hint">⚡ Max 30 files per upload (repeat anytime)</div>
+
+      <div class="limit-badge-box">
+        <span style="font-size: 14px;">⚡</span>
+        <div class="limit-badge-text">
+          Upload Limit: <span class="limit-pill">Max 30 / batch</span>
+        </div>
+      </div>
+
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
@@ -345,7 +375,7 @@
     const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
     const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
 
-    // التحكم في ظهور التابات وقسم التهاني
+    // إخفاء أو إظهار أقسام التهاني بحسب خيارات الـ QR
     if (!allowVoice && !allowVideoWish) {
       document.getElementById('guestbookSection').style.display = 'none';
       document.getElementById('tabVW').style.display = 'none';
@@ -572,7 +602,7 @@
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات بحد أقصى 30 وتتابع سريع ومضمون
+    // رفع الصور والفيديوهات بحد أقصى 30 ملف وتتابع سريع بدون أخطاء
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
