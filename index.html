@@ -277,6 +277,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
+    <!-- بطاقة الرفع الأساسية -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -285,6 +286,7 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
+    <!-- بطاقة التهاني الخاصة -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -298,6 +300,7 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
+    <!-- التابات -->
     <div class="tabs" id="tabsBar">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
       <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
@@ -305,11 +308,13 @@
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
+    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
+  <!-- عارض الوسائط Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -525,13 +530,10 @@
       fd.append("type", type);
 
       const res = await fetch(API, { method: "POST", body: fd });
-      if (!res.ok) {
-        throw new Error("Worker responded with " + res.status);
-      }
       return await res.json();
     }
 
-    // رفع مباشر ومضمون 100%
+    // رفع مباشر بدون وسيط ضغط مع تنبيه فوري لو فيه خطأ
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -553,17 +555,17 @@
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const isVid = file.type.startsWith('video');
-        
-        if (isVid && videoLimit !== 'u' && videoData.length >= parseInt(videoLimit)) continue;
-        if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
 
         try {
-          await uploadToWorker(file, isVid ? "video" : "photo");
-          completed++;
-          btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-          await new Promise(r => setTimeout(r, 150));
+          const res = await uploadToWorker(file, isVid ? "video" : "photo");
+          if (res.ok) {
+            completed++;
+            btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
+          } else {
+            alert("Upload Error: " + (res.error || "Failed"));
+          }
         } catch (err) {
-          console.error("Upload failed for item:", file.name, err);
+          alert("Connection Error: " + err.message);
         }
       }
 
@@ -588,14 +590,14 @@
       try {
         await uploadToWorker(file, "videowish");
       } catch (err) {
-        console.error(err);
+        alert("Wish upload error: " + err.message);
       }
 
       btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
       e.target.value = '';
       switchMedia('vw');
-      await fetchStream();
+      fetchStream();
     });
 
     // مسجل الصوت
@@ -635,14 +637,14 @@
             try {
               await uploadToWorker(file, "voice");
             } catch (err) {
-              console.error(err);
+              alert("Voice upload error: " + err.message);
             }
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
             isRecording = false;
             switchMedia('a');
-            await fetchStream();
+            fetchStream();
           };
 
           mediaRecorder.start();
