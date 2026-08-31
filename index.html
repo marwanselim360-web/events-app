@@ -277,7 +277,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة الرفع مع النص التوضيحي المدمج -->
+    <!-- بطاقة رفع الصور والفيديوهات -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -286,7 +286,7 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
-    <!-- قسم التهاني الخاصة -->
+    <!-- بطاقة التهاني الخاصة -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -547,7 +547,11 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob((blob) => {
-              resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file);
+              if (blob) {
+                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }));
+              } else {
+                resolve(file);
+              }
             }, 'image/jpeg', 0.75);
           };
           img.src = e.target.result;
@@ -558,23 +562,28 @@
 
     async function uploadToWorker(file, type) {
       const fd = new FormData();
-      fd.append("file", file);
+      const fileName = file.name || `file_${Date.now()}.${type === 'video' ? 'mp4' : (type === 'voice' ? 'm4a' : 'jpg')}`;
+      fd.append("file", file, fileName);
       fd.append("chat_id", FIXED_CHAT_ID);
       fd.append("event", eventSlug);
       fd.append("type", type);
 
       const res = await fetch(API, { method: "POST", body: fd });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
       return await res.json();
     }
 
-    // رفع متتالي مع تأخير زمني آمن لضمان وصول الـ 30 صورة كاملة
+    // رفع الصور والفيديوهات
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
 
       const MAX_BATCH = 30;
       if (files.length > MAX_BATCH) {
-        alert(`⚠️ You selected ${files.length} files!\n\nPlease choose up to ${MAX_BATCH} files per upload to ensure fast and smooth processing.`);
+        alert(`⚠️ You selected ${files.length} files!\n\nPlease choose up to ${MAX_BATCH} files per upload.`);
         e.target.value = '';
         return;
       }
@@ -598,11 +607,9 @@
           await uploadToWorker(processed, isVid ? "video" : "photo");
           completed++;
           btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-          
-          // تأخير 300ms لمنع تضارب الـ KV وضمان حفظ كل صورة
-          await new Promise(r => setTimeout(r, 300));
+          await new Promise(r => setTimeout(r, 250));
         } catch (err) {
-          console.error("Upload error:", err);
+          console.error("Upload failed for item:", file.name, err);
         }
       }
 
@@ -615,7 +622,7 @@
       await fetchStream();
     });
 
-    // رفع أمنيات الفيديو Video Wish
+    // رفع Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -624,7 +631,11 @@
       btn.innerHTML = `<span>⏳ Sending Wish...</span>`;
       btn.disabled = true;
 
-      await uploadToWorker(file, "videowish");
+      try {
+        await uploadToWorker(file, "videowish");
+      } catch (err) {
+        console.error(err);
+      }
 
       btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
@@ -667,7 +678,11 @@
             voiceTxt.innerText = "⏳ Sending...";
 
             const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: recordedType });
-            await uploadToWorker(file, "voice");
+            try {
+              await uploadToWorker(file, "voice");
+            } catch (err) {
+              console.error(err);
+            }
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
