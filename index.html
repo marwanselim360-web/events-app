@@ -277,7 +277,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة رفع الصور مع النص المدمج بالزر -->
+    <!-- بطاقة الرفع مع النص التوضيحي المدمج -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -567,7 +567,7 @@
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات بحد أقصى 30 ملف
+    // رفع متتالي مع تأخير زمني آمن لضمان وصول الـ 30 صورة كاملة
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -598,9 +598,9 @@
           await uploadToWorker(processed, isVid ? "video" : "photo");
           completed++;
           btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-          if (completed % 2 === 0 || completed === total) {
-            fetchStream();
-          }
+          
+          // تأخير 300ms لمنع تضارب الـ KV وضمان حفظ كل صورة
+          await new Promise(r => setTimeout(r, 300));
         } catch (err) {
           console.error("Upload error:", err);
         }
@@ -612,7 +612,7 @@
       `;
       btn.disabled = false;
       e.target.value = '';
-      fetchStream();
+      await fetchStream();
     });
 
     // رفع أمنيات الفيديو Video Wish
@@ -633,7 +633,7 @@
       fetchStream();
     });
 
-    // تسجيل الفويس نوت
+    // مسجل الصوت
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
