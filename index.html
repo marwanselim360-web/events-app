@@ -522,7 +522,6 @@
             else p.push(item);
           });
 
-          // دمج بدون تكرار
           p.forEach(it => { if(!photoData.some(x => x.file_id === it.file_id)) photoData.push(it); });
           v.forEach(it => { if(!videoData.some(x => x.file_id === it.file_id)) videoData.push(it); });
           vw.forEach(it => { if(!videoWishData.some(x => x.file_id === it.file_id)) videoWishData.push(it); });
@@ -570,6 +569,8 @@
       });
     }
 
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     async function uploadToWorker(file, type) {
       const fd = new FormData();
       fd.append("file", file, file.name || "media_file");
@@ -577,11 +578,31 @@
       fd.append("event", eventSlug);
       fd.append("type", type);
 
-      const res = await fetch(API, { method: "POST", body: fd });
-      return await res.json();
+      let maxAttempts = 4;
+      while (maxAttempts > 0) {
+        try {
+          const res = await fetch(API, { method: "POST", body: fd });
+          const json = await res.json();
+
+          if (json.ok) {
+            return json;
+          } else if (json.rate_limited) {
+            // انتظار الثواني المطلوبة من تيليجرام ثم إعادة المحاولة
+            const waitTime = (json.retry_after || 1) * 1000 + 200;
+            await sleep(waitTime);
+            maxAttempts--;
+          } else {
+            return json;
+          }
+        } catch (e) {
+          await sleep(1000);
+          maxAttempts--;
+        }
+      }
+      return { ok: false, error: "Upload failed after retries" };
     }
 
-    // رفع متتالي مع إدراج فوري لكل صورة تنجح
+    // رفع الـ 100 صورة مع Auto-Retry
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -603,12 +624,12 @@
           if (res.ok && res.item) {
             completed++;
             btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-            // إضافة فورية للواجهة لضمان ظهور 100% من الصور
             addLocalItem(res.item);
           }
         } catch (err) {
           console.error("Upload error:", err);
         }
+        await sleep(50); // تأخير زمني خفيف لضمان ثبات السيرفر
       }
 
       btn.innerHTML = `
