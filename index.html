@@ -73,7 +73,7 @@
       width: 100%;
       background: var(--primary);
       color: #ffffff;
-      padding: 11px 14px;
+      padding: 12px 14px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
@@ -82,7 +82,10 @@
       align-items: center;
       justify-content: center;
       gap: 3px;
+      transition: opacity 0.2s;
     }
+
+    .btn-main-upload:disabled { opacity: 0.7; }
 
     .guestbook-card {
       width: 100%;
@@ -277,16 +280,14 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة رفع الصور مع النص المدمج بالزر -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
-        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Max 30 items per upload • Unlimited uploads)</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Unlimited uploads • Multi-select supported)</span>
       </button>
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
-    <!-- قسم التهاني الخاصة -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -300,7 +301,6 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
-    <!-- التابات -->
     <div class="tabs" id="tabsBar">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
       <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
@@ -308,13 +308,11 @@
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
-    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
-  <!-- عارض الصور والفيديو Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -547,18 +545,20 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob((blob) => {
-              resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file);
-            }, 'image/jpeg', 0.75);
+              resolve(blob ? new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }) : file);
+            }, 'image/jpeg', 0.8);
           };
+          img.onerror = () => resolve(file);
           img.src = e.target.result;
         };
+        reader.onerror = () => resolve(file);
         reader.readAsDataURL(file);
       });
     }
 
     async function uploadToWorker(file, type) {
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", file, file.name || "media_file");
       fd.append("chat_id", FIXED_CHAT_ID);
       fd.append("event", eventSlug);
       fd.append("type", type);
@@ -567,17 +567,10 @@
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات
+    // رفع متوازي فائق السرعة عبر Concurrency Pool (3 صور معاً في نفس اللحظة)
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
-
-      const MAX_BATCH = 30;
-      if (files.length > MAX_BATCH) {
-        alert(`⚠️ You selected ${files.length} files!\n\nPlease choose up to ${MAX_BATCH} files per upload to ensure fast and smooth processing.`);
-        e.target.value = '';
-        return;
-      }
 
       const btn = document.getElementById('uploadAction');
       btn.disabled = true;
@@ -586,36 +579,49 @@
       let completed = 0;
       btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (0/${total})...</span>`;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const isVid = file.type.startsWith('video');
-        
-        if (isVid && videoLimit !== 'u' && videoData.length >= parseInt(videoLimit)) continue;
-        if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
+      // بركة المعالجة المتوازية (3 ملفات في المرة الواحدة)
+      const CONCURRENCY = 3;
+      let index = 0;
 
-        try {
-          const processed = isVid ? file : await compressImage(file);
-          await uploadToWorker(processed, isVid ? "video" : "photo");
-          completed++;
-          btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-          if (completed % 2 === 0 || completed === total) {
-            fetchStream();
+      async function worker() {
+        while (index < files.length) {
+          const currentIdx = index++;
+          const file = files[currentIdx];
+          const isVid = file.type.startsWith('video');
+
+          if (isVid && videoLimit !== 'u' && videoData.length >= parseInt(videoLimit)) continue;
+          if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
+
+          try {
+            const processed = isVid ? file : await compressImage(file);
+            await uploadToWorker(processed, isVid ? "video" : "photo");
+            completed++;
+            btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
+            if (completed % 2 === 0 || completed === total) {
+              fetchStream();
+            }
+          } catch (err) {
+            console.error("Upload error:", err);
           }
-        } catch (err) {
-          console.error("Upload error:", err);
         }
       }
 
+      const workers = [];
+      for (let i = 0; i < Math.min(CONCURRENCY, files.length); i++) {
+        workers.push(worker());
+      }
+      await Promise.all(workers);
+
       btn.innerHTML = `
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
-        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Max 30 items per upload • Unlimited uploads)</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Unlimited uploads • Multi-select supported)</span>
       `;
       btn.disabled = false;
       e.target.value = '';
       fetchStream();
     });
 
-    // رفع أمنيات الفيديو Video Wish
+    // رفع Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
