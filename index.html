@@ -137,13 +137,19 @@
       100% { transform: scale(0.96); opacity: 0.8; }
     }
 
-    .tabs {
+    .controls-bar {
       display: flex;
       width: 100%;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      flex: 1;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 4px;
-      margin-bottom: 14px;
       border: 1px solid var(--card-border);
       gap: 4px;
     }
@@ -162,6 +168,21 @@
       white-space: nowrap;
     }
     .tab.active { background: var(--primary); color: #ffffff; }
+
+    .btn-sort {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
 
     .gallery {
       width: 100%;
@@ -280,6 +301,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
+    <!-- بطاقة الرفع -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -288,6 +310,7 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
+    <!-- بطاقة التهاني -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -301,18 +324,26 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
-    <div class="tabs" id="tabsBar">
-      <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
-      <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
-      <button class="tab" id="tabVW" onclick="switchMedia('vw')">🤳 Wishes (<span id="countVW">0</span>)</button>
-      <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
+    <!-- شريط التابات وزر الفرز والترتيب -->
+    <div class="controls-bar">
+      <div class="tabs" id="tabsBar">
+        <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
+        <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
+        <button class="tab" id="tabVW" onclick="switchMedia('vw')">🤳 Wishes (<span id="countVW">0</span>)</button>
+        <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
+      </div>
+      <button class="btn-sort" id="btnSortToggle" onclick="toggleSort()">
+        <span id="sortLabel">🆕 Newest</span>
+      </button>
     </div>
 
+    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
+  <!-- عارض الصور Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -375,11 +406,11 @@
     document.documentElement.style.setProperty('--bg', bCol);
 
     let current = 'p';
+    let sortOrder = 'newest'; // 'newest' or 'oldest'
     let photoData = [];
     let videoData = [];
     let videoWishData = [];
     let audioData = [];
-    let renderedIds = new Set();
     let currentUrl = '';
     let currentType = 'photo';
 
@@ -388,6 +419,12 @@
       document.getElementById('countV').innerText = videoData.length;
       document.getElementById('countVW').innerText = videoWishData.length;
       document.getElementById('countA').innerText = audioData.length;
+    }
+
+    function toggleSort() {
+      sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest';
+      document.getElementById('sortLabel').innerText = sortOrder === 'newest' ? '🆕 Newest' : '⏳ Oldest';
+      draw();
     }
 
     function addLocalItem(item) {
@@ -405,8 +442,6 @@
       document.getElementById('tabV').classList.toggle('active', t === 'v');
       document.getElementById('tabVW').classList.toggle('active', t === 'vw');
       document.getElementById('tabA').classList.toggle('active', t === 'a');
-      renderedIds.clear();
-      document.getElementById('mediaGrid').innerHTML = '';
       draw();
     }
 
@@ -450,6 +485,8 @@
 
     function draw() {
       const grid = document.getElementById('mediaGrid');
+      grid.innerHTML = '';
+
       let list = photoData;
       if (current === 'v') list = videoData;
       if (current === 'vw') list = videoWishData;
@@ -461,47 +498,48 @@
         return;
       }
 
-      const emptyBox = grid.querySelector('.empty');
-      if (emptyBox) emptyBox.remove();
+      // فرز القائمة بناء على الاختيار
+      let displayList = [...list];
+      if (sortOrder === 'oldest') {
+        displayList.sort((a, b) => a.timestamp - b.timestamp);
+      } else {
+        displayList.sort((a, b) => b.timestamp - a.timestamp);
+      }
 
-      list.forEach(item => {
-        if (!renderedIds.has(item.file_id)) {
-          renderedIds.add(item.file_id);
+      displayList.forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'media-card';
 
-          const d = document.createElement('div');
-          d.className = 'media-card';
-
-          if (item.type === 'video') {
-            d.innerHTML = `
-              <div class="card-badge-inner">
-                <div class="badge-icon" style="background:var(--primary);">▶</div>
-                <span style="font-size:12px; font-weight:700;">Watch Video</span>
-              </div>
-            `;
-            d.onclick = () => openViewer(item.url, 'video');
-          } else if (item.type === 'videowish') {
-            d.innerHTML = `
-              <div class="card-badge-inner">
-                <div class="badge-icon" style="background:#2563eb;">🤳</div>
-                <span style="font-size:12px; font-weight:700;">Video Wish</span>
-              </div>
-            `;
-            d.onclick = () => openViewer(item.url, 'videowish');
-          } else if (item.type === 'voice') {
-            d.innerHTML = `
-              <div class="card-badge-inner">
-                <div class="badge-icon" style="background:#e11d48;">🎙️</div>
-                <span style="font-size:12px; font-weight:700;">Listen Voice</span>
-              </div>
-            `;
-            d.onclick = () => openViewer(item.url, 'voice');
-          } else {
-            d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
-            d.onclick = () => openViewer(item.url, 'photo');
-          }
-
-          grid.insertBefore(d, grid.firstChild);
+        if (item.type === 'video') {
+          d.innerHTML = `
+            <div class="card-badge-inner">
+              <div class="badge-icon" style="background:var(--primary);">▶</div>
+              <span style="font-size:12px; font-weight:700;">Watch Video</span>
+            </div>
+          `;
+          d.onclick = () => openViewer(item.url, 'video');
+        } else if (item.type === 'videowish') {
+          d.innerHTML = `
+            <div class="card-badge-inner">
+              <div class="badge-icon" style="background:#2563eb;">🤳</div>
+              <span style="font-size:12px; font-weight:700;">Video Wish</span>
+            </div>
+          `;
+          d.onclick = () => openViewer(item.url, 'videowish');
+        } else if (item.type === 'voice') {
+          d.innerHTML = `
+            <div class="card-badge-inner">
+              <div class="badge-icon" style="background:#e11d48;">🎙️</div>
+              <span style="font-size:12px; font-weight:700;">Listen Voice</span>
+            </div>
+          `;
+          d.onclick = () => openViewer(item.url, 'voice');
+        } else {
+          d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
+          d.onclick = () => openViewer(item.url, 'photo');
         }
+
+        grid.appendChild(d);
       });
     }
 
@@ -522,6 +560,7 @@
             else p.push(item);
           });
 
+          // دمج ذكي بدون تكرار
           p.forEach(it => { if(!photoData.some(x => x.file_id === it.file_id)) photoData.push(it); });
           v.forEach(it => { if(!videoData.some(x => x.file_id === it.file_id)) videoData.push(it); });
           vw.forEach(it => { if(!videoWishData.some(x => x.file_id === it.file_id)) videoWishData.push(it); });
@@ -587,7 +626,6 @@
           if (json.ok) {
             return json;
           } else if (json.rate_limited) {
-            // انتظار الثواني المطلوبة من تيليجرام ثم إعادة المحاولة
             const waitTime = (json.retry_after || 1) * 1000 + 200;
             await sleep(waitTime);
             maxAttempts--;
@@ -602,7 +640,7 @@
       return { ok: false, error: "Upload failed after retries" };
     }
 
-    // رفع الـ 100 صورة مع Auto-Retry
+    // رفع الوسائط
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -629,7 +667,7 @@
         } catch (err) {
           console.error("Upload error:", err);
         }
-        await sleep(50); // تأخير زمني خفيف لضمان ثبات السيرفر
+        await sleep(50);
       }
 
       btn.innerHTML = `
@@ -660,7 +698,7 @@
       switchMedia('vw');
     });
 
-    // تسجيل الفويس نوت
+    // تسجيل الفويس
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
