@@ -383,6 +383,22 @@
     let currentUrl = '';
     let currentType = 'photo';
 
+    function updateCounts() {
+      document.getElementById('countP').innerText = photoData.length;
+      document.getElementById('countV').innerText = videoData.length;
+      document.getElementById('countVW').innerText = videoWishData.length;
+      document.getElementById('countA').innerText = audioData.length;
+    }
+
+    function addLocalItem(item) {
+      if (item.type === 'voice') audioData.unshift(item);
+      else if (item.type === 'videowish') videoWishData.unshift(item);
+      else if (item.type === 'video') videoData.unshift(item);
+      else photoData.unshift(item);
+      updateCounts();
+      draw();
+    }
+
     function switchMedia(t) {
       current = t;
       document.getElementById('tabP').classList.toggle('active', t === 'p');
@@ -448,7 +464,7 @@
       const emptyBox = grid.querySelector('.empty');
       if (emptyBox) emptyBox.remove();
 
-      list.slice().reverse().forEach(item => {
+      list.forEach(item => {
         if (!renderedIds.has(item.file_id)) {
           renderedIds.add(item.file_id);
 
@@ -506,15 +522,13 @@
             else p.push(item);
           });
 
-          photoData = p;
-          videoData = v;
-          videoWishData = vw;
-          audioData = a;
+          // دمج بدون تكرار
+          p.forEach(it => { if(!photoData.some(x => x.file_id === it.file_id)) photoData.push(it); });
+          v.forEach(it => { if(!videoData.some(x => x.file_id === it.file_id)) videoData.push(it); });
+          vw.forEach(it => { if(!videoWishData.some(x => x.file_id === it.file_id)) videoWishData.push(it); });
+          a.forEach(it => { if(!audioData.some(x => x.file_id === it.file_id)) audioData.push(it); });
 
-          document.getElementById('countP').innerText = p.length;
-          document.getElementById('countV').innerText = v.length;
-          document.getElementById('countVW').innerText = vw.length;
-          document.getElementById('countA').innerText = a.length;
+          updateCounts();
           draw();
         }
       } catch (e) {}
@@ -567,7 +581,7 @@
       return await res.json();
     }
 
-    // رفع متتالي يضمن حفظ وتسجيل كل صورة بالترتيب في KV
+    // رفع متتالي مع إدراج فوري لكل صورة تنجح
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -583,15 +597,14 @@
         const file = files[i];
         const isVid = file.type.startsWith('video');
 
-        if (isVid && videoLimit !== 'u' && videoData.length >= parseInt(videoLimit)) continue;
-        if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
-
         try {
           const processed = isVid ? file : await compressImage(file);
           const res = await uploadToWorker(processed, isVid ? "video" : "photo");
-          if (res.ok) {
+          if (res.ok && res.item) {
             completed++;
             btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
+            // إضافة فورية للواجهة لضمان ظهور 100% من الصور
+            addLocalItem(res.item);
           }
         } catch (err) {
           console.error("Upload error:", err);
@@ -604,10 +617,9 @@
       `;
       btn.disabled = false;
       e.target.value = '';
-      await fetchStream();
     });
 
-    // رفع أمنيات الفيديو Video Wish
+    // رفع Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -616,16 +628,18 @@
       btn.innerHTML = `<span>⏳ Sending Wish...</span>`;
       btn.disabled = true;
 
-      await uploadToWorker(file, "videowish");
+      const res = await uploadToWorker(file, "videowish");
+      if (res.ok && res.item) {
+        addLocalItem(res.item);
+      }
 
       btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
       e.target.value = '';
       switchMedia('vw');
-      fetchStream();
     });
 
-    // مسجل الصوت
+    // تسجيل الفويس نوت
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -659,13 +673,15 @@
             voiceTxt.innerText = "⏳ Sending...";
 
             const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: recordedType });
-            await uploadToWorker(file, "voice");
+            const res = await uploadToWorker(file, "voice");
+            if (res.ok && res.item) {
+              addLocalItem(res.item);
+            }
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
             isRecording = false;
             switchMedia('a');
-            fetchStream();
           };
 
           mediaRecorder.start();
@@ -681,7 +697,7 @@
     }
 
     fetchStream();
-    setInterval(fetchStream, 3000);
+    setInterval(fetchStream, 4000);
   </script>
 </body>
 </html>
