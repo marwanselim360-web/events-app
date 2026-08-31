@@ -277,7 +277,6 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة رفع الصور والفيديوهات -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -286,7 +285,6 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
-    <!-- بطاقة التهاني الخاصة -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -300,7 +298,6 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
-    <!-- التابات -->
     <div class="tabs" id="tabsBar">
       <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
       <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
@@ -308,13 +305,11 @@
       <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
     </div>
 
-    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
-  <!-- عارض الصور والفيديو Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -522,61 +517,21 @@
       } catch (e) {}
     }
 
-    async function compressImage(file) {
-      if (!file.type.startsWith('image/')) return file;
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const maxDim = 1200;
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob((blob) => {
-              if (blob) {
-                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }));
-              } else {
-                resolve(file);
-              }
-            }, 'image/jpeg', 0.75);
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
     async function uploadToWorker(file, type) {
       const fd = new FormData();
-      const fileName = file.name || `file_${Date.now()}.${type === 'video' ? 'mp4' : (type === 'voice' ? 'm4a' : 'jpg')}`;
-      fd.append("file", file, fileName);
+      fd.append("file", file);
       fd.append("chat_id", FIXED_CHAT_ID);
       fd.append("event", eventSlug);
       fd.append("type", type);
 
       const res = await fetch(API, { method: "POST", body: fd });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}`);
+        throw new Error("Worker responded with " + res.status);
       }
       return await res.json();
     }
 
-    // رفع الصور والفيديوهات
+    // رفع مباشر ومضمون 100%
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -603,11 +558,10 @@
         if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
 
         try {
-          const processed = isVid ? file : await compressImage(file);
-          await uploadToWorker(processed, isVid ? "video" : "photo");
+          await uploadToWorker(file, isVid ? "video" : "photo");
           completed++;
           btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-          await new Promise(r => setTimeout(r, 250));
+          await new Promise(r => setTimeout(r, 150));
         } catch (err) {
           console.error("Upload failed for item:", file.name, err);
         }
@@ -641,7 +595,7 @@
       btn.disabled = false;
       e.target.value = '';
       switchMedia('vw');
-      fetchStream();
+      await fetchStream();
     });
 
     // مسجل الصوت
@@ -688,7 +642,7 @@
             voiceTxt.innerText = "🎙️ Voice Note";
             isRecording = false;
             switchMedia('a');
-            fetchStream();
+            await fetchStream();
           };
 
           mediaRecorder.start();
