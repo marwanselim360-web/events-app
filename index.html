@@ -567,7 +567,7 @@
       return await res.json();
     }
 
-    // رفع متوازي فائق السرعة عبر Concurrency Pool (3 صور معاً في نفس اللحظة)
+    // رفع متتالي يضمن حفظ وتسجيل كل صورة بالترتيب في KV
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -579,38 +579,24 @@
       let completed = 0;
       btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (0/${total})...</span>`;
 
-      // بركة المعالجة المتوازية (3 ملفات في المرة الواحدة)
-      const CONCURRENCY = 3;
-      let index = 0;
+      for (let i = 0; i < total; i++) {
+        const file = files[i];
+        const isVid = file.type.startsWith('video');
 
-      async function worker() {
-        while (index < files.length) {
-          const currentIdx = index++;
-          const file = files[currentIdx];
-          const isVid = file.type.startsWith('video');
+        if (isVid && videoLimit !== 'u' && videoData.length >= parseInt(videoLimit)) continue;
+        if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
 
-          if (isVid && videoLimit !== 'u' && videoData.length >= parseInt(videoLimit)) continue;
-          if (!isVid && photoLimit !== 'u' && photoData.length >= parseInt(photoLimit)) continue;
-
-          try {
-            const processed = isVid ? file : await compressImage(file);
-            await uploadToWorker(processed, isVid ? "video" : "photo");
+        try {
+          const processed = isVid ? file : await compressImage(file);
+          const res = await uploadToWorker(processed, isVid ? "video" : "photo");
+          if (res.ok) {
             completed++;
             btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-            if (completed % 2 === 0 || completed === total) {
-              fetchStream();
-            }
-          } catch (err) {
-            console.error("Upload error:", err);
           }
+        } catch (err) {
+          console.error("Upload error:", err);
         }
       }
-
-      const workers = [];
-      for (let i = 0; i < Math.min(CONCURRENCY, files.length); i++) {
-        workers.push(worker());
-      }
-      await Promise.all(workers);
 
       btn.innerHTML = `
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -618,10 +604,10 @@
       `;
       btn.disabled = false;
       e.target.value = '';
-      fetchStream();
+      await fetchStream();
     });
 
-    // رفع Video Wish
+    // رفع أمنيات الفيديو Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -639,7 +625,7 @@
       fetchStream();
     });
 
-    // تسجيل الفويس نوت
+    // مسجل الصوت
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
