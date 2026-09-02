@@ -313,7 +313,6 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      text-decoration: none;
     }
 
     .btn-save { background: var(--primary); color: #fff; }
@@ -372,7 +371,7 @@
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
-      <button class="btn-ctrl btn-save" id="btnDl" onclick="handleDirectDownload()">⬇ Download</button>
+      <button class="btn-ctrl btn-save" id="btnDl" onclick="handleDirectDownload()">💾 Save / Share</button>
       <button class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
     </div>
   </div>
@@ -515,7 +514,7 @@
       }
     }
 
-    // تنزيل ملفات حقيقي متوافق مع Safari والآيفون بنسبة 100%
+    // حفظ مباشر داخل Camera Roll / الاستوديو عبر Web Share API
     async function handleDirectDownload() {
       if (!activeItem || !activeItem.file_id) return;
       const dlBtn = document.getElementById('btnDl');
@@ -527,23 +526,38 @@
         const downloadUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
         const res = await fetch(downloadUrl);
         const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
 
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        
         let ext = 'jpg';
-        if (activeItem.type === 'video' || activeItem.type === 'videowish') ext = 'mp4';
-        else if (activeItem.type === 'voice') ext = 'm4a';
+        let mime = 'image/jpeg';
+        if (activeItem.type === 'video' || activeItem.type === 'videowish') {
+          ext = 'mp4';
+          mime = 'video/mp4';
+        } else if (activeItem.type === 'voice') {
+          ext = 'm4a';
+          mime = 'audio/mp4';
+        }
 
-        a.download = `memory_${Date.now()}.${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
+        const file = new File([blob], `memory_${Date.now()}.${ext}`, { type: mime });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Save Memory'
+          });
+        } else {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = file.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }
       } catch (err) {
-        // Fallback في حال منع الـ blob
-        window.open(`${API}/?file_id=${activeItem.file_id}&dl=1`, '_blank');
+        if (err.name !== 'AbortError') {
+          window.open(`${API}/?file_id=${activeItem.file_id}&dl=1`, '_blank');
+        }
       } finally {
         dlBtn.innerText = originalText;
         dlBtn.disabled = false;
@@ -561,7 +575,6 @@
       document.getElementById('viewer').classList.remove('active');
     }
 
-    // رسم بدون مسح الكروت القديمة لمنع رعشة الفيديوهات
     function draw() {
       const grid = document.getElementById('mediaGrid');
 
