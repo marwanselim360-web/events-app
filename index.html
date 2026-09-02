@@ -301,7 +301,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة الرفع الأساسية -->
+    <!-- بطاقة الرفع -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -411,8 +411,7 @@
     let videoData = [];
     let videoWishData = [];
     let audioData = [];
-    let currentUrl = '';
-    let currentType = 'photo';
+    let activeItem = null;
 
     function updateCounts() {
       document.getElementById('countP').innerText = photoData.length;
@@ -451,41 +450,62 @@
       draw();
     }
 
-    function openViewer(url, type) {
+    function openViewer(item) {
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
-      currentUrl = url;
-      currentType = type;
+      activeItem = item;
 
-      if (type === 'video' || type === 'videowish') {
-        target.innerHTML = `<video id="activeVid" src="${url}" controls playsinline webkit-playsinline autoplay style="max-height:70vh; width:100%;"></video>`;
-        box.classList.add('active');
-      } else if (type === 'voice') {
+      if (item.type === 'video' || item.type === 'videowish') {
         target.innerHTML = `
-          <div style="background:#1e293b; padding:20px; border-radius:16px; display:flex; flex-direction:column; align-items:center; gap:12px;">
-            <div style="font-size:32px;">🎙️</div>
-            <audio id="activeAud" src="${url}" controls autoplay playsinline style="width:260px;"></audio>
+          <video id="activeVid" controls playsinline webkit-playsinline preload="metadata" style="max-height:70vh; width:100%;">
+            <source src="${item.url}" type="video/mp4">
+            Your browser does not support video playback.
+          </video>
+        `;
+        box.classList.add('active');
+        const v = document.getElementById('activeVid');
+        if (v) v.play().catch(() => {});
+      } else if (item.type === 'voice') {
+        target.innerHTML = `
+          <div style="background:#1e293b; padding:24px; border-radius:16px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+            <div style="font-size:36px;">🎙️</div>
+            <audio id="activeAud" controls preload="metadata" style="width:260px;">
+              <source src="${item.url}" type="audio/mp4">
+              <source src="${item.url}" type="audio/ogg">
+              Your browser does not support audio playback.
+            </audio>
           </div>
         `;
         box.classList.add('active');
+        const a = document.getElementById('activeAud');
+        if (a) a.play().catch(() => {});
       } else {
-        target.innerHTML = `<img src="${url}" alt="Memory" />`;
+        target.innerHTML = `<img src="${item.url}" alt="Memory" />`;
         box.classList.add('active');
       }
     }
 
+    // زرار التحميل المباشر
     document.getElementById('btnDl').onclick = () => {
-      if (!currentUrl) return;
-      window.open(currentUrl, '_blank');
+      if (!activeItem || !activeItem.file_id) return;
+      const downloadUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.setAttribute('download', '');
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     };
 
     function closeViewer() {
       const target = document.getElementById('viewerTarget');
       const v = document.getElementById('activeVid');
       const a = document.getElementById('activeAud');
-      if (v) v.pause();
-      if (a) a.pause();
+      if (v) { v.pause(); v.src = ""; }
+      if (a) { a.pause(); a.src = ""; }
       target.innerHTML = '';
+      activeItem = null;
       document.getElementById('viewer').classList.remove('active');
     }
 
@@ -522,7 +542,7 @@
               <span style="font-size:12px; font-weight:700;">Watch Video</span>
             </div>
           `;
-          d.onclick = () => openViewer(item.url, 'video');
+          d.onclick = () => openViewer(item);
         } else if (item.type === 'videowish') {
           d.innerHTML = `
             <div class="card-badge-inner">
@@ -530,7 +550,7 @@
               <span style="font-size:12px; font-weight:700;">Video Wish</span>
             </div>
           `;
-          d.onclick = () => openViewer(item.url, 'videowish');
+          d.onclick = () => openViewer(item);
         } else if (item.type === 'voice') {
           d.innerHTML = `
             <div class="card-badge-inner">
@@ -538,10 +558,10 @@
               <span style="font-size:12px; font-weight:700;">Listen Voice</span>
             </div>
           `;
-          d.onclick = () => openViewer(item.url, 'voice');
+          d.onclick = () => openViewer(item);
         } else {
           d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
-          d.onclick = () => openViewer(item.url, 'photo');
+          d.onclick = () => openViewer(item);
         }
 
         grid.appendChild(d);
@@ -713,14 +733,12 @@
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           
-          let options = {};
-          if (MediaRecorder.isTypeSupported('audio/mp4')) {
-            options = { mimeType: 'audio/mp4' };
-          } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-            options = { mimeType: 'audio/webm;codecs=opus' };
+          let mime = 'audio/mp4';
+          if (!MediaRecorder.isTypeSupported('audio/mp4')) {
+            mime = 'audio/webm;codecs=opus';
           }
 
-          mediaRecorder = new MediaRecorder(stream, options);
+          mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
           audioChunks = [];
 
           mediaRecorder.ondataavailable = (e) => {
@@ -728,12 +746,11 @@
           };
 
           mediaRecorder.onstop = async () => {
-            const recordedType = mediaRecorder.mimeType || 'audio/mp4';
-            const ext = recordedType.includes('mp4') ? 'm4a' : 'webm';
-            const audioBlob = new Blob(audioChunks, { type: recordedType });
+            const ext = mime.includes('mp4') ? 'm4a' : 'webm';
+            const audioBlob = new Blob(audioChunks, { type: mime });
             voiceTxt.innerText = "⏳ Sending...";
 
-            const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: recordedType });
+            const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: mime });
             const res = await uploadToWorker(file, "voice");
             if (res.ok && res.item) {
               addLocalItem(res.item);
