@@ -301,7 +301,7 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة الرفع -->
+    <!-- بطاقة الرفع الأساسية -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -324,7 +324,7 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
-    <!-- شريط التابات وزر الفرز والترتيب -->
+    <!-- شريط التابات والفرز -->
     <div class="controls-bar">
       <div class="tabs" id="tabsBar">
         <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
@@ -406,7 +406,7 @@
     document.documentElement.style.setProperty('--bg', bCol);
 
     let current = 'p';
-    let sortOrder = 'newest'; // 'newest' or 'oldest'
+    let sortOrder = 'newest';
     let photoData = [];
     let videoData = [];
     let videoWishData = [];
@@ -428,10 +428,16 @@
     }
 
     function addLocalItem(item) {
-      if (item.type === 'voice') audioData.unshift(item);
-      else if (item.type === 'videowish') videoWishData.unshift(item);
-      else if (item.type === 'video') videoData.unshift(item);
-      else photoData.unshift(item);
+      if (!item || !item.file_id) return;
+      if (item.type === 'voice') {
+        if (!audioData.some(x => x.file_id === item.file_id)) audioData.unshift(item);
+      } else if (item.type === 'videowish') {
+        if (!videoWishData.some(x => x.file_id === item.file_id)) videoWishData.unshift(item);
+      } else if (item.type === 'video') {
+        if (!videoData.some(x => x.file_id === item.file_id)) videoData.unshift(item);
+      } else {
+        if (!photoData.some(x => x.file_id === item.file_id)) photoData.unshift(item);
+      }
       updateCounts();
       draw();
     }
@@ -498,7 +504,6 @@
         return;
       }
 
-      // فرز القائمة بناء على الاختيار
       let displayList = [...list];
       if (sortOrder === 'oldest') {
         displayList.sort((a, b) => a.timestamp - b.timestamp);
@@ -560,7 +565,6 @@
             else p.push(item);
           });
 
-          // دمج ذكي بدون تكرار
           p.forEach(it => { if(!photoData.some(x => x.file_id === it.file_id)) photoData.push(it); });
           v.forEach(it => { if(!videoData.some(x => x.file_id === it.file_id)) videoData.push(it); });
           vw.forEach(it => { if(!videoWishData.some(x => x.file_id === it.file_id)) videoWishData.push(it); });
@@ -617,8 +621,8 @@
       fd.append("event", eventSlug);
       fd.append("type", type);
 
-      let maxAttempts = 4;
-      while (maxAttempts > 0) {
+      let attempts = 8;
+      while (attempts > 0) {
         try {
           const res = await fetch(API, { method: "POST", body: fd });
           const json = await res.json();
@@ -626,21 +630,21 @@
           if (json.ok) {
             return json;
           } else if (json.rate_limited) {
-            const waitTime = (json.retry_after || 1) * 1000 + 200;
+            const waitTime = (json.retry_after || 1) * 1000 + 400;
             await sleep(waitTime);
-            maxAttempts--;
+            attempts--;
           } else {
-            return json;
+            await sleep(1000);
+            attempts--;
           }
         } catch (e) {
-          await sleep(1000);
-          maxAttempts--;
+          await sleep(1500);
+          attempts--;
         }
       }
-      return { ok: false, error: "Upload failed after retries" };
+      return { ok: false, error: "Upload failed after max attempts" };
     }
 
-    // رفع الوسائط
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
@@ -678,7 +682,6 @@
       e.target.value = '';
     });
 
-    // رفع Video Wish
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -698,7 +701,6 @@
       switchMedia('vw');
     });
 
-    // تسجيل الفويس
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
