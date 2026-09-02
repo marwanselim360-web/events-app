@@ -331,7 +331,6 @@
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
-    <!-- بطاقة الرفع -->
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
@@ -340,7 +339,6 @@
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
-    <!-- بطاقة التهاني -->
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
@@ -354,7 +352,6 @@
       <input type="file" id="pickerVideoWish" accept="video/*" capture="user" />
     </div>
 
-    <!-- شريط التابات والفرز -->
     <div class="controls-bar">
       <div class="tabs" id="tabsBar">
         <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
@@ -367,17 +364,15 @@
       </button>
     </div>
 
-    <!-- الجاليري -->
     <div class="gallery" id="mediaGrid">
       <div class="empty">Loading memories...</div>
     </div>
   </div>
 
-  <!-- عارض الصور Lightbox -->
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
-      <a class="btn-ctrl btn-save" id="btnDl" href="#" download>⬇ Download</a>
+      <button class="btn-ctrl btn-save" id="btnDl" onclick="handleDirectDownload()">⬇ Download</button>
       <button class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
     </div>
   </div>
@@ -441,6 +436,7 @@
     let videoData = [];
     let videoWishData = [];
     let audioData = [];
+    let renderedIds = new Set();
     let activeItem = null;
 
     function updateCounts() {
@@ -453,6 +449,8 @@
     function toggleSort() {
       sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest';
       document.getElementById('sortLabel').innerText = sortOrder === 'newest' ? '🆕 Newest' : '⏳ Oldest';
+      renderedIds.clear();
+      document.getElementById('mediaGrid').innerHTML = '';
       draw();
     }
 
@@ -477,17 +475,15 @@
       document.getElementById('tabV').classList.toggle('active', t === 'v');
       document.getElementById('tabVW').classList.toggle('active', t === 'vw');
       document.getElementById('tabA').classList.toggle('active', t === 'a');
+      renderedIds.clear();
+      document.getElementById('mediaGrid').innerHTML = '';
       draw();
     }
 
     function openViewer(item) {
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
-      const dlBtn = document.getElementById('btnDl');
       activeItem = item;
-
-      // ضبط رابط التحميل المباشر للزرار
-      dlBtn.href = `${API}/?file_id=${item.file_id}&dl=1`;
 
       if (item.type === 'video' || item.type === 'videowish') {
         target.innerHTML = `
@@ -519,6 +515,41 @@
       }
     }
 
+    // تنزيل ملفات حقيقي متوافق مع Safari والآيفون بنسبة 100%
+    async function handleDirectDownload() {
+      if (!activeItem || !activeItem.file_id) return;
+      const dlBtn = document.getElementById('btnDl');
+      const originalText = dlBtn.innerText;
+      dlBtn.innerText = "⏳ Saving...";
+      dlBtn.disabled = true;
+
+      try {
+        const downloadUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
+        const res = await fetch(downloadUrl);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        
+        let ext = 'jpg';
+        if (activeItem.type === 'video' || activeItem.type === 'videowish') ext = 'mp4';
+        else if (activeItem.type === 'voice') ext = 'm4a';
+
+        a.download = `memory_${Date.now()}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        // Fallback في حال منع الـ blob
+        window.open(`${API}/?file_id=${activeItem.file_id}&dl=1`, '_blank');
+      } finally {
+        dlBtn.innerText = originalText;
+        dlBtn.disabled = false;
+      }
+    }
+
     function closeViewer() {
       const target = document.getElementById('viewerTarget');
       const v = document.getElementById('activeVid');
@@ -530,9 +561,9 @@
       document.getElementById('viewer').classList.remove('active');
     }
 
+    // رسم بدون مسح الكروت القديمة لمنع رعشة الفيديوهات
     function draw() {
       const grid = document.getElementById('mediaGrid');
-      grid.innerHTML = '';
 
       let list = photoData;
       if (current === 'v') list = videoData;
@@ -545,6 +576,9 @@
         return;
       }
 
+      const emptyBox = grid.querySelector('.empty');
+      if (emptyBox) emptyBox.remove();
+
       let displayList = [...list];
       if (sortOrder === 'oldest') {
         displayList.sort((a, b) => a.timestamp - b.timestamp);
@@ -553,32 +587,35 @@
       }
 
       displayList.forEach(item => {
-        const d = document.createElement('div');
-        d.className = 'media-card';
+        if (!renderedIds.has(item.file_id)) {
+          renderedIds.add(item.file_id);
 
-        if (item.type === 'video' || item.type === 'videowish') {
-          // عرض لقطة حية من أول الفيديو مكان الخلفية السوداء
-          d.innerHTML = `
-            <video class="preview-thumb" src="${item.url}#t=0.5" preload="metadata" muted playsinline></video>
-            <div class="video-play-overlay">
-              <div class="video-play-btn">${item.type === 'videowish' ? '🤳' : '▶'}</div>
-            </div>
-          `;
-          d.onclick = () => openViewer(item);
-        } else if (item.type === 'voice') {
-          d.innerHTML = `
-            <div class="card-badge-inner">
-              <div class="badge-icon" style="background:#e11d48;">🎙️</div>
-              <span style="font-size:12px; font-weight:700;">Listen Voice</span>
-            </div>
-          `;
-          d.onclick = () => openViewer(item);
-        } else {
-          d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
-          d.onclick = () => openViewer(item);
+          const d = document.createElement('div');
+          d.className = 'media-card';
+
+          if (item.type === 'video' || item.type === 'videowish') {
+            d.innerHTML = `
+              <video class="preview-thumb" src="${item.url}#t=0.1" preload="metadata" muted playsinline></video>
+              <div class="video-play-overlay">
+                <div class="video-play-btn">${item.type === 'videowish' ? '🤳' : '▶'}</div>
+              </div>
+            `;
+            d.onclick = () => openViewer(item);
+          } else if (item.type === 'voice') {
+            d.innerHTML = `
+              <div class="card-badge-inner">
+                <div class="badge-icon" style="background:#e11d48;">🎙️</div>
+                <span style="font-size:12px; font-weight:700;">Listen Voice</span>
+              </div>
+            `;
+            d.onclick = () => openViewer(item);
+          } else {
+            d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
+            d.onclick = () => openViewer(item);
+          }
+
+          grid.appendChild(d);
         }
-
-        grid.appendChild(d);
       });
     }
 
