@@ -467,6 +467,76 @@
     let audioData = [];
     let renderedIds = new Set();
     let activeItem = null;
+    let isUploadingGlobal = false;
+
+    // منع الخروج أو الريفريش غير المقصود أثناء الرفع
+    window.addEventListener('beforeunload', (e) => {
+      if (isUploadingGlobal) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // محرك قاعدة البيانات المحلية في المتصفح (IndexedDB)
+    const DB_NAME = "LiveEventDB";
+    const STORE_NAME = "pending_uploads";
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: "tempId" });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveTaskLocally(task) {
+      try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readwrite");
+          tx.objectStore(STORE_NAME).put({
+            tempId: task.tempId,
+            file: task.file,
+            isVid: task.isVid,
+            type: task.type || (task.isVid ? "video" : "photo")
+          });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      } catch (e) {}
+    }
+
+    async function removeTaskLocally(tempId) {
+      try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readwrite");
+          tx.objectStore(STORE_NAME).delete(tempId);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      } catch (e) {}
+    }
+
+    async function getLocalPendingTasks() {
+      try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readonly");
+          const req = tx.objectStore(STORE_NAME).getAll();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (e) {
+        return [];
+      }
+    }
 
     function updateCounts() {
       document.getElementById('countP').innerText = photoData.length;
@@ -662,11 +732,7 @@
             d.onclick = () => { if (!item.isPending) openViewer(item); };
           }
 
-          if (sortOrder === 'newest') {
-            grid.prepend(d);
-          } else {
-            grid.appendChild(d);
-          }
+          grid.appendChild(d);
         }
       });
     }
@@ -768,7 +834,6 @@
       return { ok: false, error: "Upload failed after max attempts" };
     }
 
-    // استبدال العنصر المؤقت بالعنصر الحقيقي المعتمد من السيرفر
     function resolvePendingItem(tempId, finalItem) {
       function replaceInArray(arr) {
         const idx = arr.findIndex(x => x.file_id === tempId);
@@ -805,14 +870,21 @@
       updateCounts();
     }
 
-    // طابور رفع ذكي يرفع 3 بـ 3 في الخلفية دون تجميد المتصفح
     async function runConcurrentQueue(items, concurrency = 3) {
+      if (!items.length) return;
+      isUploadingGlobal = true;
+
       const btn = document.getElementById('uploadAction');
       const total = items.length;
       let completed = 0;
 
       btn.disabled = true;
-      btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (0/${total})...</span>`;
+      btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
+
+      // تخزين أولي في IndexedDB للحماية من أي ريفريش مفاجئ
+      for (const it of items) {
+        await saveTaskLocally(it);
+      }
 
       const queue = [...items];
       async function worker() {
@@ -820,14 +892,17 @@
           const item = queue.shift();
           try {
             const processed = item.isVid ? item.file : await compressImage(item.file);
-            const res = await uploadToWorker(processed, item.isVid ? "video" : "photo");
+            const res = await uploadToWorker(processed, item.type || (item.isVid ? "video" : "photo"));
             if (res.ok && res.item) {
               resolvePendingItem(item.tempId, res.item);
+              await removeTaskLocally(item.tempId);
             } else {
               removePendingItem(item.tempId);
+              await removeTaskLocally(item.tempId);
             }
           } catch (err) {
             removePendingItem(item.tempId);
+            await removeTaskLocally(item.tempId);
           }
           completed++;
           btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
@@ -842,6 +917,7 @@
 
       await Promise.all(workers);
 
+      isUploadingGlobal = false;
       btn.innerHTML = `
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
         <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Unlimited uploads • Multi-select supported)</span>
@@ -855,7 +931,6 @@
 
       const uploadTasks = [];
 
-      // 1. عرض فوري لحظي لكل الملفات في الجاليري (Optimistic UI)
       files.forEach(file => {
         const isVid = file.type.startsWith('video');
         const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
@@ -870,17 +945,15 @@
         };
 
         addLocalItem(tempItem);
-        uploadTasks.push({ file, isVid, tempId });
+        uploadTasks.push({ file, isVid, type: tempItem.type, tempId });
       });
 
       e.target.value = '';
 
-      // 2. تحويل التاب للصور أو الفيديوهات حسب نوع أول ملف تم اختياره
       if (uploadTasks.length > 0) {
         switchMedia(uploadTasks[0].isVid ? 'v' : 'p');
       }
 
-      // 3. تشغيل الطابور التوازي 3 بـ 3 في الخلفية
       runConcurrentQueue(uploadTasks, 3);
     });
 
@@ -906,12 +979,19 @@
       addLocalItem(tempItem);
       switchMedia('vw');
 
+      const task = { file, isVid: true, type: "videowish", tempId };
+      await saveTaskLocally(task);
+
+      isUploadingGlobal = true;
       const res = await uploadToWorker(file, "videowish");
+      isUploadingGlobal = false;
+
       if (res.ok && res.item) {
         resolvePendingItem(tempId, res.item);
       } else {
         removePendingItem(tempId);
       }
+      await removeTaskLocally(tempId);
 
       btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
@@ -962,12 +1042,19 @@
             addLocalItem(tempItem);
             switchMedia('a');
 
+            const task = { file, isVid: false, type: "voice", tempId };
+            await saveTaskLocally(task);
+
+            isUploadingGlobal = true;
             const res = await uploadToWorker(file, "voice");
+            isUploadingGlobal = false;
+
             if (res.ok && res.item) {
               resolvePendingItem(tempId, res.item);
             } else {
               removePendingItem(tempId);
             }
+            await removeTaskLocally(tempId);
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
@@ -985,6 +1072,27 @@
         mediaRecorder.stop();
       }
     }
+
+    // استعادة الرفع تلقائياً بعد الريفريش لو في ملفات لم تكتمل
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const saved = await getLocalPendingTasks();
+        if (saved && saved.length > 0) {
+          saved.forEach(task => {
+            const localBlobUrl = URL.createObjectURL(task.file);
+            const tempItem = {
+              file_id: task.tempId,
+              type: task.type,
+              url: localBlobUrl,
+              timestamp: Date.now(),
+              isPending: true
+            };
+            addLocalItem(tempItem);
+          });
+          runConcurrentQueue(saved, 3);
+        }
+      } catch (e) {}
+    });
 
     fetchStream();
     setInterval(fetchStream, 4000);
