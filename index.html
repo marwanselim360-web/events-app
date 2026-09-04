@@ -209,6 +209,11 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      transition: opacity 0.3s;
+    }
+
+    .media-card.pending img, .media-card.pending video {
+      opacity: 0.6;
     }
 
     .video-play-overlay {
@@ -233,6 +238,34 @@
       color: #ffffff;
       font-size: 18px;
       border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .upload-spinner-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .spinner-ring {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .card-badge-inner {
@@ -388,9 +421,6 @@
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
-    const photoLimit = q.get('pl') || q.get('plimit') || 'u';
-    const videoLimit = q.get('vl') || q.get('vlimit') || 'u';
-
     const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
     const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
 
@@ -514,7 +544,6 @@
       }
     }
 
-    // حفظ مباشر داخل Camera Roll / الاستوديو عبر Web Share API
     async function handleDirectDownload() {
       if (!activeItem || !activeItem.file_id) return;
       const dlBtn = document.getElementById('btnDl');
@@ -604,7 +633,8 @@
           renderedIds.add(item.file_id);
 
           const d = document.createElement('div');
-          d.className = 'media-card';
+          d.className = 'media-card' + (item.isPending ? ' pending' : '');
+          d.id = 'card-' + item.file_id;
 
           if (item.type === 'video' || item.type === 'videowish') {
             d.innerHTML = `
@@ -612,22 +642,31 @@
               <div class="video-play-overlay">
                 <div class="video-play-btn">${item.type === 'videowish' ? '🤳' : '▶'}</div>
               </div>
+              ${item.isPending ? '<div class="upload-spinner-overlay"><div class="spinner-ring"></div><span>Uploading...</span></div>' : ''}
             `;
-            d.onclick = () => openViewer(item);
+            d.onclick = () => { if (!item.isPending) openViewer(item); };
           } else if (item.type === 'voice') {
             d.innerHTML = `
               <div class="card-badge-inner">
                 <div class="badge-icon" style="background:#e11d48;">🎙️</div>
                 <span style="font-size:12px; font-weight:700;">Listen Voice</span>
               </div>
+              ${item.isPending ? '<div class="upload-spinner-overlay"><div class="spinner-ring"></div><span>Uploading...</span></div>' : ''}
             `;
-            d.onclick = () => openViewer(item);
+            d.onclick = () => { if (!item.isPending) openViewer(item); };
           } else {
-            d.innerHTML = `<img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />`;
-            d.onclick = () => openViewer(item);
+            d.innerHTML = `
+              <img src="${item.url}" loading="lazy" decoding="async" alt="Photo" />
+              ${item.isPending ? '<div class="upload-spinner-overlay"><div class="spinner-ring"></div><span>Uploading...</span></div>' : ''}
+            `;
+            d.onclick = () => { if (!item.isPending) openViewer(item); };
           }
 
-          grid.appendChild(d);
+          if (sortOrder === 'newest') {
+            grid.prepend(d);
+          } else {
+            grid.appendChild(d);
+          }
         }
       });
     }
@@ -729,41 +768,120 @@
       return { ok: false, error: "Upload failed after max attempts" };
     }
 
-    document.getElementById('pickerMedia').addEventListener('change', async (e) => {
-      let files = Array.from(e.target.files);
-      if (!files.length) return;
+    // استبدال العنصر المؤقت بالعنصر الحقيقي المعتمد من السيرفر
+    function resolvePendingItem(tempId, finalItem) {
+      function replaceInArray(arr) {
+        const idx = arr.findIndex(x => x.file_id === tempId);
+        if (idx !== -1) {
+          arr[idx] = finalItem;
+        }
+      }
+      replaceInArray(photoData);
+      replaceInArray(videoData);
+      replaceInArray(videoWishData);
+      replaceInArray(audioData);
 
+      renderedIds.delete(tempId);
+      renderedIds.add(finalItem.file_id);
+
+      const oldCard = document.getElementById('card-' + tempId);
+      if (oldCard) {
+        oldCard.id = 'card-' + finalItem.file_id;
+        oldCard.classList.remove('pending');
+        const overlay = oldCard.querySelector('.upload-spinner-overlay');
+        if (overlay) overlay.remove();
+        oldCard.onclick = () => openViewer(finalItem);
+      }
+    }
+
+    function removePendingItem(tempId) {
+      photoData = photoData.filter(x => x.file_id !== tempId);
+      videoData = videoData.filter(x => x.file_id !== tempId);
+      videoWishData = videoWishData.filter(x => x.file_id !== tempId);
+      audioData = audioData.filter(x => x.file_id !== tempId);
+      renderedIds.delete(tempId);
+      const oldCard = document.getElementById('card-' + tempId);
+      if (oldCard) oldCard.remove();
+      updateCounts();
+    }
+
+    // طابور رفع ذكي يرفع 3 بـ 3 في الخلفية دون تجميد المتصفح
+    async function runConcurrentQueue(items, concurrency = 3) {
       const btn = document.getElementById('uploadAction');
-      btn.disabled = true;
-
-      let total = files.length;
+      const total = items.length;
       let completed = 0;
+
+      btn.disabled = true;
       btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (0/${total})...</span>`;
 
-      for (let i = 0; i < total; i++) {
-        const file = files[i];
-        const isVid = file.type.startsWith('video');
-
-        try {
-          const processed = isVid ? file : await compressImage(file);
-          const res = await uploadToWorker(processed, isVid ? "video" : "photo");
-          if (res.ok && res.item) {
-            completed++;
-            btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-            addLocalItem(res.item);
+      const queue = [...items];
+      async function worker() {
+        while (queue.length > 0) {
+          const item = queue.shift();
+          try {
+            const processed = item.isVid ? item.file : await compressImage(item.file);
+            const res = await uploadToWorker(processed, item.isVid ? "video" : "photo");
+            if (res.ok && res.item) {
+              resolvePendingItem(item.tempId, res.item);
+            } else {
+              removePendingItem(item.tempId);
+            }
+          } catch (err) {
+            removePendingItem(item.tempId);
           }
-        } catch (err) {
-          console.error("Upload error:", err);
+          completed++;
+          btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
         }
-        await sleep(50);
       }
+
+      const workers = [];
+      const count = Math.min(concurrency, items.length);
+      for (let i = 0; i < count; i++) {
+        workers.push(worker());
+      }
+
+      await Promise.all(workers);
 
       btn.innerHTML = `
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
         <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Unlimited uploads • Multi-select supported)</span>
       `;
       btn.disabled = false;
+    }
+
+    document.getElementById('pickerMedia').addEventListener('change', async (e) => {
+      let files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      const uploadTasks = [];
+
+      // 1. عرض فوري لحظي لكل الملفات في الجاليري (Optimistic UI)
+      files.forEach(file => {
+        const isVid = file.type.startsWith('video');
+        const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
+        const localBlobUrl = URL.createObjectURL(file);
+
+        const tempItem = {
+          file_id: tempId,
+          type: isVid ? 'video' : 'photo',
+          url: localBlobUrl,
+          timestamp: Date.now(),
+          isPending: true
+        };
+
+        addLocalItem(tempItem);
+        uploadTasks.push({ file, isVid, tempId });
+      });
+
       e.target.value = '';
+
+      // 2. تحويل التاب للصور أو الفيديوهات حسب نوع أول ملف تم اختياره
+      if (uploadTasks.length > 0) {
+        switchMedia(uploadTasks[0].isVid ? 'v' : 'p');
+      }
+
+      // 3. تشغيل الطابور التوازي 3 بـ 3 في الخلفية
+      runConcurrentQueue(uploadTasks, 3);
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
@@ -774,15 +892,30 @@
       btn.innerHTML = `<span>⏳ Sending Wish...</span>`;
       btn.disabled = true;
 
+      const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
+      const localBlobUrl = URL.createObjectURL(file);
+
+      const tempItem = {
+        file_id: tempId,
+        type: 'videowish',
+        url: localBlobUrl,
+        timestamp: Date.now(),
+        isPending: true
+      };
+
+      addLocalItem(tempItem);
+      switchMedia('vw');
+
       const res = await uploadToWorker(file, "videowish");
       if (res.ok && res.item) {
-        addLocalItem(res.item);
+        resolvePendingItem(tempId, res.item);
+      } else {
+        removePendingItem(tempId);
       }
 
       btn.innerHTML = `<span>🤳 Video Wish</span>`;
       btn.disabled = false;
       e.target.value = '';
-      switchMedia('vw');
     });
 
     let mediaRecorder = null;
@@ -815,15 +948,30 @@
             voiceTxt.innerText = "⏳ Sending...";
 
             const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: mime });
+            const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
+            const localBlobUrl = URL.createObjectURL(audioBlob);
+
+            const tempItem = {
+              file_id: tempId,
+              type: 'voice',
+              url: localBlobUrl,
+              timestamp: Date.now(),
+              isPending: true
+            };
+
+            addLocalItem(tempItem);
+            switchMedia('a');
+
             const res = await uploadToWorker(file, "voice");
             if (res.ok && res.item) {
-              addLocalItem(res.item);
+              resolvePendingItem(tempId, res.item);
+            } else {
+              removePendingItem(tempId);
             }
 
             voiceBtn.classList.remove('recording');
             voiceTxt.innerText = "🎙️ Voice Note";
             isRecording = false;
-            switchMedia('a');
           };
 
           mediaRecorder.start();
