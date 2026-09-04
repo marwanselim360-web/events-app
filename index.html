@@ -35,6 +35,8 @@
       flex-direction: column;
       align-items: center;
       -webkit-tap-highlight-color: transparent;
+      /* منع سحب الصفحة لتحت للريفريش العرضي */
+      overscroll-behavior-y: contain;
     }
 
     .wrapper {
@@ -213,7 +215,7 @@
     }
 
     .media-card.pending img, .media-card.pending video {
-      opacity: 0.6;
+      opacity: 0.55;
     }
 
     .video-play-overlay {
@@ -469,7 +471,7 @@
     let activeItem = null;
     let isUploadingGlobal = false;
 
-    // منع الخروج أو الريفريش غير المقصود أثناء الرفع
+    // حماية الخروج العرضي
     window.addEventListener('beforeunload', (e) => {
       if (isUploadingGlobal) {
         e.preventDefault();
@@ -477,9 +479,11 @@
       }
     });
 
-    // محرك قاعدة البيانات المحلية في المتصفح (IndexedDB)
-    const DB_NAME = "LiveEventDB";
-    const STORE_NAME = "pending_uploads";
+    // ==========================================
+    // محرك IndexedDB المتين لتخزين الطابور محلياً
+    // ==========================================
+    const DB_NAME = "LiveEventDB_v2";
+    const STORE_NAME = "persistent_uploads";
 
     function openDB() {
       return new Promise((resolve, reject) => {
@@ -495,21 +499,23 @@
       });
     }
 
-    async function saveTaskLocally(task) {
-      try {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, "readwrite");
-          tx.objectStore(STORE_NAME).put({
+    async function saveBatchLocally(tasks) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        tasks.forEach(task => {
+          store.put({
             tempId: task.tempId,
             file: task.file,
             isVid: task.isVid,
-            type: task.type || (task.isVid ? "video" : "photo")
+            type: task.type,
+            timestamp: task.timestamp
           });
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
         });
-      } catch (e) {}
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
     }
 
     async function removeTaskLocally(tempId) {
@@ -530,7 +536,7 @@
         return new Promise((resolve, reject) => {
           const tx = db.transaction(STORE_NAME, "readonly");
           const req = tx.objectStore(STORE_NAME).getAll();
-          req.onsuccess = () => resolve(req.result);
+          req.onsuccess = () => resolve(req.result || []);
           req.onerror = () => reject(req.error);
         });
       } catch (e) {
@@ -737,27 +743,23 @@
       });
     }
 
+    // دالة التحديث: تحتفظ بالـ Pending المحلي ولا تمسحه
     async function fetchStream() {
       try {
         const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}&event=${encodeURIComponent(eventSlug)}&_t=${Date.now()}`);
         const data = await res.json();
         if (data.ok && data.media) {
-          const p = [];
-          const v = [];
-          const vw = [];
-          const a = [];
-
           data.media.forEach(item => {
-            if (item.type === 'voice') a.push(item);
-            else if (item.type === 'videowish') vw.push(item);
-            else if (item.type === 'video') v.push(item);
-            else p.push(item);
+            if (item.type === 'voice') {
+              if (!audioData.some(x => x.file_id === item.file_id)) audioData.push(item);
+            } else if (item.type === 'videowish') {
+              if (!videoWishData.some(x => x.file_id === item.file_id)) videoWishData.push(item);
+            } else if (item.type === 'video') {
+              if (!videoData.some(x => x.file_id === item.file_id)) videoData.push(item);
+            } else {
+              if (!photoData.some(x => x.file_id === item.file_id)) photoData.push(item);
+            }
           });
-
-          p.forEach(it => { if(!photoData.some(x => x.file_id === it.file_id)) photoData.push(it); });
-          v.forEach(it => { if(!videoData.some(x => x.file_id === it.file_id)) videoData.push(it); });
-          vw.forEach(it => { if(!videoWishData.some(x => x.file_id === it.file_id)) videoWishData.push(it); });
-          a.forEach(it => { if(!audioData.some(x => x.file_id === it.file_id)) audioData.push(it); });
 
           updateCounts();
           draw();
@@ -837,9 +839,7 @@
     function resolvePendingItem(tempId, finalItem) {
       function replaceInArray(arr) {
         const idx = arr.findIndex(x => x.file_id === tempId);
-        if (idx !== -1) {
-          arr[idx] = finalItem;
-        }
+        if (idx !== -1) arr[idx] = finalItem;
       }
       replaceInArray(photoData);
       replaceInArray(videoData);
@@ -870,7 +870,7 @@
       updateCounts();
     }
 
-    async function runConcurrentQueue(items, concurrency = 3) {
+    async function runConcurrentQueue(items, concurrency = 2) {
       if (!items.length) return;
       isUploadingGlobal = true;
 
@@ -880,11 +880,6 @@
 
       btn.disabled = true;
       btn.innerHTML = `<span style="font-size: 15px; font-weight: 700;">⏳ Uploading (${completed}/${total})...</span>`;
-
-      // تخزين أولي في IndexedDB للحماية من أي ريفريش مفاجئ
-      for (const it of items) {
-        await saveTaskLocally(it);
-      }
 
       const queue = [...items];
       async function worker() {
@@ -931,6 +926,7 @@
 
       const uploadTasks = [];
 
+      // 1. توليد العناصر المؤقتة
       files.forEach(file => {
         const isVid = file.type.startsWith('video');
         const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
@@ -945,7 +941,7 @@
         };
 
         addLocalItem(tempItem);
-        uploadTasks.push({ file, isVid, type: tempItem.type, tempId });
+        uploadTasks.push({ file, isVid, type: tempItem.type, tempId, timestamp: tempItem.timestamp });
       });
 
       e.target.value = '';
@@ -954,7 +950,11 @@
         switchMedia(uploadTasks[0].isVid ? 'v' : 'p');
       }
 
-      runConcurrentQueue(uploadTasks, 3);
+      // 2. الحفظ المباشر المتين في الـ IndexedDB دفعة واحدة قبل بدء الرفع
+      await saveBatchLocally(uploadTasks);
+
+      // 3. تشغيل الرفع بتزامن هادئ (2 بـ 2) لضمان عدم اختناق التليجرام والموبايل
+      runConcurrentQueue(uploadTasks, 2);
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
@@ -979,8 +979,8 @@
       addLocalItem(tempItem);
       switchMedia('vw');
 
-      const task = { file, isVid: true, type: "videowish", tempId };
-      await saveTaskLocally(task);
+      const task = { file, isVid: true, type: "videowish", tempId, timestamp: tempItem.timestamp };
+      await saveBatchLocally([task]);
 
       isUploadingGlobal = true;
       const res = await uploadToWorker(file, "videowish");
@@ -1042,8 +1042,8 @@
             addLocalItem(tempItem);
             switchMedia('a');
 
-            const task = { file, isVid: false, type: "voice", tempId };
-            await saveTaskLocally(task);
+            const task = { file, isVid: false, type: "voice", tempId, timestamp: tempItem.timestamp };
+            await saveBatchLocally([task]);
 
             isUploadingGlobal = true;
             const res = await uploadToWorker(file, "voice");
@@ -1073,7 +1073,7 @@
       }
     }
 
-    // استعادة الرفع تلقائياً بعد الريفريش لو في ملفات لم تكتمل
+    // استعادة الرفع التلقائي عند فتح الصفحة أو بعد أي Refresh
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         const saved = await getLocalPendingTasks();
@@ -1084,18 +1084,19 @@
               file_id: task.tempId,
               type: task.type,
               url: localBlobUrl,
-              timestamp: Date.now(),
+              timestamp: task.timestamp || Date.now(),
               isPending: true
             };
             addLocalItem(tempItem);
           });
-          runConcurrentQueue(saved, 3);
+          // استكمال الرفع فوراً
+          runConcurrentQueue(saved, 2);
         }
       } catch (e) {}
-    });
 
-    fetchStream();
-    setInterval(fetchStream, 4000);
+      fetchStream();
+      setInterval(fetchStream, 4000);
+    });
   </script>
 </body>
 </html>
