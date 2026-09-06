@@ -572,46 +572,38 @@
       const dlBtn = document.getElementById('btnDl');
       const originalText = dlBtn.innerText;
 
-      const directUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
-
-      if (activeItem.type === 'video') {
-        dlBtn.innerText = "⏳ Downloading...";
-        const a = document.createElement('a');
-        a.href = directUrl;
-        a.setAttribute('download', `video_${Date.now()}.mp4`);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        setTimeout(() => {
-          dlBtn.innerText = originalText;
-        }, 1500);
-        return;
-      }
-
-      dlBtn.innerText = "⏳ Saving...";
+      dlBtn.innerText = "⏳ Preparing...";
       dlBtn.disabled = true;
 
+      const directUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
+
       try {
+        const isVideo = activeItem.type === 'video' || activeItem.type === 'videowish';
+        const isVoice = activeItem.type === 'voice';
+
         const res = await fetch(directUrl);
         const blob = await res.blob();
 
         let ext = 'jpg';
         let mime = 'image/jpeg';
-        if (activeItem.type === 'videowish') {
+        let fileNamePrefix = 'photo';
+
+        if (isVideo) {
           ext = 'mp4';
           mime = 'video/mp4';
-        } else if (activeItem.type === 'voice') {
+          fileNamePrefix = 'video';
+        } else if (isVoice) {
           ext = 'm4a';
           mime = 'audio/mp4';
+          fileNamePrefix = 'voice';
         }
 
-        const file = new File([blob], `memory_${Date.now()}.${ext}`, { type: mime });
+        const file = new File([blob], `${fileNamePrefix}_${Date.now()}.${ext}`, { type: mime });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'Save Memory'
+            title: isVideo ? 'Save Video' : 'Save Photo'
           });
         } else {
           const blobUrl = URL.createObjectURL(blob);
@@ -621,7 +613,7 @@
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          URL.revokeObjectURL(blobUrl);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
