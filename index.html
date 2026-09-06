@@ -319,7 +319,6 @@
     .btn-save { background: var(--primary); color: #fff; }
     .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
-    /* شريط عائم شيك بدون سواد على الشاشة */
     .upload-floating-toast {
       position: fixed;
       bottom: 24px;
@@ -364,7 +363,6 @@
 </head>
 <body>
 
-  <!-- البار العائم أثناء الرفع -->
   <div class="upload-floating-toast" id="uploadToast">
     <div class="mini-spinner"></div>
     <span id="toastStatus" style="font-size: 13px; font-weight: 700; color: #fff;">Uploading memories...</span>
@@ -483,7 +481,6 @@
     let activeItem = null;
     let isUploading = false;
 
-    // حماية خروج الصفحة أثناء الرفع
     window.onbeforeunload = function() {
       if (isUploading) {
         return "Upload in progress. Are you sure you want to leave?";
@@ -538,14 +535,18 @@
 
       if (item.type === 'video' || item.type === 'videowish') {
         target.innerHTML = `
-          <video id="activeVid" controls playsinline webkit-playsinline preload="auto" autoplay style="max-height:70vh; width:100%;">
+          <video id="activeVid" controls playsinline webkit-playsinline preload="metadata" style="max-height:70vh; width:100%; border-radius:12px; background:#000;">
             <source src="${item.url}" type="video/mp4">
+            <source src="${item.url}">
             Your browser does not support video playback.
           </video>
         `;
         box.classList.add('active');
         const v = document.getElementById('activeVid');
-        if (v) v.play().catch(() => {});
+        if (v) {
+          v.load();
+          v.play().catch(() => {});
+        }
       } else if (item.type === 'voice') {
         target.innerHTML = `
           <div style="background:#1e293b; padding:24px; border-radius:16px; display:flex; flex-direction:column; align-items:center; gap:16px;">
@@ -561,7 +562,7 @@
         const a = document.getElementById('activeAud');
         if (a) a.play().catch(() => {});
       } else {
-        target.innerHTML = `<img src="${item.url}" alt="Memory" />`;
+        target.innerHTML = `<img src="${item.url}" alt="Memory" style="max-height:70vh; width:100%; object-fit:contain; border-radius:12px;" />`;
         box.classList.add('active');
       }
     }
@@ -570,17 +571,34 @@
       if (!activeItem || !activeItem.file_id) return;
       const dlBtn = document.getElementById('btnDl');
       const originalText = dlBtn.innerText;
+
+      const directUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
+
+      if (activeItem.type === 'video') {
+        dlBtn.innerText = "⏳ Downloading...";
+        const a = document.createElement('a');
+        a.href = directUrl;
+        a.setAttribute('download', `video_${Date.now()}.mp4`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => {
+          dlBtn.innerText = originalText;
+        }, 1500);
+        return;
+      }
+
       dlBtn.innerText = "⏳ Saving...";
       dlBtn.disabled = true;
 
       try {
-        const downloadUrl = `${API}/?file_id=${activeItem.file_id}&dl=1`;
-        const res = await fetch(downloadUrl);
+        const res = await fetch(directUrl);
         const blob = await res.blob();
 
         let ext = 'jpg';
         let mime = 'image/jpeg';
-        if (activeItem.type === 'video' || activeItem.type === 'videowish') {
+        if (activeItem.type === 'videowish') {
           ext = 'mp4';
           mime = 'video/mp4';
         } else if (activeItem.type === 'voice') {
@@ -607,7 +625,7 @@
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          window.open(`${API}/?file_id=${activeItem.file_id}&dl=1`, '_blank');
+          window.location.href = directUrl;
         }
       } finally {
         dlBtn.innerText = originalText;
@@ -711,7 +729,6 @@
       } catch (e) {}
     }
 
-    // ضغط خفيف سريع متوافق مع الآيفون وسفاري بدون خنق الرامات
     async function compressImage(file) {
       if (!file.type.startsWith('image/') || file.size < 700 * 1024) return file;
       return new Promise((resolve) => {
@@ -744,7 +761,6 @@
       });
     }
 
-    // رفع فردي هادئ مع Timeout 15 ثانية
     async function uploadToWorker(file, type) {
       const fd = new FormData();
       fd.append("file", file, file.name || "media_file");
@@ -768,7 +784,6 @@
       return { ok: false };
     }
 
-    // دورة الرفع مع البار العائم تحت
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
