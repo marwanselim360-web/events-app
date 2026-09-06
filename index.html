@@ -319,14 +319,14 @@
     .btn-save { background: var(--primary); color: #fff; }
     .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
-    /* شاشة قفل التحميل لمنع الريفريش */
-    .upload-modal {
+    /* شاشة القفل لمنع الريفريش وضياع الصور */
+    .upload-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(5px);
-      z-index: 99999;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 999999;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -334,28 +334,46 @@
       text-align: center;
       color: #fff;
     }
-    .upload-modal.active { display: flex; }
-    .upload-spinner {
-      width: 44px;
-      height: 44px;
+    .upload-overlay.active { display: flex; }
+    .spinner {
+      width: 50px;
+      height: 50px;
       border: 4px solid rgba(255,255,255,0.2);
       border-top-color: var(--gold);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-bar-wrap {
+      width: 240px;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 14px 0 8px;
+    }
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--gold);
+      transition: width 0.3s ease;
+    }
 
     #pickerMedia, #pickerVideoWish { display: none; }
   </style>
 </head>
 <body>
 
-  <!-- شاشة قفل المتصفح وقت الرفع -->
-  <div class="upload-modal" id="uploadModal">
-    <div class="upload-spinner"></div>
-    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;" id="modalStatusTitle">Uploading memories...</h3>
-    <p style="font-size: 13px; color: #cbd5e1; max-width: 280px;">Please do not close or refresh the page until upload completes.</p>
+  <!-- شاشة القفل التفاعلية للرفع -->
+  <div class="upload-overlay" id="uploadOverlay">
+    <div class="spinner"></div>
+    <h3 id="overlayText" style="font-size: 18px; font-weight: 700;">Uploading (0/0)...</h3>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <p style="font-size: 12px; color: #94a3b8;">Please keep this page open until upload completes</p>
   </div>
 
   <div class="wrapper">
@@ -368,7 +386,7 @@
     <div class="upload-main-card">
       <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
-        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Select your favorite moments)</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Multi-select supported)</span>
       </button>
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
@@ -471,12 +489,12 @@
     let activeItem = null;
     let isUploading = false;
 
-    window.addEventListener('beforeunload', (e) => {
+    // تنبيه المتصفح القياسي لمنع إغلاق أو ريفريش الصفحة أثناء الرفع
+    window.onbeforeunload = function() {
       if (isUploading) {
-        e.preventDefault();
-        e.returnValue = '';
+        return "Upload in progress. Leaving will cancel your upload.";
       }
-    });
+    };
 
     function updateCounts() {
       document.getElementById('countP').innerText = photoData.length;
@@ -699,44 +717,40 @@
       } catch (e) {}
     }
 
+    // ضغط خفيف وسريع مع تايم أوت ثانيتين لتجنب أي تعليق
     async function compressImage(file) {
-      if (!file.type.startsWith('image/')) return file;
+      if (!file.type.startsWith('image/') || file.size < 800 * 1024) return file;
       return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(file), 2000);
         const reader = new FileReader();
         reader.onload = (e) => {
           const img = new Image();
           img.onload = () => {
+            clearTimeout(timeout);
             const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const maxDim = 1200;
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
+            const max = 1200;
+            let w = img.width, h = img.height;
+            if (w > max || h > max) {
+              if (w > h) { h = Math.round((h * max) / w); w = max; }
+              else { w = Math.round((w * max) / h); h = max; }
             }
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob((blob) => {
-              resolve(blob ? new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }) : file);
+            ctx.drawImage(img, 0, 0, w, h);
+            canvas.toBlob((b) => {
+              resolve(b ? new File([b], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }) : file);
             }, 'image/jpeg', 0.8);
           };
-          img.onerror = () => resolve(file);
+          img.onerror = () => { clearTimeout(timeout); resolve(file); };
           img.src = e.target.result;
         };
-        reader.onerror = () => resolve(file);
+        reader.onerror = () => { clearTimeout(timeout); resolve(file); };
         reader.readAsDataURL(file);
       });
     }
 
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
+    // دالة الرفع الأساسية مع Timeout صارم 15 ثانية
     async function uploadToWorker(file, type) {
       const fd = new FormData();
       fd.append("file", file, file.name || "media_file");
@@ -744,39 +758,32 @@
       fd.append("event", eventSlug);
       fd.append("type", type);
 
-      let attempts = 5;
-      while (attempts > 0) {
-        try {
-          const res = await fetch(API, { method: "POST", body: fd });
-          const json = await res.json();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 15000);
 
-          if (json.ok) {
-            return json;
-          } else if (json.rate_limited) {
-            const waitTime = (json.retry_after || 1) * 1000 + 400;
-            await sleep(waitTime);
-            attempts--;
-          } else {
-            await sleep(1000);
-            attempts--;
-          }
+        try {
+          const res = await fetch(API, { method: "POST", body: fd, signal: controller.signal });
+          clearTimeout(tid);
+          const json = await res.json();
+          if (json.ok) return json;
         } catch (e) {
-          await sleep(1500);
-          attempts--;
+          clearTimeout(tid);
         }
       }
-      return { ok: false, error: "Upload failed" };
+      return { ok: false };
     }
 
-    // الرفع الفردي المتتالي السريع مع شاشة القفل لمنع الريفريش
+    // رفع الملفات واحداً تلو الآخر مع قفل الشاشة لمنع الريفريش
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
 
       isUploading = true;
-      const modal = document.getElementById('uploadModal');
-      const modalTitle = document.getElementById('modalStatusTitle');
-      modal.classList.add('active');
+      const overlay = document.getElementById('uploadOverlay');
+      const overlayTxt = document.getElementById('overlayText');
+      const progressFill = document.getElementById('progressFill');
+      overlay.classList.add('active');
 
       const total = files.length;
       let completed = 0;
@@ -784,7 +791,8 @@
       for (let i = 0; i < total; i++) {
         const file = files[i];
         const isVid = file.type.startsWith('video');
-        modalTitle.innerText = `Uploading (${i + 1}/${total})...`;
+        overlayTxt.innerText = `Uploading (${i + 1}/${total})...`;
+        progressFill.style.width = `${Math.round(((i) / total) * 100)}%`;
 
         try {
           const processed = isVid ? file : await compressImage(file);
@@ -793,15 +801,16 @@
             completed++;
             addLocalItem(res.item);
           }
-        } catch (err) {
-          console.error(err);
-        }
+        } catch (err) {}
       }
 
-      modal.classList.remove('active');
-      isUploading = false;
-      e.target.value = '';
-      fetchStream();
+      progressFill.style.width = '100%';
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        isUploading = false;
+        e.target.value = '';
+        fetchStream();
+      }, 400);
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
@@ -837,7 +846,6 @@
       if (!isRecording) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          
           let mime = 'audio/mp4';
           if (!MediaRecorder.isTypeSupported('audio/mp4')) {
             mime = 'audio/webm;codecs=opus';
