@@ -776,7 +776,6 @@
       return { ok: false };
     }
 
-    // معالجة الرفع بسعة غير محدودة مع تحرير الذاكرة الفوري (Stream-like queue)
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       const fileList = e.target.files;
       if (!fileList || !fileList.length) return;
@@ -786,7 +785,6 @@
         files.push(fileList[i]);
       }
 
-      // تفريغ الرابط في الـ input فوراً لمنع متصفح الموبايل من قفل الملفات
       e.target.value = '';
 
       isUploading = true;
@@ -798,7 +796,6 @@
       let completed = 0;
       toastStatus.innerText = `Uploading (0/${total})...`;
 
-      // التزامن: 1 للفيديوهات لضمان استقرار خط الرفع بالكامل، و 2 للصور لتسريعها
       const hasVideos = files.some(f => f.type.startsWith('video'));
       const CONCURRENCY = hasVideos ? 1 : 2;
 
