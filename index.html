@@ -762,7 +762,7 @@
 
       for (let attempt = 0; attempt < 2; attempt++) {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 15000);
+        const tid = setTimeout(() => controller.abort(), 20000);
 
         try {
           const res = await fetch(API, { method: "POST", body: fd, signal: controller.signal });
@@ -776,9 +776,18 @@
       return { ok: false };
     }
 
+    // معالجة الرفع بسعة غير محدودة مع تحرير الذاكرة الفوري (Stream-like queue)
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
-      let files = Array.from(e.target.files);
-      if (!files.length) return;
+      const fileList = e.target.files;
+      if (!fileList || !fileList.length) return;
+
+      const files = [];
+      for (let i = 0; i < fileList.length; i++) {
+        files.push(fileList[i]);
+      }
+
+      // تفريغ الرابط في الـ input فوراً لمنع متصفح الموبايل من قفل الملفات
+      e.target.value = '';
 
       isUploading = true;
       const toast = document.getElementById('uploadToast');
@@ -789,13 +798,13 @@
       let completed = 0;
       toastStatus.innerText = `Uploading (0/${total})...`;
 
-      const queue = files.map((file, index) => ({ file, index }));
-      const CONCURRENCY = 3;
+      // التزامن: 1 للفيديوهات لضمان استقرار خط الرفع بالكامل، و 2 للصور لتسريعها
+      const hasVideos = files.some(f => f.type.startsWith('video'));
+      const CONCURRENCY = hasVideos ? 1 : 2;
 
-      async function processQueue() {
-        while (queue.length > 0) {
-          const item = queue.shift();
-          const file = item.file;
+      async function worker() {
+        while (files.length > 0) {
+          const file = files.shift();
           const isVid = file.type.startsWith('video');
 
           try {
@@ -805,7 +814,7 @@
               addLocalItem(res.item);
             }
           } catch (err) {
-            console.error(err);
+            console.error("Upload failed for item", err);
           } finally {
             completed++;
             toastStatus.innerText = `Uploading (${completed}/${total})...`;
@@ -815,7 +824,7 @@
 
       const workers = [];
       for (let i = 0; i < Math.min(CONCURRENCY, total); i++) {
-        workers.push(processQueue());
+        workers.push(worker());
       }
 
       await Promise.all(workers);
@@ -824,7 +833,6 @@
       setTimeout(() => {
         toast.classList.remove('active');
         isUploading = false;
-        e.target.value = '';
         fetchStream();
       }, 1200);
     });
