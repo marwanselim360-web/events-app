@@ -319,46 +319,44 @@
     .btn-save { background: var(--primary); color: #fff; }
     .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
-    /* شاشة القفل لمنع الريفريش وضياع الصور */
-    .upload-overlay {
-      display: none;
+    /* شريط عائم شيك بدون سواد على الشاشة */
+    .upload-floating-toast {
       position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(8px);
-      z-index: 999999;
-      flex-direction: column;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 40px;
+      padding: 10px 20px;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-      color: #fff;
+      gap: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      z-index: 99999;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s;
+      opacity: 0;
+      pointer-events: none;
     }
-    .upload-overlay.active { display: flex; }
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255,255,255,0.2);
+
+    .upload-floating-toast.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .mini-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid rgba(255, 255, 255, 0.2);
       border-top-color: var(--gold);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 20px;
+      animation: spin 0.7s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .progress-bar-wrap {
-      width: 240px;
-      height: 8px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 14px 0 8px;
-    }
-    .progress-bar-fill {
-      width: 0%;
-      height: 100%;
-      background: var(--gold);
-      transition: width 0.3s ease;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     #pickerMedia, #pickerVideoWish { display: none; }
@@ -366,14 +364,10 @@
 </head>
 <body>
 
-  <!-- شاشة القفل التفاعلية للرفع -->
-  <div class="upload-overlay" id="uploadOverlay">
-    <div class="spinner"></div>
-    <h3 id="overlayText" style="font-size: 18px; font-weight: 700;">Uploading (0/0)...</h3>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="progressFill"></div>
-    </div>
-    <p style="font-size: 12px; color: #94a3b8;">Please keep this page open until upload completes</p>
+  <!-- البار العائم أثناء الرفع -->
+  <div class="upload-floating-toast" id="uploadToast">
+    <div class="mini-spinner"></div>
+    <span id="toastStatus" style="font-size: 13px; font-weight: 700; color: #fff;">Uploading memories...</span>
   </div>
 
   <div class="wrapper">
@@ -489,10 +483,10 @@
     let activeItem = null;
     let isUploading = false;
 
-    // تنبيه المتصفح القياسي لمنع إغلاق أو ريفريش الصفحة أثناء الرفع
+    // حماية خروج الصفحة أثناء الرفع
     window.onbeforeunload = function() {
       if (isUploading) {
-        return "Upload in progress. Leaving will cancel your upload.";
+        return "Upload in progress. Are you sure you want to leave?";
       }
     };
 
@@ -717,11 +711,11 @@
       } catch (e) {}
     }
 
-    // ضغط خفيف وسريع مع تايم أوت ثانيتين لتجنب أي تعليق
+    // ضغط خفيف سريع متوافق مع الآيفون وسفاري بدون خنق الرامات
     async function compressImage(file) {
-      if (!file.type.startsWith('image/') || file.size < 800 * 1024) return file;
+      if (!file.type.startsWith('image/') || file.size < 700 * 1024) return file;
       return new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(file), 2000);
+        const timeout = setTimeout(() => resolve(file), 1500);
         const reader = new FileReader();
         reader.onload = (e) => {
           const img = new Image();
@@ -750,7 +744,7 @@
       });
     }
 
-    // دالة الرفع الأساسية مع Timeout صارم 15 ثانية
+    // رفع فردي هادئ مع Timeout 15 ثانية
     async function uploadToWorker(file, type) {
       const fd = new FormData();
       fd.append("file", file, file.name || "media_file");
@@ -774,16 +768,15 @@
       return { ok: false };
     }
 
-    // رفع الملفات واحداً تلو الآخر مع قفل الشاشة لمنع الريفريش
+    // دورة الرفع مع البار العائم تحت
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       let files = Array.from(e.target.files);
       if (!files.length) return;
 
       isUploading = true;
-      const overlay = document.getElementById('uploadOverlay');
-      const overlayTxt = document.getElementById('overlayText');
-      const progressFill = document.getElementById('progressFill');
-      overlay.classList.add('active');
+      const toast = document.getElementById('uploadToast');
+      const toastStatus = document.getElementById('toastStatus');
+      toast.classList.add('active');
 
       const total = files.length;
       let completed = 0;
@@ -791,8 +784,7 @@
       for (let i = 0; i < total; i++) {
         const file = files[i];
         const isVid = file.type.startsWith('video');
-        overlayTxt.innerText = `Uploading (${i + 1}/${total})...`;
-        progressFill.style.width = `${Math.round(((i) / total) * 100)}%`;
+        toastStatus.innerText = `Uploading (${i + 1}/${total})...`;
 
         try {
           const processed = isVid ? file : await compressImage(file);
@@ -804,13 +796,13 @@
         } catch (err) {}
       }
 
-      progressFill.style.width = '100%';
+      toastStatus.innerText = `✓ Uploaded ${completed} items!`;
       setTimeout(() => {
-        overlay.classList.remove('active');
+        toast.classList.remove('active');
         isUploading = false;
         e.target.value = '';
         fetchStream();
-      }, 400);
+      }, 1200);
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
