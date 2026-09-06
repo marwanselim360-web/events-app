@@ -787,23 +787,40 @@
 
       const total = files.length;
       let completed = 0;
+      toastStatus.innerText = `Uploading (0/${total})...`;
 
-      for (let i = 0; i < total; i++) {
-        const file = files[i];
-        const isVid = file.type.startsWith('video');
-        toastStatus.innerText = `Uploading (${i + 1}/${total})...`;
+      const queue = files.map((file, index) => ({ file, index }));
+      const CONCURRENCY = 3;
 
-        try {
-          const processed = isVid ? file : await compressImage(file);
-          const res = await uploadToWorker(processed, isVid ? "video" : "photo");
-          if (res.ok && res.item) {
+      async function processQueue() {
+        while (queue.length > 0) {
+          const item = queue.shift();
+          const file = item.file;
+          const isVid = file.type.startsWith('video');
+
+          try {
+            const processed = isVid ? file : await compressImage(file);
+            const res = await uploadToWorker(processed, isVid ? "video" : "photo");
+            if (res.ok && res.item) {
+              addLocalItem(res.item);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
             completed++;
-            addLocalItem(res.item);
+            toastStatus.innerText = `Uploading (${completed}/${total})...`;
           }
-        } catch (err) {}
+        }
       }
 
-      toastStatus.innerText = `✓ Uploaded ${completed} items!`;
+      const workers = [];
+      for (let i = 0; i < Math.min(CONCURRENCY, total); i++) {
+        workers.push(processQueue());
+      }
+
+      await Promise.all(workers);
+
+      toastStatus.innerText = `✓ Done! Uploaded ${completed} items`;
       setTimeout(() => {
         toast.classList.remove('active');
         isUploading = false;
