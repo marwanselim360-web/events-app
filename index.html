@@ -426,15 +426,15 @@
     const FIXED_CHAT_ID = "-1003837109142";
 
     const q = new URLSearchParams(window.location.search);
-    const eventSlug = q.get('e') || q.get('event') || 'default_event';
-    const title = q.get('t') || q.get('title') || 'Live Moments';
+    const eventSlug = q.get('event') || q.get('e') || 'default_event';
+    const title = q.get('title') || q.get('t') || 'Live Moments';
     const sub = q.get('sub') || 'Share your live memories with us';
-    const eventType = (q.get('ty') || q.get('type') || 'Wedding').toLowerCase();
+    const eventType = (q.get('type') || q.get('ty') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
 
-    const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
-    const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
+    const allowVoice = q.get('voice') === 'true' || q.get('vo') === '1';
+    const allowVideoWish = q.get('video') === 'true' || q.get('vi') === '1';
 
     if (!allowVoice && !allowVideoWish) {
       document.getElementById('guestbookSection').style.display = 'none';
@@ -655,9 +655,9 @@
 
       let displayList = [...list];
       if (sortOrder === 'oldest') {
-        displayList.sort((a, b) => a.timestamp - b.timestamp);
+        displayList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       } else {
-        displayList.sort((a, b) => b.timestamp - a.timestamp);
+        displayList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       }
 
       displayList.forEach(item => {
@@ -695,9 +695,12 @@
 
     async function fetchStream() {
       try {
-        const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}&event=${encodeURIComponent(eventSlug)}&_t=${Date.now()}`);
+        const bust = Date.now();
+        const res = await fetch(`${API}?chat_id=${encodeURIComponent(FIXED_CHAT_ID)}&event=${encodeURIComponent(eventSlug)}&e=${encodeURIComponent(eventSlug)}&_t=${bust}`, {
+          cache: "no-store"
+        });
         const data = await res.json();
-        if (data.ok && data.media) {
+        if (data.ok && Array.isArray(data.media)) {
           const p = [];
           const v = [];
           const vw = [];
@@ -710,6 +713,7 @@
             else p.push(item);
           });
 
+          // دمج العناصر بدون فقدان أي عنصر في الذاكرة
           p.forEach(it => { if(!photoData.some(x => x.file_id === it.file_id)) photoData.push(it); });
           v.forEach(it => { if(!videoData.some(x => x.file_id === it.file_id)) videoData.push(it); });
           vw.forEach(it => { if(!videoWishData.some(x => x.file_id === it.file_id)) videoWishData.push(it); });
@@ -718,10 +722,11 @@
           updateCounts();
           draw();
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Fetch stream error:", e);
+      }
     }
 
-    // ضغط فائق السرعة وبجودة متوازنة (300KB-400KB للموبايل)
     async function fastCompress(file) {
       if (!file.type.startsWith('image/') || file.size < 400 * 1024) return file;
       return new Promise((resolve) => {
@@ -759,14 +764,19 @@
       fd.append("file", file, file.name || "media_file");
       fd.append("chat_id", FIXED_CHAT_ID);
       fd.append("event", eventSlug);
+      fd.append("e", eventSlug);
       fd.append("type", type);
 
       for (let attempt = 0; attempt < 2; attempt++) {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 20000);
+        const tid = setTimeout(() => controller.abort(), 25000);
 
         try {
-          const res = await fetch(API, { method: "POST", body: fd, signal: controller.signal });
+          const res = await fetch(API, { 
+            method: "POST", 
+            body: fd, 
+            signal: controller.signal 
+          });
           clearTimeout(tid);
           const json = await res.json();
           if (json.ok) return json;
@@ -777,13 +787,12 @@
       return { ok: false };
     }
 
-    // رفع فائق السرعة: 3 عمال للصور + عامل مستقل للفيديوهات
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       const fileList = e.target.files;
       if (!fileList || !fileList.length) return;
 
       const files = Array.from(fileList);
-      e.target.value = ''; // تحرير رامات المتصفح فوراً
+      e.target.value = '';
 
       isUploading = true;
       const toast = document.getElementById('uploadToast');
