@@ -721,17 +721,18 @@
       } catch (e) {}
     }
 
-    async function compressImage(file) {
-      if (!file.type.startsWith('image/') || file.size < 700 * 1024) return file;
+    // ضغط فائق السرعة وبجودة متوازنة (300KB-400KB للموبايل)
+    async function fastCompress(file) {
+      if (!file.type.startsWith('image/') || file.size < 400 * 1024) return file;
       return new Promise((resolve) => {
         const timeout = setTimeout(() => resolve(file), 1500);
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = (ev) => {
           const img = new Image();
           img.onload = () => {
             clearTimeout(timeout);
             const canvas = document.createElement('canvas');
-            const max = 1200;
+            const max = 1100;
             let w = img.width, h = img.height;
             if (w > max || h > max) {
               if (w > h) { h = Math.round((h * max) / w); w = max; }
@@ -743,10 +744,10 @@
             ctx.drawImage(img, 0, 0, w, h);
             canvas.toBlob((b) => {
               resolve(b ? new File([b], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }) : file);
-            }, 'image/jpeg', 0.8);
+            }, 'image/jpeg', 0.68);
           };
           img.onerror = () => { clearTimeout(timeout); resolve(file); };
-          img.src = e.target.result;
+          img.src = ev.target.result;
         };
         reader.onerror = () => { clearTimeout(timeout); resolve(file); };
         reader.readAsDataURL(file);
@@ -776,16 +777,13 @@
       return { ok: false };
     }
 
+    // رفع فائق السرعة: 3 عمال للصور + عامل مستقل للفيديوهات
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
       const fileList = e.target.files;
       if (!fileList || !fileList.length) return;
 
-      const files = [];
-      for (let i = 0; i < fileList.length; i++) {
-        files.push(fileList[i]);
-      }
-
-      e.target.value = '';
+      const files = Array.from(fileList);
+      e.target.value = ''; // تحرير رامات المتصفح فوراً
 
       isUploading = true;
       const toast = document.getElementById('uploadToast');
@@ -796,22 +794,38 @@
       let completed = 0;
       toastStatus.innerText = `Uploading (0/${total})...`;
 
-      const hasVideos = files.some(f => f.type.startsWith('video'));
-      const CONCURRENCY = hasVideos ? 1 : 2;
+      const videoQueue = [];
+      const photoQueue = [];
 
-      async function worker() {
-        while (files.length > 0) {
-          const file = files.shift();
-          const isVid = file.type.startsWith('video');
+      for (const f of files) {
+        if (f.type.startsWith('video')) videoQueue.push(f);
+        else photoQueue.push(f);
+      }
 
+      async function photoWorker() {
+        while (photoQueue.length > 0) {
+          const file = photoQueue.shift();
           try {
-            const processed = isVid ? file : await compressImage(file);
-            const res = await uploadToWorker(processed, isVid ? "video" : "photo");
-            if (res.ok && res.item) {
-              addLocalItem(res.item);
-            }
+            const processed = await fastCompress(file);
+            const res = await uploadToWorker(processed, "photo");
+            if (res.ok && res.item) addLocalItem(res.item);
           } catch (err) {
-            console.error("Upload failed for item", err);
+            console.error(err);
+          } finally {
+            completed++;
+            toastStatus.innerText = `Uploading (${completed}/${total})...`;
+          }
+        }
+      }
+
+      async function videoWorker() {
+        while (videoQueue.length > 0) {
+          const file = videoQueue.shift();
+          try {
+            const res = await uploadToWorker(file, "video");
+            if (res.ok && res.item) addLocalItem(res.item);
+          } catch (err) {
+            console.error(err);
           } finally {
             completed++;
             toastStatus.innerText = `Uploading (${completed}/${total})...`;
@@ -820,9 +834,8 @@
       }
 
       const workers = [];
-      for (let i = 0; i < Math.min(CONCURRENCY, total); i++) {
-        workers.push(worker());
-      }
+      for (let i = 0; i < 3; i++) workers.push(photoWorker());
+      workers.push(videoWorker());
 
       await Promise.all(workers);
 
@@ -831,7 +844,7 @@
         toast.classList.remove('active');
         isUploading = false;
         fetchStream();
-      }, 1200);
+      }, 1000);
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
