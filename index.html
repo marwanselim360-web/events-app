@@ -64,7 +64,7 @@
       width: 100%;
     }
 
-.couple-banner-box {
+    .couple-banner-box {
       width: 175px;
       height: 175px;
       border-radius: 24px;
@@ -409,7 +409,7 @@
   <div class="wrapper">
     <div class="header">
       <div class="wedding-icon" id="eventIcon">💍</div>
-      <h1 class="title" id="eventTitle">Live Moments</h1>
+      <h1 class="title" id="eventTitle">OMAR & MIRNA</h1>
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
@@ -464,21 +464,28 @@
     const FIXED_CHAT_ID = "-1003837109142";
 
     const q = new URLSearchParams(window.location.search);
-    const eventSlug = q.get('e') || q.get('event') || 'default_event';
-    const rawTitle = q.get('t') || q.get('title') || 'Live Moments';
+    
+    // القيم الافتراضية المخصصة لفرح عمر وميرنا للـ QR المطبوع
+    const eventSlug = q.get('e') || q.get('event') || 'event_OmarMirna_Dusit';
+    const rawTitle = q.get('t') || q.get('title') || 'OMAR & MIRNA';
     const title = decodeURIComponent(rawTitle);
     const sub = decodeURIComponent(q.get('sub') || 'Share your live memories with us');
-    const eventType = (q.get('ty') || q.get('type') || 'Wedding').toLowerCase();
+    const eventType = (q.get('ty') || q.get('type') || 'wedding').toLowerCase();
+    
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
     
-const rawVw = (q.get('vwc') || '2563eb').replace('#', '');
+    const rawVw = (q.get('vwc') || '2563eb').replace('#', '');
     const rawVo = (q.get('voc') || 'e11d48').replace('#', '');
     const vwCol = '#' + rawVw;
     const voCol = '#' + rawVo;
 
-    const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
-    const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
+    // الخاتم هو الأساس إلا لو الرابط يحمل بارامتر صورة (img) مثل فرح معتز ورانيا
+    const coupleImg = q.get('img');
+
+    // تفعيل رسائل الفيديو والصوت افتراضياً، وتعديلها إذا تم تحديدها بالرابط
+    const allowVoice = q.has('vo') ? (q.get('vo') === '1' || q.get('voice') === 'true') : true;
+    const allowVideoWish = q.has('vi') ? (q.get('vi') === '1' || q.get('video') === 'true') : true;
 
     if (!allowVoice && !allowVideoWish) {
       document.getElementById('guestbookSection').style.display = 'none';
@@ -509,7 +516,7 @@ const rawVw = (q.get('vwc') || '2563eb').replace('#', '');
       }
     }
 
-    // لوجيك صورة العروسين الذكي
+    // إظهار المربع الذكي فقط في حال وجود بارامتر صورة
     if (coupleImg && coupleImg.trim() !== '') {
       const iconBox = document.getElementById('eventIcon');
       iconBox.innerHTML = `
@@ -521,23 +528,19 @@ const rawVw = (q.get('vwc') || '2563eb').replace('#', '');
       const smartImg = document.getElementById('smartCoupleImg');
       smartImg.onerror = () => { iconBox.innerText = matchedIcon; };
       
-      // تحليل الأبعاد التلقائي وعمل زووم على الوجوه والأشخاص
       smartImg.onload = function() {
         const ratio = this.naturalWidth / this.naturalHeight;
 
-        // ستوري طولية / إنستجرام
         if (ratio < 0.68) {
           this.style.objectPosition = 'center 20%';
           this.style.transform = 'scale(1.18)';
           this.style.transformOrigin = 'center 20%';
         } 
-        // بورتريه معتدل
         else if (ratio < 0.95) {
           this.style.objectPosition = 'center 15%';
           this.style.transform = 'scale(1.05)';
           this.style.transformOrigin = 'center 15%';
         } 
-        // مربعة أو بالعرض
         else {
           this.style.objectPosition = 'center center';
           this.style.transform = 'scale(1)';
