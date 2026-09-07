@@ -263,16 +263,36 @@
       </div>
     </div>
 
-    <!-- رفع صورة العروسين للمربع المقوس أو تركها فارغة للأيقونة الافتراضية -->
-    <div class="form-group">
-      <label>Couple Photo / Avatar (Optional - leave empty for ring icon)</label>
+    <!-- 1. الأوبشن الأول: الجزء اللي فوق الاسم (Icon / Portrait Avatar) -->
+    <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid #26334d;">
+      <label style="color: #38bdf8;">1. Top Header Display (Above Title)</label>
+      <select id="headerMode" onchange="handleHeaderModeChange()">
+        <option value="ring">💍 Default Ring / Event Icon</option>
+        <option value="none">🚫 None (Hide icon completely)</option>
+        <option value="photo">🖼️ Portrait Squircle Photo</option>
+      </select>
+      
+      <div id="avatarUploadWrap" style="display: none; margin-top: 10px;">
+        <div class="upload-avatar-row">
+          <input type="text" id="evCoupleImg" placeholder="Upload portrait photo or paste URL" />
+          <button type="button" class="btn-file-avatar" id="btnUploadAvatar" onclick="document.getElementById('avatarPicker').click()">
+            📁 Upload
+          </button>
+        </div>
+        <input type="file" id="avatarPicker" accept="image/*" style="display: none;" onchange="handleGenericUpload(event, 'evCoupleImg', 'btnUploadAvatar', 'couple_avatars')" />
+      </div>
+    </div>
+
+    <!-- 2. الأوبشن الثاني: خلفية الموقع بالكامل (Background Pattern / Image) -->
+    <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid #26334d;">
+      <label style="color: #38bdf8;">2. Page Background Pattern/Image (Optional)</label>
       <div class="upload-avatar-row">
-        <input type="text" id="evCoupleImg" placeholder="Upload photo or paste direct link (Optional)" />
-        <button type="button" class="btn-file-avatar" id="btnUploadAvatar" onclick="document.getElementById('avatarPicker').click()">
-          📁 Upload Image
+        <input type="text" id="evBgImg" placeholder="Leave empty for solid color, or upload pattern" />
+        <button type="button" class="btn-file-avatar" id="btnUploadBg" onclick="document.getElementById('bgPicker').click()">
+          🖼️ Upload BG
         </button>
       </div>
-      <input type="file" id="avatarPicker" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)" />
+      <input type="file" id="bgPicker" accept="image/*" style="display: none;" onchange="handleGenericUpload(event, 'evBgImg', 'btnUploadBg', 'page_backgrounds')" />
     </div>
 
     <div class="form-group">
@@ -305,7 +325,7 @@
       <div class="color-item">
         <input type="color" id="bgColor" value="#f8faf7" onchange="syncHex('bgColor', 'bgHex')" />
         <div>
-          <div style="font-size: 10px; color:#94a3b8;">Background</div>
+          <div style="font-size: 10px; color:#94a3b8;">Background Color</div>
           <input type="text" id="bgHex" value="#f8faf7" style="padding:2px 4px; font-size:11px;" onchange="syncColor('bgHex', 'bgColor')" />
         </div>
       </div>
@@ -331,6 +351,11 @@
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
     const FIXED_CHAT_ID = "-1003837109142";
 
+    function handleHeaderModeChange() {
+      const mode = document.getElementById('headerMode').value;
+      document.getElementById('avatarUploadWrap').style.display = mode === 'photo' ? 'block' : 'none';
+    }
+
     function togglePhotoLimit() {
       const mode = document.getElementById('evPhotoLimitSelect').value;
       document.getElementById('evPhotoLimitVal').style.display = mode === 'custom' ? 'block' : 'none';
@@ -355,26 +380,26 @@
       return Math.random().toString(36).substring(2, 6);
     }
 
-    async function handleAvatarUpload(event) {
+    async function handleGenericUpload(event, targetInputId, btnId, eventTag) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const uploadBtn = document.getElementById('btnUploadAvatar');
+      const uploadBtn = document.getElementById(btnId);
       const originalText = uploadBtn.innerText;
       uploadBtn.innerText = "⏳ Uploading...";
       uploadBtn.disabled = true;
 
       const fd = new FormData();
-      fd.append("file", file, file.name || "couple_photo.jpg");
+      fd.append("file", file, file.name || "image.jpg");
       fd.append("chat_id", FIXED_CHAT_ID);
-      fd.append("event", "couple_avatars");
+      fd.append("event", eventTag);
       fd.append("type", "photo");
 
       try {
         const res = await fetch(API, { method: "POST", body: fd });
         const json = await res.json();
         if (json.ok && json.item && json.item.url) {
-          document.getElementById('evCoupleImg').value = json.item.url;
+          document.getElementById(targetInputId).value = json.item.url;
           uploadBtn.innerText = "✓ Uploaded";
         } else {
           alert("Failed to upload image.");
@@ -398,7 +423,10 @@
         const venue = document.getElementById('evVenue').value.trim();
         const dateVal = document.getElementById('evDate').value;
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
+        
+        const headerMode = document.getElementById('headerMode').value;
         const coupleImg = document.getElementById('evCoupleImg').value.trim();
+        const bgImg = document.getElementById('evBgImg').value.trim();
         
         const photoLimitMode = document.getElementById('evPhotoLimitSelect').value;
         const photoLimitVal = photoLimitMode === 'custom' ? document.getElementById('evPhotoLimitVal').value : 'unlimited';
@@ -423,9 +451,16 @@
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
         let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
         
-        // تمرير الصورة كـ &img ليتم إدراجها داخل الفريم المربع المقوس فوق الاسم
-        if (coupleImg) {
+        // لوجيك الجزء العلوي (Top Header)
+        if (headerMode === 'none') {
+          fullUrl += `&h_mode=none`;
+        } else if (headerMode === 'photo' && coupleImg) {
           fullUrl += `&img=${encodeURIComponent(coupleImg)}`;
+        } // لو ring مش بنضيف حاجة علشان يفضل هو الديفولت
+
+        // لوجيك خلفية الموقع (Page Background Pattern)
+        if (bgImg) {
+          fullUrl += `&bg_img=${encodeURIComponent(bgImg)}`;
         }
 
         currentGeneratedUrl = fullUrl;
