@@ -440,16 +440,12 @@
         let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
         let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-        let cleanTagParts = [title.replace(/\s+/g, '')];
-        if (venue) cleanTagParts.push(venue.replace(/\s+/g, ''));
-        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
-        cleanTagParts.push(getUniqueCode());
+        // أزرار الـ Guestbook هتاخد تلقائياً نفس لون باليتة الفرح
+        let vwCol = pCol; 
+        let voCol = pCol; 
 
-        const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
-        currentEventSlug = uniqueTag;
-
-        const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
+        let hostUrl = "https://marwanselim360-web.github.io/events-app";
+        let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}&vwc=${vwCol}&voc=${voCol}`;
         
         // لوجيك الجزء العلوي (Top Header)
         if (headerMode === 'none') {
