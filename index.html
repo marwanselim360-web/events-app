@@ -471,10 +471,11 @@
     const eventType = (q.get('ty') || q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
-
-    const vwCol = '#' + (q.get('vwc') || '2563eb');
-    const voCol = '#' + (q.get('voc') || 'e11d48');
-    const coupleImg = q.get('img');
+    
+const rawVw = (q.get('vwc') || '2563eb').replace('#', '');
+    const rawVo = (q.get('voc') || 'e11d48').replace('#', '');
+    const vwCol = '#' + rawVw;
+    const voCol = '#' + rawVo;
 
     const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
     const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
