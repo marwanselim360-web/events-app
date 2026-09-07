@@ -64,15 +64,14 @@
       width: 100%;
     }
 
-    .couple-banner-box {
-      width: 100%;
-      max-width: 440px;
-      height: 165px;
-      border-radius: 18px;
+.couple-banner-box {
+      width: 175px;
+      height: 175px;
+      border-radius: 24px;
       overflow: hidden;
       position: relative;
       background: #0f172a;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       margin: 0 auto 12px;
       display: flex;
       align-items: center;
@@ -525,28 +524,22 @@
       smartImg.onload = function() {
         const ratio = this.naturalWidth / this.naturalHeight;
 
-        // صورة طولية جداً / سكرين شوت إنستجرام
+        // ستوري طولية / إنستجرام
         if (ratio < 0.68) {
-          this.style.objectPosition = 'center 30%';
-          this.style.transform = 'scale(1.52)';
-          this.style.transformOrigin = 'center 30%';
+          this.style.objectPosition = 'center 20%';
+          this.style.transform = 'scale(1.18)';
+          this.style.transformOrigin = 'center 20%';
         } 
         // بورتريه معتدل
         else if (ratio < 0.95) {
-          this.style.objectPosition = 'center 22%';
-          this.style.transform = 'scale(1.22)';
-          this.style.transformOrigin = 'center 22%';
+          this.style.objectPosition = 'center 15%';
+          this.style.transform = 'scale(1.05)';
+          this.style.transformOrigin = 'center 15%';
         } 
-        // صورة مربعة
-        else if (ratio <= 1.25) {
-          this.style.objectPosition = 'center 25%';
-          this.style.transform = 'scale(1.1)';
-          this.style.transformOrigin = 'center 25%';
-        } 
-        // صورة أفقية بالعرض
+        // مربعة أو بالعرض
         else {
-          this.style.objectPosition = 'center 35%';
-          this.style.transform = 'scale(1.02)';
+          this.style.objectPosition = 'center center';
+          this.style.transform = 'scale(1)';
         }
       };
     } else {
