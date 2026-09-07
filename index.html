@@ -69,6 +69,26 @@
       width: 100%;
     }
 
+    .couple-avatar-frame {
+      width: 170px;
+      height: 170px;
+      border-radius: 28px;
+      overflow: hidden;
+      margin: 0 auto 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .couple-avatar-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
     .title {
       font-family: 'Cinzel', serif;
       font-size: 24px;
@@ -395,7 +415,7 @@
   <div class="wrapper">
     <div class="header">
       <div class="wedding-icon" id="eventIcon">💍</div>
-      <h1 class="title" id="eventTitle">OMAR & MIRNA</h1>
+      <h1 class="title" id="eventTitle"></h1>
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
@@ -452,9 +472,8 @@
 
     const q = new URLSearchParams(window.location.search);
     
-    // الديفولت لإيفنت عمر وميرنا
-    const eventSlug = q.get('e') || q.get('event') || 'event_OmarMirna_Dusit';
-    const rawTitle = q.get('t') || q.get('title') || 'OMAR & MIRNA';
+    const eventSlug = q.get('e') || q.get('event') || 'event_Default';
+    const rawTitle = q.get('t') || q.get('title') || 'Maro & Rania';
     const title = decodeURIComponent(rawTitle);
     const sub = decodeURIComponent(q.get('sub') || 'Share your live memories with us');
     const eventType = (q.get('ty') || q.get('type') || 'wedding').toLowerCase();
@@ -462,13 +481,15 @@
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
     
-    const rawVw = (q.get('vwc') || '2563eb').replace('#', '');
-    const rawVo = (q.get('voc') || 'e11d48').replace('#', '');
+    // ربط ألوان الأزرار بالقيم المبعوثة أو بلون الـ Primary كافتراضي
+    const rawVw = (q.get('vwc') || q.get('p') || '4a6342').replace('#', '');
+    const rawVo = (q.get('voc') || q.get('p') || '4a6342').replace('#', '');
     const vwCol = '#' + rawVw;
     const voCol = '#' + rawVo;
 
-    // استلام رابط صورة الخلفية
-    const backgroundMediaUrl = q.get('bg_img') || q.get('img');
+    // استلام رابط صورة الخلفية وفريم البورتريه
+    const backgroundMediaUrl = q.get('bg_img');
+    const coupleImg = q.get('img');
 
     const allowVoice = q.has('vo') ? (q.get('vo') === '1' || q.get('voice') === 'true') : true;
     const allowVideoWish = q.has('vi') ? (q.get('vi') === '1' || q.get('video') === 'true') : true;
@@ -502,7 +523,7 @@
       }
     }
 
-  // قراءة اختيارات الهيدر (إخفاء، خاتم، أو صورة بورتريه)
+    // قراءة اختيارات الهيدر
     const headerMode = q.get('h_mode');
     const iconContainer = document.getElementById('eventIcon');
 
@@ -518,7 +539,7 @@
       iconContainer.innerText = matchedIcon;
     }
 
-    // تطبيق صورة الخلفية صريحة بدون أي لون أبيض أو بهتان
+    // تطبيق صورة الخلفية صريحة بدون بهتان أبيض
     if (backgroundMediaUrl && backgroundMediaUrl.trim() !== '') {
       const decodedImg = decodeURIComponent(backgroundMediaUrl);
       document.body.style.background = `url("${decodedImg}") no-repeat center center fixed`;
@@ -536,7 +557,6 @@
     document.documentElement.style.setProperty('--btn-vw', vwCol);
     document.documentElement.style.setProperty('--btn-vo', voCol);
 
-    // إدارة مفاتيح الملكية في LocalStorage
     const MY_UPLOADS_KEY = `my_uploads_${eventSlug}`;
     function getMyUploads() {
       try {
@@ -625,7 +645,6 @@
       const delBtn = document.getElementById('btnDel');
       activeItem = item;
 
-      // فحص ملكية الصورة لإظهار زر الحذف
       const myUploads = getMyUploads();
       if (myUploads.hasOwnProperty(item.file_id)) {
         delBtn.style.display = 'inline-flex';
