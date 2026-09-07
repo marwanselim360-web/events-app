@@ -231,7 +231,6 @@
       </div>
     </div>
 
-    <!-- التحكم في سعة الصور والفيديوهات -->
     <div class="row-2">
       <div class="form-group">
         <label>Photos Limit</label>
@@ -255,7 +254,7 @@
     <div class="row-2">
       <div class="form-group">
         <label>Event Name / Title</label>
-        <input type="text" id="evTitle" placeholder="e.g. Omar & Nour" value="Omar & Nour" />
+        <input type="text" id="evTitle" placeholder="e.g. Moataz & Rania" value="Moataz & Rania" />
       </div>
 
       <div class="form-group">
@@ -264,11 +263,11 @@
       </div>
     </div>
 
-    <!-- رفع صورة العروسين مباشرة أو كتابة اللينك -->
+    <!-- رفع صورة العروسين للمربع المقوس أو تركها فارغة للأيقونة الافتراضية -->
     <div class="form-group">
-      <label>Couple / Event Photo (Optional)</label>
+      <label>Couple Photo / Avatar (Optional - leave empty for ring icon)</label>
       <div class="upload-avatar-row">
-        <input type="text" id="evCoupleImg" placeholder="Direct image URL or click Upload ->" />
+        <input type="text" id="evCoupleImg" placeholder="Upload photo or paste direct link (Optional)" />
         <button type="button" class="btn-file-avatar" id="btnUploadAvatar" onclick="document.getElementById('avatarPicker').click()">
           📁 Upload Image
         </button>
@@ -356,7 +355,6 @@
       return Math.random().toString(36).substring(2, 6);
     }
 
-    // رفع صورة العروسين مباشرة على التليجرام/الوركر
     async function handleAvatarUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -367,7 +365,7 @@
       uploadBtn.disabled = true;
 
       const fd = new FormData();
-      fd.append("file", file, file.name || "avatar.jpg");
+      fd.append("file", file, file.name || "couple_photo.jpg");
       fd.append("chat_id", FIXED_CHAT_ID);
       fd.append("event", "couple_avatars");
       fd.append("type", "photo");
@@ -379,7 +377,7 @@
           document.getElementById('evCoupleImg').value = json.item.url;
           uploadBtn.innerText = "✓ Uploaded";
         } else {
-          alert("Failed to upload avatar image.");
+          alert("Failed to upload image.");
           uploadBtn.innerText = originalText;
         }
       } catch (err) {
@@ -425,6 +423,7 @@
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
         let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
         
+        // تمرير الصورة كـ &img ليتم إدراجها داخل الفريم المربع المقوس فوق الاسم
         if (coupleImg) {
           fullUrl += `&img=${encodeURIComponent(coupleImg)}`;
         }
@@ -434,7 +433,6 @@
         document.getElementById('generatedLink').innerText = fullUrl;
         document.getElementById('openLinkBtn').href = fullUrl;
 
-        // عرض المعاينة في الصفحة
         new QRious({
           element: document.getElementById('qrCanvas'),
           value: fullUrl,
@@ -448,7 +446,6 @@
       }
     }
 
-    // تنزيل نسخة 1200x1200 عالية الدقة للطباعة والعرض الكامل
     function downloadQRCodeImage() {
       if (!currentGeneratedUrl) {
         alert("Please generate QR first!");
