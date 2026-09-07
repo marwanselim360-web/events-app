@@ -39,6 +39,10 @@
       align-items: center;
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior-y: contain;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
     }
 
     .wrapper {
@@ -63,28 +67,6 @@
       justify-content: center; 
       color: var(--gold); 
       width: 100%;
-    }
-
-    .couple-banner-box {
-      width: 175px;
-      height: 175px;
-      border-radius: 24px;
-      overflow: hidden;
-      position: relative;
-      background: #0f172a;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      margin: 0 auto 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .couple-banner-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.3s ease;
     }
 
     .title {
@@ -485,7 +467,8 @@
     const vwCol = '#' + rawVw;
     const voCol = '#' + rawVo;
 
-    const coupleImg = q.get('img');
+    // استلام رابط صورة الخلفية
+    const backgroundMediaUrl = q.get('bg_img') || q.get('img');
 
     const allowVoice = q.has('vo') ? (q.get('vo') === '1' || q.get('voice') === 'true') : true;
     const allowVideoWish = q.has('vi') ? (q.get('vi') === '1' || q.get('video') === 'true') : true;
@@ -519,37 +502,14 @@
       }
     }
 
-    if (coupleImg && coupleImg.trim() !== '') {
-      const iconBox = document.getElementById('eventIcon');
-      iconBox.innerHTML = `
-        <div class="couple-banner-box">
-          <img id="smartCoupleImg" src="${decodeURIComponent(coupleImg)}" alt="Couple" />
-        </div>
-      `;
-      
-      const smartImg = document.getElementById('smartCoupleImg');
-      smartImg.onerror = () => { iconBox.innerText = matchedIcon; };
-      
-      smartImg.onload = function() {
-        const ratio = this.naturalWidth / this.naturalHeight;
+    // تثبيت الأيقونة دائماً في الهيدر
+    document.getElementById('eventIcon').innerText = matchedIcon;
 
-        if (ratio < 0.68) {
-          this.style.objectPosition = 'center 20%';
-          this.style.transform = 'scale(1.18)';
-          this.style.transformOrigin = 'center 20%';
-        } 
-        else if (ratio < 0.95) {
-          this.style.objectPosition = 'center 15%';
-          this.style.transform = 'scale(1.05)';
-          this.style.transformOrigin = 'center 15%';
-        } 
-        else {
-          this.style.objectPosition = 'center center';
-          this.style.transform = 'scale(1)';
-        }
-      };
-    } else {
-      document.getElementById('eventIcon').innerText = matchedIcon;
+    // تطبيق صورة الخلفية مع العزل الناعم إذا تم تمريرها من الرابط
+    if (backgroundMediaUrl && backgroundMediaUrl.trim() !== '') {
+      const decodedImg = decodeURIComponent(backgroundMediaUrl);
+      document.body.style.background = `linear-gradient(rgba(248, 250, 247, 0.86), rgba(248, 250, 247, 0.86)), url("${decodedImg}") no-repeat center center fixed`;
+      document.body.style.backgroundSize = 'cover';
     }
 
     document.title = title;
