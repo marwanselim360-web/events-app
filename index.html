@@ -14,6 +14,8 @@
       --card-border: rgba(0, 0, 0, 0.08);
       --muted: #64748b;
       --gold: #d4af37;
+      --btn-vw: #2563eb;
+      --btn-vo: #e11d48;
     }
 
     body.dark-theme {
@@ -47,7 +49,16 @@
     }
 
     .header { text-align: center; margin-bottom: 18px; }
-    .wedding-icon { font-size: 36px; margin-bottom: 4px; display: inline-block; color: var(--gold); }
+    .wedding-icon { font-size: 36px; margin-bottom: 4px; display: inline-flex; align-items: center; justify-content: center; color: var(--gold); }
+    .avatar-img {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--gold);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      margin-bottom: 4px;
+    }
     .title {
       font-family: 'Cinzel', serif;
       font-size: 24px;
@@ -129,8 +140,8 @@
       color: #fff;
     }
 
-    .btn-video-wish { background: #2563eb; }
-    .btn-voice { background: #e11d48; }
+    .btn-video-wish { background: var(--btn-vw); }
+    .btn-voice { background: var(--btn-vo); }
 
     .btn-voice.recording { animation: pulse 1s infinite alternate; }
     @keyframes pulse {
@@ -427,11 +438,17 @@
 
     const q = new URLSearchParams(window.location.search);
     const eventSlug = q.get('e') || q.get('event') || 'default_event';
-    const title = q.get('t') || q.get('title') || 'Live Moments';
-    const sub = q.get('sub') || 'Share your live memories with us';
+    const rawTitle = q.get('t') || q.get('title') || 'Live Moments';
+    const title = decodeURIComponent(rawTitle);
+    const sub = decodeURIComponent(q.get('sub') || 'Share your live memories with us');
     const eventType = (q.get('ty') || q.get('type') || 'Wedding').toLowerCase();
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
+
+    // قراءة ألوان الأزرار وصورة العروسين
+    const vwCol = '#' + (q.get('vwc') || '2563eb');
+    const voCol = '#' + (q.get('voc') || 'e11d48');
+    const coupleImg = q.get('img');
 
     const allowVoice = q.get('vo') === '1' || q.get('voice') === 'true';
     const allowVideoWish = q.get('vi') === '1' || q.get('video') === 'true';
@@ -465,11 +482,23 @@
       }
     }
 
-    document.getElementById('eventIcon').innerText = matchedIcon;
-    document.getElementById('eventTitle').innerText = decodeURIComponent(title);
-    document.getElementById('eventSub').innerText = decodeURIComponent(sub);
+    // صورة العروسين أو الأيقونة الافتراضية
+    if (coupleImg && coupleImg.trim() !== '') {
+      document.getElementById('eventIcon').innerHTML = `<img src="${decodeURIComponent(coupleImg)}" class="avatar-img" alt="Couple" onerror="this.parentElement.innerText='${matchedIcon}'" />`;
+    } else {
+      document.getElementById('eventIcon').innerText = matchedIcon;
+    }
+
+    // اسم التاب واسم الإيفنت
+    document.title = title;
+    document.getElementById('eventTitle').innerText = title;
+    document.getElementById('eventSub').innerText = sub;
+
+    // تطبيق الألوان
     document.documentElement.style.setProperty('--primary', pCol);
     document.documentElement.style.setProperty('--bg', bCol);
+    document.documentElement.style.setProperty('--btn-vw', vwCol);
+    document.documentElement.style.setProperty('--btn-vo', voCol);
 
     let current = 'p';
     let sortOrder = 'newest';
@@ -678,7 +707,7 @@
           } else if (item.type === 'voice') {
             d.innerHTML = `
               <div class="card-badge-inner">
-                <div class="badge-icon" style="background:#e11d48;">🎙️</div>
+                <div class="badge-icon" style="background:var(--btn-vo);">🎙️</div>
                 <span style="font-size:12px; font-weight:700;">Listen Voice</span>
               </div>
             `;

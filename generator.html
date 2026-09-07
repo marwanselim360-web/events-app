@@ -67,6 +67,27 @@
       border-color: #38bdf8;
     }
 
+    .upload-avatar-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-file-avatar {
+      background: #26334d;
+      color: #38bdf8;
+      border: 1px dashed #38bdf8;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-file-avatar:hover { background: rgba(56, 189, 248, 0.1); }
+
     .features-box {
       background: #090d16;
       border: 1px solid #26334d;
@@ -210,6 +231,7 @@
       </div>
     </div>
 
+    <!-- التحكم في سعة الصور والفيديوهات -->
     <div class="row-2">
       <div class="form-group">
         <label>Photos Limit</label>
@@ -240,6 +262,18 @@
         <label>Venue / Location (Optional)</label>
         <input type="text" id="evVenue" placeholder="e.g. Dusit Thani" />
       </div>
+    </div>
+
+    <!-- رفع صورة العروسين مباشرة أو كتابة اللينك -->
+    <div class="form-group">
+      <label>Couple / Event Photo (Optional)</label>
+      <div class="upload-avatar-row">
+        <input type="text" id="evCoupleImg" placeholder="Direct image URL or click Upload ->" />
+        <button type="button" class="btn-file-avatar" id="btnUploadAvatar" onclick="document.getElementById('avatarPicker').click()">
+          📁 Upload Image
+        </button>
+      </div>
+      <input type="file" id="avatarPicker" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)" />
     </div>
 
     <div class="form-group">
@@ -295,6 +329,9 @@
   </div>
 
   <script>
+    const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
+    const FIXED_CHAT_ID = "-1003837109142";
+
     function togglePhotoLimit() {
       const mode = document.getElementById('evPhotoLimitSelect').value;
       document.getElementById('evPhotoLimitVal').style.display = mode === 'custom' ? 'block' : 'none';
@@ -319,6 +356,40 @@
       return Math.random().toString(36).substring(2, 6);
     }
 
+    // رفع صورة العروسين مباشرة على التليجرام/الوركر
+    async function handleAvatarUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const uploadBtn = document.getElementById('btnUploadAvatar');
+      const originalText = uploadBtn.innerText;
+      uploadBtn.innerText = "⏳ Uploading...";
+      uploadBtn.disabled = true;
+
+      const fd = new FormData();
+      fd.append("file", file, file.name || "avatar.jpg");
+      fd.append("chat_id", FIXED_CHAT_ID);
+      fd.append("event", "couple_avatars");
+      fd.append("type", "photo");
+
+      try {
+        const res = await fetch(API, { method: "POST", body: fd });
+        const json = await res.json();
+        if (json.ok && json.item && json.item.url) {
+          document.getElementById('evCoupleImg').value = json.item.url;
+          uploadBtn.innerText = "✓ Uploaded";
+        } else {
+          alert("Failed to upload avatar image.");
+          uploadBtn.innerText = originalText;
+        }
+      } catch (err) {
+        alert("Upload error: " + err.message);
+        uploadBtn.innerText = originalText;
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    }
+
     let currentEventSlug = 'qr_event';
     let currentGeneratedUrl = '';
 
@@ -329,6 +400,7 @@
         const venue = document.getElementById('evVenue').value.trim();
         const dateVal = document.getElementById('evDate').value;
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
+        const coupleImg = document.getElementById('evCoupleImg').value.trim();
         
         const photoLimitMode = document.getElementById('evPhotoLimitSelect').value;
         const photoLimitVal = photoLimitMode === 'custom' ? document.getElementById('evPhotoLimitVal').value : 'unlimited';
@@ -351,8 +423,12 @@
         currentEventSlug = uniqueTag;
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
+        let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
         
+        if (coupleImg) {
+          fullUrl += `&img=${encodeURIComponent(coupleImg)}`;
+        }
+
         currentGeneratedUrl = fullUrl;
 
         document.getElementById('generatedLink').innerText = fullUrl;
