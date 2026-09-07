@@ -210,7 +210,6 @@
       </div>
     </div>
 
-    <!-- التحكم في سعة الصور والفيديوهات -->
     <div class="row-2">
       <div class="form-group">
         <label>Photos Limit</label>
@@ -321,6 +320,7 @@
     }
 
     let currentEventSlug = 'qr_event';
+    let currentGeneratedUrl = '';
 
     function generateSystem() {
       try {
@@ -352,14 +352,17 @@
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
         const fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}`;
+        
+        currentGeneratedUrl = fullUrl;
 
         document.getElementById('generatedLink').innerText = fullUrl;
         document.getElementById('openLinkBtn').href = fullUrl;
 
+        // عرض المعاينة في الصفحة
         new QRious({
           element: document.getElementById('qrCanvas'),
           value: fullUrl,
-          size: 240,
+          size: 300,
           level: 'H'
         });
 
@@ -369,13 +372,22 @@
       }
     }
 
+    // تنزيل نسخة 1200x1200 عالية الدقة للطباعة والعرض الكامل
     function downloadQRCodeImage() {
-      const canvas = document.getElementById('qrCanvas');
-      if (!canvas) {
+      if (!currentGeneratedUrl) {
         alert("Please generate QR first!");
         return;
       }
-      const dataUrl = canvas.toDataURL("image/png");
+
+      const exportCanvas = document.createElement('canvas');
+      new QRious({
+        element: exportCanvas,
+        value: currentGeneratedUrl,
+        size: 1200,
+        level: 'H'
+      });
+
+      const dataUrl = exportCanvas.toDataURL("image/png");
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = `QR_${currentEventSlug}.png`;
