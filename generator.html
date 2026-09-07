@@ -444,7 +444,15 @@
         let vwCol = pCol; 
         let voCol = pCol; 
 
-        let hostUrl = "https://marwanselim360-web.github.io/events-app";
+        let cleanTagParts = [title.replace(/\s+/g, '')];
+        if (venue) cleanTagParts.push(venue.replace(/\s+/g, ''));
+        if (dateVal) cleanTagParts.push(dateVal.replace(/-/g, ''));
+        cleanTagParts.push(getUniqueCode());
+
+        const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
+        currentEventsSlug = uniqueTag;
+
+        const hostUrl = "https://marwanselim360-web.github.io/events-app";
         let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}&vwc=${vwCol}&voc=${voCol}`;
         
         // لوجيك الجزء العلوي (Top Header)
