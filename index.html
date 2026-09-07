@@ -502,14 +502,29 @@
       }
     }
 
-    // تثبيت الأيقونة دائماً في الهيدر
-    document.getElementById('eventIcon').innerText = matchedIcon;
+  // قراءة اختيارات الهيدر (إخفاء، خاتم، أو صورة بورتريه)
+    const headerMode = q.get('h_mode');
+    const iconContainer = document.getElementById('eventIcon');
 
-    // تطبيق صورة الخلفية مع العزل الناعم إذا تم تمريرها من الرابط
+    if (headerMode === 'none') {
+      iconContainer.style.display = 'none';
+    } else if (coupleImg && coupleImg.trim() !== '') {
+      iconContainer.innerHTML = `
+        <div class="couple-avatar-frame">
+          <img src="${decodeURIComponent(coupleImg)}" alt="Couple" onerror="this.parentElement.innerHTML='${matchedIcon}';" />
+        </div>
+      `;
+    } else {
+      iconContainer.innerText = matchedIcon;
+    }
+
+    // تطبيق صورة الخلفية صريحة بدون أي لون أبيض أو بهتان
     if (backgroundMediaUrl && backgroundMediaUrl.trim() !== '') {
       const decodedImg = decodeURIComponent(backgroundMediaUrl);
-      document.body.style.background = `linear-gradient(rgba(248, 250, 247, 0.86), rgba(248, 250, 247, 0.86)), url("${decodedImg}") no-repeat center center fixed`;
+      document.body.style.background = `url("${decodedImg}") no-repeat center center fixed`;
       document.body.style.backgroundSize = 'cover';
+    } else {
+      document.body.style.background = bCol;
     }
 
     document.title = title;
