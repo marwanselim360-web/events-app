@@ -16,6 +16,7 @@
       --gold: #d4af37;
       --btn-vw: #2563eb;
       --btn-vo: #e11d48;
+      --danger: #ef4444;
     }
 
     body.dark-theme {
@@ -338,12 +339,14 @@
 
     .lightbox-controls {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       z-index: 10000;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .btn-ctrl {
-      padding: 12px 24px;
+      padding: 12px 20px;
       border-radius: 30px;
       font-size: 14px;
       font-weight: 700;
@@ -355,6 +358,7 @@
     }
 
     .btn-save { background: var(--primary); color: #fff; }
+    .btn-delete { background: var(--danger); color: #fff; display: none; }
     .btn-exit { background: rgba(255,255,255,0.2); color: #fff; }
 
     .upload-floating-toast {
@@ -455,6 +459,7 @@
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
       <button class="btn-ctrl btn-save" id="btnDl" onclick="handleDirectDownload()">💾 Save / Share</button>
+      <button class="btn-ctrl btn-delete" id="btnDel" onclick="handleDeleteUpload()">🗑️ Delete</button>
       <button class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
     </div>
   </div>
@@ -465,7 +470,7 @@
 
     const q = new URLSearchParams(window.location.search);
     
-    // القيم الافتراضية المخصصة لفرح عمر وميرنا للـ QR المطبوع
+    // الديفولت لإيفنت عمر وميرنا
     const eventSlug = q.get('e') || q.get('event') || 'event_OmarMirna_Dusit';
     const rawTitle = q.get('t') || q.get('title') || 'OMAR & MIRNA';
     const title = decodeURIComponent(rawTitle);
@@ -480,10 +485,8 @@
     const vwCol = '#' + rawVw;
     const voCol = '#' + rawVo;
 
-    // الخاتم هو الأساس إلا لو الرابط يحمل بارامتر صورة (img) مثل فرح معتز ورانيا
     const coupleImg = q.get('img');
 
-    // تفعيل رسائل الفيديو والصوت افتراضياً، وتعديلها إذا تم تحديدها بالرابط
     const allowVoice = q.has('vo') ? (q.get('vo') === '1' || q.get('voice') === 'true') : true;
     const allowVideoWish = q.has('vi') ? (q.get('vi') === '1' || q.get('video') === 'true') : true;
 
@@ -516,7 +519,6 @@
       }
     }
 
-    // إظهار المربع الذكي فقط في حال وجود بارامتر صورة
     if (coupleImg && coupleImg.trim() !== '') {
       const iconBox = document.getElementById('eventIcon');
       iconBox.innerHTML = `
@@ -558,6 +560,32 @@
     document.documentElement.style.setProperty('--bg', bCol);
     document.documentElement.style.setProperty('--btn-vw', vwCol);
     document.documentElement.style.setProperty('--btn-vo', voCol);
+
+    // إدارة مفاتيح الملكية في LocalStorage
+    const MY_UPLOADS_KEY = `my_uploads_${eventSlug}`;
+    function getMyUploads() {
+      try {
+        return JSON.parse(localStorage.getItem(MY_UPLOADS_KEY)) || {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function recordMyUpload(fileId, messageId) {
+      const currentMap = getMyUploads();
+      currentMap[fileId] = messageId || null;
+      try {
+        localStorage.setItem(MY_UPLOADS_KEY, JSON.stringify(currentMap));
+      } catch(e) {}
+    }
+
+    function removeMyUploadRecord(fileId) {
+      const currentMap = getMyUploads();
+      delete currentMap[fileId];
+      try {
+        localStorage.setItem(MY_UPLOADS_KEY, JSON.stringify(currentMap));
+      } catch(e) {}
+    }
 
     let current = 'p';
     let sortOrder = 'newest';
@@ -619,7 +647,16 @@
     function openViewer(item) {
       const box = document.getElementById('viewer');
       const target = document.getElementById('viewerTarget');
+      const delBtn = document.getElementById('btnDel');
       activeItem = item;
+
+      // فحص ملكية الصورة لإظهار زر الحذف
+      const myUploads = getMyUploads();
+      if (myUploads.hasOwnProperty(item.file_id)) {
+        delBtn.style.display = 'inline-flex';
+      } else {
+        delBtn.style.display = 'none';
+      }
 
       if (item.type === 'video' || item.type === 'videowish') {
         target.innerHTML = `
@@ -652,6 +689,56 @@
       } else {
         target.innerHTML = `<img src="${item.url}" alt="Memory" style="max-height:70vh; width:100%; object-fit:contain; border-radius:12px;" />`;
         box.classList.add('active');
+      }
+    }
+
+    async function handleDeleteUpload() {
+      if (!activeItem || !activeItem.file_id) return;
+      if (!confirm("Are you sure you want to delete this memory?")) return;
+
+      const delBtn = document.getElementById('btnDel');
+      const originalText = delBtn.innerText;
+      delBtn.innerText = "⏳ Deleting...";
+      delBtn.disabled = true;
+
+      const myUploads = getMyUploads();
+      const messageId = myUploads[activeItem.file_id] || activeItem.message_id;
+
+      try {
+        const res = await fetch(`${API}?action=delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: FIXED_CHAT_ID,
+            event: eventSlug,
+            file_id: activeItem.file_id,
+            message_id: messageId
+          })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          const removedId = activeItem.file_id;
+          removeMyUploadRecord(removedId);
+
+          photoData = photoData.filter(x => x.file_id !== removedId);
+          videoData = videoData.filter(x => x.file_id !== removedId);
+          videoWishData = videoWishData.filter(x => x.file_id !== removedId);
+          audioData = audioData.filter(x => x.file_id !== removedId);
+
+          closeViewer();
+          renderedIds.clear();
+          document.getElementById('mediaGrid').innerHTML = '';
+          updateCounts();
+          draw();
+        } else {
+          alert("Could not delete. Please try again.");
+        }
+      } catch (e) {
+        alert("Error deleting file.");
+      } finally {
+        delBtn.innerText = originalText;
+        delBtn.disabled = false;
       }
     }
 
@@ -856,7 +943,12 @@
           const res = await fetch(API, { method: "POST", body: fd, signal: controller.signal });
           clearTimeout(tid);
           const json = await res.json();
-          if (json.ok) return json;
+          if (json.ok) {
+            if (json.item && json.item.file_id) {
+              recordMyUpload(json.item.file_id, json.item.message_id);
+            }
+            return json;
+          }
         } catch (e) {
           clearTimeout(tid);
         }
