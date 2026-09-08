@@ -100,7 +100,6 @@
     }
     body.dark-theme .title { color: #ffffff; }
 
-    /* تنسيق التاريخ الديناميكي */
     .wedding-date {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 13px;
@@ -504,8 +503,9 @@
     const backgroundMediaUrl = q.get('bg_img');
     const coupleImg = q.get('img');
 
-    const allowVoice = q.has('vo') ? (q.get('vo') === '1' || q.get('voice') === 'true') : true;
-    const allowVideoWish = q.has('vi') ? (q.get('vi') === '1' || q.get('video') === 'true') : true;
+    // قراءة حالات الـ Voice و Video بدقة من اللينك (لو false تختفي تماماً)
+    const allowVoice = q.get('voice') !== 'false';
+    const allowVideoWish = q.get('video') !== 'false';
 
     if (!allowVoice && !allowVideoWish) {
       document.getElementById('guestbookSection').style.display = 'none';
@@ -563,7 +563,6 @@
     document.getElementById('eventTitle').innerText = title;
     document.getElementById('eventSub').innerText = sub;
 
-    // التعامل مع عرض التاريخ ديناميكياً
     const dateEl = document.getElementById('eventDate');
     if (eventDate && eventDate.trim() !== '') {
       dateEl.innerText = eventDate;
