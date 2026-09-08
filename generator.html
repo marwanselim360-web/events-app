@@ -231,7 +231,7 @@
       </div>
     </div>
 
-    <!-- خانة التاريخ النصية التي ستظهر تحت اسم العريس والعروسة -->
+    <!-- خانة التاريخ النصية التي تظهر تحت اسم العريس والعروسة -->
     <div class="form-group">
       <label>Display Date Text (e.g. 11.9.2026 - Optional)</label>
       <input type="text" id="evDateText" placeholder="Leave empty to hide date" value="11.9.2026" />
@@ -269,7 +269,6 @@
       </div>
     </div>
 
-    <!-- 1. الأوبشن الأول: الجزء اللي فوق الاسم (Icon / Portrait Avatar) -->
     <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid #26334d;">
       <label style="color: #38bdf8;">1. Top Header Display (Above Title)</label>
       <select id="headerMode" onchange="handleHeaderModeChange()">
@@ -289,7 +288,6 @@
       </div>
     </div>
 
-    <!-- 2. الأوبشن الثاني: خلفية الموقع بالكامل (Background Pattern / Image) -->
     <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid #26334d;">
       <label style="color: #38bdf8;">2. Page Background Pattern/Image (Optional)</label>
       <div class="upload-avatar-row">
@@ -441,6 +439,7 @@
         const videoLimitMode = document.getElementById('evVideoLimitSelect').value;
         const videoLimitVal = videoLimitMode === 'custom' ? document.getElementById('evVideoLimitVal').value : 'unlimited';
 
+        // قراءة حالة الـ Checkboxes بدقة (true أو false)
         const allowVoice = document.getElementById('featVoice').checked;
         const allowVideo = document.getElementById('featVideo').checked;
 
@@ -461,7 +460,6 @@
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
         let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}&vwc=${vwCol}&voc=${voCol}`;
         
-        // إضافة خانة التاريخ للرابط لو مكتوبة
         if (dateTextVal !== '') {
           fullUrl += `&date=${encodeURIComponent(dateTextVal)}`;
         }
