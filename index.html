@@ -99,6 +99,19 @@
       text-transform: uppercase;
     }
     body.dark-theme .title { color: #ffffff; }
+
+    /* تنسيق التاريخ الديناميكي */
+    .wedding-date {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-top: 6px;
+      text-transform: uppercase;
+      display: none;
+    }
+
     .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
     .upload-main-card {
@@ -416,6 +429,7 @@
     <div class="header">
       <div class="wedding-icon" id="eventIcon">💍</div>
       <h1 class="title" id="eventTitle"></h1>
+      <div class="wedding-date" id="eventDate"></div>
       <p class="subtitle" id="eventSub">Share your live memories with us</p>
     </div>
 
@@ -476,18 +490,17 @@
     const rawTitle = q.get('t') || q.get('title') || 'Maro & Rania';
     const title = decodeURIComponent(rawTitle);
     const sub = decodeURIComponent(q.get('sub') || 'Share your live memories with us');
+    const eventDate = decodeURIComponent(q.get('date') || '');
     const eventType = (q.get('ty') || q.get('type') || 'wedding').toLowerCase();
     
     const pCol = '#' + (q.get('p') || '4a6342');
     const bCol = '#' + (q.get('bg') || 'f8faf7');
     
-    // ربط ألوان الأزرار بالقيم المبعوثة أو بلون الـ Primary كافتراضي
     const rawVw = (q.get('vwc') || q.get('p') || '4a6342').replace('#', '');
     const rawVo = (q.get('voc') || q.get('p') || '4a6342').replace('#', '');
     const vwCol = '#' + rawVw;
     const voCol = '#' + rawVo;
 
-    // استلام رابط صورة الخلفية وفريم البورتريه
     const backgroundMediaUrl = q.get('bg_img');
     const coupleImg = q.get('img');
 
@@ -523,7 +536,6 @@
       }
     }
 
-    // قراءة اختيارات الهيدر
     const headerMode = q.get('h_mode');
     const iconContainer = document.getElementById('eventIcon');
 
@@ -539,7 +551,6 @@
       iconContainer.innerText = matchedIcon;
     }
 
-    // تطبيق صورة الخلفية صريحة بدون بهتان أبيض
     if (backgroundMediaUrl && backgroundMediaUrl.trim() !== '') {
       const decodedImg = decodeURIComponent(backgroundMediaUrl);
       document.body.style.background = `url("${decodedImg}") no-repeat center center fixed`;
@@ -551,6 +562,15 @@
     document.title = title;
     document.getElementById('eventTitle').innerText = title;
     document.getElementById('eventSub').innerText = sub;
+
+    // التعامل مع عرض التاريخ ديناميكياً
+    const dateEl = document.getElementById('eventDate');
+    if (eventDate && eventDate.trim() !== '') {
+      dateEl.innerText = eventDate;
+      dateEl.style.display = 'block';
+    } else {
+      dateEl.style.display = 'none';
+    }
 
     document.documentElement.style.setProperty('--primary', pCol);
     document.documentElement.style.setProperty('--bg', bCol);

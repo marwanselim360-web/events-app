@@ -231,6 +231,12 @@
       </div>
     </div>
 
+    <!-- خانة التاريخ النصية التي ستظهر تحت اسم العريس والعروسة -->
+    <div class="form-group">
+      <label>Display Date Text (e.g. 11.9.2026 - Optional)</label>
+      <input type="text" id="evDateText" placeholder="Leave empty to hide date" value="11.9.2026" />
+    </div>
+
     <div class="row-2">
       <div class="form-group">
         <label>Photos Limit</label>
@@ -422,6 +428,7 @@
         const title = document.getElementById('evTitle').value.trim() || 'Live Event';
         const venue = document.getElementById('evVenue').value.trim();
         const dateVal = document.getElementById('evDate').value;
+        const dateTextVal = document.getElementById('evDateText').value.trim();
         const sub = document.getElementById('evSub').value.trim() || 'Share your live moments with us';
         
         const headerMode = document.getElementById('headerMode').value;
@@ -440,7 +447,6 @@
         let pCol = document.getElementById('primaryHex').value.replace('#', '').trim() || '4a6342';
         let bCol = document.getElementById('bgHex').value.replace('#', '').trim() || 'f8faf7';
 
-        // أزرار الـ Guestbook هتاخد تلقائياً نفس لون باليتة الفرح
         let vwCol = pCol; 
         let voCol = pCol; 
 
@@ -450,19 +456,22 @@
         cleanTagParts.push(getUniqueCode());
 
         const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
-        currentEventsSlug = uniqueTag;
+        currentEventSlug = uniqueTag;
 
         const hostUrl = "https://marwanselim360-web.github.io/events-app";
         let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}&vwc=${vwCol}&voc=${voCol}`;
         
-        // لوجيك الجزء العلوي (Top Header)
+        // إضافة خانة التاريخ للرابط لو مكتوبة
+        if (dateTextVal !== '') {
+          fullUrl += `&date=${encodeURIComponent(dateTextVal)}`;
+        }
+
         if (headerMode === 'none') {
           fullUrl += `&h_mode=none`;
         } else if (headerMode === 'photo' && coupleImg) {
           fullUrl += `&img=${encodeURIComponent(coupleImg)}`;
-        } // لو ring مش بنضيف حاجة علشان يفضل هو الديفولت
+        }
 
-        // لوجيك خلفية الموقع (Page Background Pattern)
         if (bgImg) {
           fullUrl += `&bg_img=${encodeURIComponent(bgImg)}`;
         }
