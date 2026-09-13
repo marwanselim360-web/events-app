@@ -857,7 +857,7 @@
 
           if (item.type === 'video' || item.type === 'videowish') {
             d.innerHTML = `
-              <video class="preview-thumb" src="${item.url}#t=0.1" preload="metadata" muted playsinline></video>
+              <video class="preview-thumb" src="${item.url}" preload="metadata" muted playsinline></video>
               <div class="video-play-overlay">
                 <div class="video-play-btn">${item.type === 'videowish' ? '🤳' : '▶'}</div>
               </div>
