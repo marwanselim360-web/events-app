@@ -457,8 +457,8 @@
         const uniqueTag = cleanTagParts.join('_').replace(/[^a-zA-Z0-9_]/g, '');
         currentEventSlug = uniqueTag;
 
-       const hostUrl = "https://marwanselim360-web.github.io/events-app";
-        let fullUrl = `\({hostUrl}/index.html?event=\){uniqueTag}`;
+        const hostUrl = "https://marwanselim360-web.github.io/events-app";
+        let fullUrl = `${hostUrl}/index.html?event=${uniqueTag}&title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&sub=${encodeURIComponent(sub)}&plimit=${photoLimitVal}&vlimit=${videoLimitVal}&voice=${allowVoice}&video=${allowVideo}&p=${pCol}&bg=${bCol}&vwc=${vwCol}&voc=${voCol}`;
         
         if (dateTextVal !== '') {
           fullUrl += `&date=${encodeURIComponent(dateTextVal)}`;
@@ -503,7 +503,7 @@
         element: exportCanvas,
         value: currentGeneratedUrl,
         size: 1200,
-        level: 'L'
+        level: ''
       });
 
       const dataUrl = exportCanvas.toDataURL("image/png");

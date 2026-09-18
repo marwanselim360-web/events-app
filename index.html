@@ -503,7 +503,6 @@
     const backgroundMediaUrl = q.get('bg_img');
     const coupleImg = q.get('img');
 
-    // قراءة حالات الـ Voice و Video بدقة من اللينك (لو false تختفي تماماً)
     const allowVoice = q.get('voice') !== 'false';
     const allowVideoWish = q.get('video') !== 'false';
 
@@ -858,7 +857,6 @@
           if (item.type === 'video' || item.type === 'videowish') {
             d.innerHTML = `
               <video class="preview-thumb" src="${item.url}#t=0.001" preload="metadata" muted playsinline></video>
-
               <div class="video-play-overlay">
                 <div class="video-play-btn">${item.type === 'videowish' ? '🤳' : '▶'}</div>
               </div>
