@@ -203,6 +203,54 @@
       font-size: 14px;
       font-weight: 800;
     }
+
+    /* Cropper Modal Styles */
+    .crop-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .crop-modal.active { display: flex; }
+    .crop-container {
+      background: #131b2e;
+      border: 1px solid #26334d;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .crop-canvas-wrap {
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 16px;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 2px dashed #38bdf8;
+      position: relative;
+      background: #000;
+      cursor: grab;
+    }
+    .crop-canvas-wrap:active { cursor: grabbing; }
+    #cropCanvas {
+      display: block;
+      touch-action: none;
+    }
+    .zoom-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .zoom-control input[type="range"] {
+      flex: 1;
+      accent-color: #38bdf8;
+    }
   </style>
 </head>
 <body>
@@ -231,7 +279,6 @@
       </div>
     </div>
 
-    <!-- خانة التاريخ النصية التي تظهر تحت اسم العريس والعروسة -->
     <div class="form-group">
       <label>Display Date Text (e.g. 11.9.2026 - Optional)</label>
       <input type="text" id="evDateText" placeholder="Leave empty to hide date" value="11.9.2026" />
@@ -270,7 +317,7 @@
     </div>
 
     <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid #26334d;">
-      <label style="color: #38bdf8;">1. Top Header Display (Above Title)</label>
+      <label style="color: #38bdf8;">Top Header Display (Above Title)</label>
       <select id="headerMode" onchange="handleHeaderModeChange()">
         <option value="ring">💍 Default Ring / Event Icon</option>
         <option value="none">🚫 None (Hide icon completely)</option>
@@ -281,10 +328,10 @@
         <div class="upload-avatar-row">
           <input type="text" id="evCoupleImg" placeholder="Upload portrait photo or paste URL" />
           <button type="button" class="btn-file-avatar" id="btnUploadAvatar" onclick="document.getElementById('avatarPicker').click()">
-            📁 Upload
+            📁 Upload & Adjust
           </button>
         </div>
-        <input type="file" id="avatarPicker" accept="image/*" style="display: none;" onchange="handleGenericUpload(event, 'evCoupleImg', 'btnUploadAvatar', 'couple_avatars')" />
+        <input type="file" id="avatarPicker" accept="image/*" style="display: none;" onchange="openCropperModal(event)" />
       </div>
     </div>
 
@@ -351,6 +398,24 @@
     </div>
   </div>
 
+  <!-- Cropper Modal -->
+  <div class="crop-modal" id="cropModal">
+    <div class="crop-container">
+      <h3 style="color:#38bdf8; margin-bottom: 12px; font-size:16px;">Adjust Portrait Photo</h3>
+      <div class="crop-canvas-wrap" id="cropWrap">
+        <canvas id="cropCanvas" width="250" height="250"></canvas>
+      </div>
+      <div class="zoom-control">
+        <span style="font-size:11px; color:#94a3b8;">Zoom:</span>
+        <input type="range" id="zoomRange" min="0.5" max="3" step="0.05" value="1" oninput="updateZoom(this.value)">
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="action-btn secondary" style="flex:1;" onclick="closeCropperModal()">Cancel</button>
+        <button type="button" class="action-btn primary" style="flex:1;" onclick="confirmCrop()">Crop & Save</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
     const FIXED_CHAT_ID = "-1003837109142";
@@ -382,6 +447,118 @@
 
     function getUniqueCode() {
       return Math.random().toString(36).substring(2, 6);
+    }
+
+    // --- Interactive Zoom & Crop Logic ---
+    let cropImageObj = null;
+    let imgX = 0, imgY = 0, imgScale = 1;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    const canvas = document.getElementById('cropCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function openCropperModal(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        cropImageObj = new Image();
+        cropImageObj.onload = function() {
+          // Reset positioning
+          imgScale = Math.max(250 / cropImageObj.width, 250 / cropImageObj.height);
+          document.getElementById('zoomRange').value = imgScale;
+          imgX = (250 - cropImageObj.width * imgScale) / 2;
+          imgY = (250 - cropImageObj.height * imgScale) / 2;
+          
+          drawCropCanvas();
+          document.getElementById('cropModal').classList.add('active');
+        };
+        cropImageObj.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = ''; // reset input
+    }
+
+    function closeCropperModal() {
+      document.getElementById('cropModal').classList.remove('active');
+    }
+
+    function updateZoom(val) {
+      if (!cropImageObj) return;
+      const oldScale = imgScale;
+      imgScale = parseFloat(val);
+      // Zoom towards center
+      imgX = 125 - (125 - imgX) * (imgScale / oldScale);
+      imgY = 125 - (125 - imgY) * (imgScale / oldScale);
+      drawCropCanvas();
+    }
+
+    function drawCropCanvas() {
+      if (!cropImageObj) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(cropImageObj, imgX, imgY, cropImageObj.width * imgScale, cropImageObj.height * imgScale);
+    }
+
+    // Mouse / Touch Dragging Events for Crop
+    const wrap = document.getElementById('cropWrap');
+    wrap.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX - imgX;
+      startY = e.clientY - imgY;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      imgX = e.clientX - startX;
+      imgY = e.clientY - startY;
+      drawCropCanvas();
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    wrap.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      startX = e.touches[0].clientX - imgX;
+      startY = e.touches[0].clientY - imgY;
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      imgX = e.touches[0].clientX - startX;
+      imgY = e.touches[0].clientY - startY;
+      drawCropCanvas();
+    });
+    window.addEventListener('touchend', () => { isDragging = false; });
+
+    async function confirmCrop() {
+      const uploadBtn = document.getElementById('btnUploadAvatar');
+      uploadBtn.innerText = "⏳ Uploading...";
+      uploadBtn.disabled = true;
+
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], "avatar_cropped.jpg", { type: "image/jpeg" });
+        const fd = new FormData();
+        fd.append("file", file, "avatar_cropped.jpg");
+        fd.append("chat_id", FIXED_CHAT_ID);
+        fd.append("event", "couple_avatars");
+        fd.append("type", "photo");
+
+        try {
+          const res = await fetch(API, { method: "POST", body: fd });
+          const json = await res.json();
+          if (json.ok && json.item && json.item.url) {
+            document.getElementById('evCoupleImg').value = json.item.url;
+            uploadBtn.innerText = "✓ Uploaded";
+            closeCropperModal();
+          } else {
+            alert("Failed to upload cropped image.");
+            uploadBtn.innerText = "📁 Upload & Adjust";
+          }
+        } catch (err) {
+          alert("Upload error: " + err.message);
+          uploadBtn.innerText = "📁 Upload & Adjust";
+        } finally {
+          uploadBtn.disabled = false;
+        }
+      }, 'image/jpeg', 0.9);
     }
 
     async function handleGenericUpload(event, targetInputId, btnId, eventTag) {
@@ -439,7 +616,6 @@
         const videoLimitMode = document.getElementById('evVideoLimitSelect').value;
         const videoLimitVal = videoLimitMode === 'custom' ? document.getElementById('evVideoLimitVal').value : 'unlimited';
 
-        // قراءة حالة الـ Checkboxes بدقة (true أو false)
         const allowVoice = document.getElementById('featVoice').checked;
         const allowVideo = document.getElementById('featVideo').checked;
 
