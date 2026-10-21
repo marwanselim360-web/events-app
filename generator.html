@@ -449,7 +449,6 @@
       return Math.random().toString(36).substring(2, 6);
     }
 
-    // --- Interactive Zoom & Crop Logic ---
     let cropImageObj = null;
     let imgX = 0, imgY = 0, imgScale = 1;
     let isDragging = false;
@@ -465,11 +464,10 @@
       reader.onload = function(e) {
         cropImageObj = new Image();
         cropImageObj.onload = function() {
-          // Reset positioning
           imgScale = Math.max(250 / cropImageObj.width, 250 / cropImageObj.height);
           document.getElementById('zoomRange').value = imgScale;
-          imgX = (250 - cropImageObj.width * imgScale) / 2;
-          imgY = (250 - cropImageObj.height * imgScale) / 2;
+          imgX = (250 - (cropImageObj.width * imgScale)) / 2;
+          imgY = (250 - (cropImageObj.height * imgScale)) / 2;
           
           drawCropCanvas();
           document.getElementById('cropModal').classList.add('active');
@@ -477,7 +475,7 @@
         cropImageObj.src = e.target.result;
       };
       reader.readAsDataURL(file);
-      event.target.value = ''; // reset input
+      event.target.value = '';
     }
 
     function closeCropperModal() {
@@ -488,7 +486,6 @@
       if (!cropImageObj) return;
       const oldScale = imgScale;
       imgScale = parseFloat(val);
-      // Zoom towards center
       imgX = 125 - (125 - imgX) * (imgScale / oldScale);
       imgY = 125 - (125 - imgY) * (imgScale / oldScale);
       drawCropCanvas();
@@ -500,7 +497,6 @@
       ctx.drawImage(cropImageObj, imgX, imgY, cropImageObj.width * imgScale, cropImageObj.height * imgScale);
     }
 
-    // Mouse / Touch Dragging Events for Crop
     const wrap = document.getElementById('cropWrap');
     wrap.addEventListener('mousedown', (e) => {
       isDragging = true;
@@ -659,7 +655,7 @@
           element: document.getElementById('qrCanvas'),
           value: fullUrl,
           size: 300,
-          level: 'L'
+          level: 'H'
         });
 
         document.getElementById('resultArea').style.display = 'block';
@@ -679,7 +675,7 @@
         element: exportCanvas,
         value: currentGeneratedUrl,
         size: 1200,
-        level: ''
+        level: 'H'
       });
 
       const dataUrl = exportCanvas.toDataURL("image/png");
