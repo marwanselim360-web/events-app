@@ -553,6 +553,17 @@
     </div>
   </div>
 
+  <div class="lightbox" id="cameraModal" onclick="if(event.target === this) closeLiveCamera()">
+    <div style="width:100%; max-width:440px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+      <video id="liveCamVideo" autoplay playsinline muted style="width:100%; max-height:65vh; border-radius:16px; background:#000; object-fit:cover;"></video>
+      <canvas id="liveCamCanvas" style="display:none;"></canvas>
+      <div class="lightbox-controls">
+        <button type="button" class="btn-ctrl btn-save" onclick="captureFromLiveCamera()">📸 Capture Photo</button>
+        <button type="button" class="btn-ctrl btn-exit" onclick="closeLiveCamera()">✕ Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -594,12 +605,63 @@
       }
     }
 
-    function triggerCameraCapture() {
+    let liveCamStream = null;
+
+    async function triggerCameraCapture() {
+      if (isAndroid && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          liveCamStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false
+          });
+          const modal = document.getElementById('cameraModal');
+          const videoEl = document.getElementById('liveCamVideo');
+          videoEl.srcObject = liveCamStream;
+          modal.classList.add('active');
+          await videoEl.play().catch(() => {});
+          return;
+        } catch (err) {
+          // لو الكاميرا المباشرة اترفضت أو مش متاحة، نرجع للـ input العادي كبديل آمن
+        }
+      }
+
       const input = document.getElementById('pickerCamera');
       if (input) {
         input.value = '';
         input.click();
       }
+    }
+
+    function closeLiveCamera() {
+      const modal = document.getElementById('cameraModal');
+      const videoEl = document.getElementById('liveCamVideo');
+      if (liveCamStream) {
+        liveCamStream.getTracks().forEach(track => track.stop());
+        liveCamStream = null;
+      }
+      if (videoEl) {
+        videoEl.srcObject = null;
+      }
+      modal.classList.remove('active');
+    }
+
+    async function captureFromLiveCamera() {
+      const videoEl = document.getElementById('liveCamVideo');
+      const canvasEl = document.getElementById('liveCamCanvas');
+      if (!videoEl || !videoEl.videoWidth || !videoEl.videoHeight) return;
+
+      canvasEl.width = videoEl.videoWidth;
+      canvasEl.height = videoEl.videoHeight;
+      const ctx = canvasEl.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+      closeLiveCamera();
+
+      canvasEl.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        await handleSelectedFiles([file], null);
+      }, 'image/jpeg', 0.86);
     }
 
     function triggerGalleryPicker() {
