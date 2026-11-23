@@ -53,19 +53,19 @@
       align-items: center;
     }
 
-    .header { 
-      text-align: center; 
-      margin-bottom: 18px; 
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
       width: 100%;
     }
-    
-    .wedding-icon { 
-      font-size: 36px; 
-      margin-bottom: 4px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      color: var(--gold); 
+
+    .wedding-icon {
+      font-size: 36px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
       width: 100%;
     }
 
@@ -137,6 +137,7 @@
       justify-content: center;
       gap: 3px;
       transition: opacity 0.2s;
+      touch-action: manipulation;
     }
 
     .btn-main-upload:disabled { opacity: 0.7; }
@@ -180,6 +181,7 @@
       justify-content: center;
       gap: 6px;
       color: #fff;
+      touch-action: manipulation;
     }
 
     .btn-video-wish { background: var(--btn-vw); }
@@ -220,6 +222,7 @@
       cursor: pointer;
       text-align: center;
       white-space: nowrap;
+      touch-action: manipulation;
     }
     .tab.active { background: var(--primary); color: #ffffff; }
 
@@ -236,6 +239,7 @@
       align-items: center;
       gap: 4px;
       white-space: nowrap;
+      touch-action: manipulation;
     }
 
     .gallery {
@@ -414,7 +418,14 @@
       to { transform: rotate(360deg); }
     }
 
-    #pickerMedia, #pickerVideoWish { display: none; }
+    #pickerMedia, #pickerVideoWish {
+      position: fixed;
+      top: -9999px;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
   </style>
 </head>
 <body>
@@ -433,7 +444,7 @@
     </div>
 
     <div class="upload-main-card">
-      <button class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
+      <button type="button" class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
         <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Multi-select supported)</span>
       </button>
@@ -443,10 +454,10 @@
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
-        <button class="btn-gb btn-video-wish" id="btnVideoWish" onclick="document.getElementById('pickerVideoWish').click()">
+        <button type="button" class="btn-gb btn-video-wish" id="btnVideoWish" onclick="document.getElementById('pickerVideoWish').click()">
           <span>🤳 Video Wish</span>
         </button>
-        <button class="btn-gb btn-voice" id="btnVoice" onclick="toggleVoiceRecording()">
+        <button type="button" class="btn-gb btn-voice" id="btnVoice" onclick="toggleVoiceRecording()">
           <span id="voiceTxt">🎙️ Voice Note</span>
         </button>
       </div>
@@ -455,12 +466,12 @@
 
     <div class="controls-bar">
       <div class="tabs" id="tabsBar">
-        <button class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
-        <button class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
-        <button class="tab" id="tabVW" onclick="switchMedia('vw')">🤳 Wishes (<span id="countVW">0</span>)</button>
-        <button class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
+        <button type="button" class="tab active" id="tabP" onclick="switchMedia('p')">📷 Photos (<span id="countP">0</span>)</button>
+        <button type="button" class="tab" id="tabV" onclick="switchMedia('v')">🎥 Videos (<span id="countV">0</span>)</button>
+        <button type="button" class="tab" id="tabVW" onclick="switchMedia('vw')">🤳 Wishes (<span id="countVW">0</span>)</button>
+        <button type="button" class="tab" id="tabA" onclick="switchMedia('a')">🎙️ Audio (<span id="countA">0</span>)</button>
       </div>
-      <button class="btn-sort" id="btnSortToggle" onclick="toggleSort()">
+      <button type="button" class="btn-sort" id="btnSortToggle" onclick="toggleSort()">
         <span id="sortLabel">🆕 Newest</span>
       </button>
     </div>
@@ -473,9 +484,9 @@
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
-      <button class="btn-ctrl btn-save" id="btnDl" onclick="handleDirectDownload()">💾 Save / Share</button>
-      <button class="btn-ctrl btn-delete" id="btnDel" onclick="handleDeleteUpload()">🗑️ Delete</button>
-      <button class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
+      <button type="button" class="btn-ctrl btn-save" id="btnDl" onclick="handleDirectDownload()">💾 Save / Share</button>
+      <button type="button" class="btn-ctrl btn-delete" id="btnDel" onclick="handleDeleteUpload()">🗑️ Delete</button>
+      <button type="button" class="btn-ctrl btn-exit" onclick="closeViewer()">✕ Close</button>
     </div>
   </div>
 
@@ -484,17 +495,17 @@
     const FIXED_CHAT_ID = "-1003837109142";
 
     const q = new URLSearchParams(window.location.search);
-    
+
     const eventSlug = q.get('e') || q.get('event') || 'event_Default';
     const rawTitle = q.get('t') || q.get('title') || 'Maro & Rania';
     const title = decodeURIComponent(rawTitle);
     const sub = decodeURIComponent(q.get('sub') || 'Share your live memories with us');
     const eventDate = decodeURIComponent(q.get('date') || '');
     const eventType = (q.get('ty') || q.get('type') || 'wedding').toLowerCase();
-    
-    const pCol = '#' + (q.get('p') || '4a6342');
-    const bCol = '#' + (q.get('bg') || 'f8faf7');
-    
+
+    const pCol = '#' + (q.get('p') || '4a6342').replace('#', '');
+    const bCol = '#' + (q.get('bg') || 'f8faf7').replace('#', '');
+
     const rawVw = (q.get('vwc') || q.get('p') || '4a6342').replace('#', '');
     const rawVo = (q.get('voc') || q.get('p') || '4a6342').replace('#', '');
     const vwCol = '#' + rawVw;
@@ -616,6 +627,20 @@
       }
     };
 
+    function isVideoFile(file) {
+      if (!file) return false;
+      if (file.type && file.type.toLowerCase().startsWith('video/')) return true;
+      const name = (file.name || '').toLowerCase();
+      return /\.(mp4|mov|m4v|webm|3gp|avi|mkv)$/.test(name);
+    }
+
+    function isImageFile(file) {
+      if (!file) return false;
+      if (file.type && file.type.toLowerCase().startsWith('image/')) return true;
+      const name = (file.name || '').toLowerCase();
+      return /\.(jpg|jpeg|png|gif|webp|heic|heif|bmp)$/.test(name);
+    }
+
     function updateCounts() {
       document.getElementById('countP').innerText = photoData.length;
       document.getElementById('countV').innerText = videoData.length;
@@ -691,6 +716,7 @@
             <audio id="activeAud" controls preload="auto" autoplay style="width:260px;">
               <source src="${item.url}" type="audio/mp4">
               <source src="${item.url}" type="audio/ogg">
+              <source src="${item.url}" type="audio/webm">
               Your browser does not support audio playback.
             </audio>
           </div>
@@ -909,47 +935,68 @@
     }
 
     async function compressImage(file) {
-      if (!file.type.startsWith('image/') || file.size < 700 * 1024) return file;
+      if (!isImageFile(file) || file.size < 900 * 1024) return file;
       return new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(file), 1500);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
+        let settled = false;
+        const done = (val) => {
+          if (!settled) {
+            settled = true;
             clearTimeout(timeout);
-            const canvas = document.createElement('canvas');
-            const max = 1200;
-            let w = img.width, h = img.height;
-            if (w > max || h > max) {
-              if (w > h) { h = Math.round((h * max) / w); w = max; }
-              else { w = Math.round((w * max) / h); h = max; }
-            }
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            canvas.toBlob((b) => {
-              resolve(b ? new File([b], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }) : file);
-            }, 'image/jpeg', 0.8);
-          };
-          img.onerror = () => { clearTimeout(timeout); resolve(file); };
-          img.src = e.target.result;
+            resolve(val);
+          }
         };
-        reader.onerror = () => { clearTimeout(timeout); resolve(file); };
-        reader.readAsDataURL(file);
+        const timeout = setTimeout(() => done(file), 3500);
+        try {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              try {
+                const canvas = document.createElement('canvas');
+                const max = 1280;
+                let w = img.width, h = img.height;
+                if (w > max || h > max) {
+                  if (w > h) { h = Math.round((h * max) / w); w = max; }
+                  else { w = Math.round((w * max) / h); h = max; }
+                }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob((b) => {
+                  if (b) {
+                    const cleanName = (file.name || 'photo').replace(/\.[^/.]+$/, "") + ".jpg";
+                    done(new File([b], cleanName, { type: 'image/jpeg' }));
+                  } else {
+                    done(file);
+                  }
+                }, 'image/jpeg', 0.82);
+              } catch (err) {
+                done(file);
+              }
+            };
+            img.onerror = () => done(file);
+            img.src = e.target.result;
+          };
+          reader.onerror = () => done(file);
+          reader.readAsDataURL(file);
+        } catch (err) {
+          done(file);
+        }
       });
     }
 
     async function uploadToWorker(file, type) {
       const fd = new FormData();
-      fd.append("file", file, file.name || "media_file");
+      const safeName = file.name && file.name.trim() !== '' ? file.name : (type === 'video' || type === 'videowish' ? 'video.mp4' : 'photo.jpg');
+      fd.append("file", file, safeName);
       fd.append("chat_id", FIXED_CHAT_ID);
       fd.append("event", eventSlug);
       fd.append("type", type);
 
       for (let attempt = 0; attempt < 2; attempt++) {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 15000);
+        const tid = setTimeout(() => controller.abort(), 60000);
 
         try {
           const res = await fetch(API, { method: "POST", body: fd, signal: controller.signal });
@@ -969,7 +1016,7 @@
     }
 
     document.getElementById('pickerMedia').addEventListener('change', async (e) => {
-      let files = Array.from(e.target.files);
+      const files = Array.from(e.target.files || []);
       if (!files.length) return;
 
       isUploading = true;
@@ -982,7 +1029,7 @@
 
       for (let i = 0; i < total; i++) {
         const file = files[i];
-        const isVid = file.type.startsWith('video');
+        const isVid = isVideoFile(file);
         toastStatus.innerText = `Uploading (${i + 1}/${total})...`;
 
         try {
@@ -995,7 +1042,7 @@
         } catch (err) {}
       }
 
-      toastStatus.innerText = `✓ Uploaded ${completed} items!`;
+      toastStatus.innerText = `✓ Uploaded ${completed}/${total} items!`;
       setTimeout(() => {
         toast.classList.remove('active');
         isUploading = false;
@@ -1005,7 +1052,7 @@
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
 
       const btn = document.getElementById('btnVideoWish');
@@ -1037,24 +1084,32 @@
       if (!isRecording) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          let mime = 'audio/mp4';
-          if (!MediaRecorder.isTypeSupported('audio/mp4')) {
-            mime = 'audio/webm;codecs=opus';
+          let mime = '';
+          if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) {
+            const candidates = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+            for (const c of candidates) {
+              if (MediaRecorder.isTypeSupported(c)) {
+                mime = c;
+                break;
+              }
+            }
           }
 
-          mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+          mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
           audioChunks = [];
 
           mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunks.push(e.data);
+            if (e.data && e.data.size > 0) audioChunks.push(e.data);
           };
 
           mediaRecorder.onstop = async () => {
-            const ext = mime.includes('mp4') ? 'm4a' : 'webm';
-            const audioBlob = new Blob(audioChunks, { type: mime });
+            try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+            const usedMime = mediaRecorder.mimeType || mime || 'audio/webm';
+            const ext = usedMime.includes('mp4') ? 'm4a' : (usedMime.includes('ogg') ? 'ogg' : 'webm');
+            const audioBlob = new Blob(audioChunks, { type: usedMime });
             voiceTxt.innerText = "⏳ Sending...";
 
-            const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: mime });
+            const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: usedMime });
             isUploading = true;
             const res = await uploadToWorker(file, "voice");
             isUploading = false;
@@ -1076,7 +1131,7 @@
         } catch (err) {
           alert('Microphone permission required.');
         }
-      } else {
+      } else if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
       }
     }
@@ -1089,7 +1144,7 @@
         if (!document.hidden) {
           fetchStream();
         }
-      }, 2000); // كل ثانيتين بالضبط
+      }, 2000);
     }
 
     startSmartPolling();
