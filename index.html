@@ -157,12 +157,6 @@
       margin-bottom: 12px;
     }
 
-    .android-upload-row {
-      display: none;
-      gap: 8px;
-      width: 100%;
-    }
-
     .btn-main-upload {
       width: 100%;
       background: var(--primary);
@@ -178,17 +172,6 @@
       gap: 3px;
       transition: opacity 0.2s;
       touch-action: manipulation;
-    }
-
-    .btn-main-upload.btn-cam {
-      flex: 1.35;
-      background: var(--primary);
-    }
-
-    .btn-main-upload.btn-gal {
-      flex: 1;
-      background: var(--primary);
-      opacity: 0.86;
     }
 
     .btn-main-upload:disabled { opacity: 0.7; }
@@ -469,7 +452,7 @@
       to { transform: rotate(360deg); }
     }
 
-    #pickerCamera, #pickerGallery, #pickerMedia, #pickerVideoWish {
+    #pickerMedia, #pickerVideoWish {
       position: fixed;
       top: -9999px;
       left: -9999px;
@@ -488,7 +471,7 @@
 
   <div class="wrapper">
     <div class="browser-banner" id="browserBanner">
-      <span>For best camera & upload support across browsers, open in your main browser.</span>
+      <span>For best upload & media support across browsers, open in your main browser.</span>
       <button type="button" class="browser-banner-btn" onclick="openInExternalBrowser()">Open Browser</button>
     </div>
 
@@ -500,26 +483,10 @@
     </div>
 
     <div class="upload-main-card">
-      <div class="android-upload-row" id="androidUploadRow">
-        <button type="button" class="btn-main-upload btn-cam" id="uploadCameraAction" onclick="triggerCameraCapture()">
-          <span style="font-size: 14px; font-weight: 700;">📸 Live Camera</span>
-          <span style="font-size: 10px; font-weight: 500; opacity: 0.85;">(Instant photo)</span>
-        </button>
-        <button type="button" class="btn-main-upload btn-gal" id="uploadGalleryAction" onclick="triggerGalleryPicker()">
-          <span style="font-size: 14px; font-weight: 700;">🖼️ Gallery</span>
-          <span style="font-size: 10px; font-weight: 500; opacity: 0.85;">(Photos & videos)</span>
-        </button>
-      </div>
-
-      <div id="defaultUploadRow" style="width:100%;">
-        <button type="button" class="btn-main-upload" id="uploadAction" onclick="triggerMediaPicker()">
-          <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
-          <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Camera or Gallery • Multi-select)</span>
-        </button>
-      </div>
-
-      <input type="file" id="pickerCamera" accept="image/*" capture="environment" />
-      <input type="file" id="pickerGallery" accept="image/*,video/*" multiple />
+      <button type="button" class="btn-main-upload" id="uploadAction" onclick="triggerMediaPicker()">
+        <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Camera or Gallery • Multi-select)</span>
+      </button>
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
 
@@ -553,17 +520,6 @@
     </div>
   </div>
 
-  <div class="lightbox" id="cameraModal" onclick="if(event.target === this) closeLiveCamera()">
-    <div style="width:100%; max-width:440px; display:flex; flex-direction:column; align-items:center; gap:14px;">
-      <video id="liveCamVideo" autoplay playsinline muted style="width:100%; max-height:65vh; border-radius:16px; background:#000; object-fit:cover;"></video>
-      <canvas id="liveCamCanvas" style="display:none;"></canvas>
-      <div class="lightbox-controls">
-        <button type="button" class="btn-ctrl btn-save" onclick="captureFromLiveCamera()">📸 Capture Photo</button>
-        <button type="button" class="btn-ctrl btn-exit" onclick="closeLiveCamera()">✕ Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <div class="lightbox" id="viewer" onclick="if(event.target === this) closeViewer()">
     <div class="lightbox-content" id="viewerTarget"></div>
     <div class="lightbox-controls">
@@ -586,11 +542,6 @@
       document.getElementById('browserBanner').classList.add('show');
     }
 
-    if (isAndroid) {
-      document.getElementById('androidUploadRow').style.display = 'flex';
-      document.getElementById('defaultUploadRow').style.display = 'none';
-    }
-
     function openInExternalBrowser() {
       const currentUrl = window.location.href;
       if (isAndroid) {
@@ -602,73 +553,6 @@
         }, 400);
       } else {
         window.open(currentUrl, '_blank', 'noopener,noreferrer');
-      }
-    }
-
-    let liveCamStream = null;
-
-    async function triggerCameraCapture() {
-      if (isAndroid && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          liveCamStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: "environment" } },
-            audio: false
-          });
-          const modal = document.getElementById('cameraModal');
-          const videoEl = document.getElementById('liveCamVideo');
-          videoEl.srcObject = liveCamStream;
-          modal.classList.add('active');
-          await videoEl.play().catch(() => {});
-          return;
-        } catch (err) {
-          // لو الكاميرا المباشرة اترفضت أو مش متاحة، نرجع للـ input العادي كبديل آمن
-        }
-      }
-
-      const input = document.getElementById('pickerCamera');
-      if (input) {
-        input.value = '';
-        input.click();
-      }
-    }
-
-    function closeLiveCamera() {
-      const modal = document.getElementById('cameraModal');
-      const videoEl = document.getElementById('liveCamVideo');
-      if (liveCamStream) {
-        liveCamStream.getTracks().forEach(track => track.stop());
-        liveCamStream = null;
-      }
-      if (videoEl) {
-        videoEl.srcObject = null;
-      }
-      modal.classList.remove('active');
-    }
-
-    async function captureFromLiveCamera() {
-      const videoEl = document.getElementById('liveCamVideo');
-      const canvasEl = document.getElementById('liveCamCanvas');
-      if (!videoEl || !videoEl.videoWidth || !videoEl.videoHeight) return;
-
-      canvasEl.width = videoEl.videoWidth;
-      canvasEl.height = videoEl.videoHeight;
-      const ctx = canvasEl.getContext('2d');
-      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-
-      closeLiveCamera();
-
-      canvasEl.toBlob(async (blob) => {
-        if (!blob) return;
-        const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        await handleSelectedFiles([file], null);
-      }, 'image/jpeg', 0.86);
-    }
-
-    function triggerGalleryPicker() {
-      const input = document.getElementById('pickerGallery');
-      if (input) {
-        input.value = '';
-        input.click();
       }
     }
 
@@ -1209,8 +1093,8 @@
       return { ok: false };
     }
 
-    async function handleSelectedFiles(fileList, inputEl) {
-      const files = Array.from(fileList || []);
+    document.getElementById('pickerMedia').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
       if (!files.length) return;
 
       isUploading = true;
@@ -1240,21 +1124,9 @@
       setTimeout(() => {
         toast.classList.remove('active');
         isUploading = false;
-        if (inputEl) inputEl.value = '';
+        e.target.value = '';
         fetchStream();
       }, 1200);
-    }
-
-    document.getElementById('pickerCamera').addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files, e.target);
-    });
-
-    document.getElementById('pickerGallery').addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files, e.target);
-    });
-
-    document.getElementById('pickerMedia').addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files, e.target);
     });
 
     document.getElementById('pickerVideoWish').addEventListener('change', async (e) => {
