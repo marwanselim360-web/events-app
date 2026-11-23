@@ -1,3 +1,4 @@
+Da a5r w7d sah
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,6 +52,40 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+    }
+
+    .browser-banner {
+      display: none;
+      width: 100%;
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .browser-banner.show {
+      display: flex;
+    }
+
+    .browser-banner-btn {
+      background: var(--gold);
+      color: #111827;
+      border: none;
+      border-radius: 9px;
+      padding: 7px 11px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      touch-action: manipulation;
     }
 
     .header {
@@ -436,6 +471,11 @@
   </div>
 
   <div class="wrapper">
+    <div class="browser-banner" id="browserBanner">
+      <span>For best camera & upload support across browsers, open in your main browser.</span>
+      <button type="button" class="browser-banner-btn" onclick="openInExternalBrowser()">Open Browser</button>
+    </div>
+
     <div class="header">
       <div class="wedding-icon" id="eventIcon">💍</div>
       <h1 class="title" id="eventTitle"></h1>
@@ -444,9 +484,9 @@
     </div>
 
     <div class="upload-main-card">
-      <button type="button" class="btn-main-upload" id="uploadAction" onclick="document.getElementById('pickerMedia').click()">
+      <button type="button" class="btn-main-upload" id="uploadAction" onclick="triggerMediaPicker()">
         <span style="font-size: 15px; font-weight: 700;">📸 Add Photos & Videos</span>
-        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Multi-select supported)</span>
+        <span style="font-size: 11px; font-weight: 500; opacity: 0.85;">(Camera or Gallery • Multi-select)</span>
       </button>
       <input type="file" id="pickerMedia" accept="image/*,video/*" multiple />
     </div>
@@ -454,7 +494,7 @@
     <div class="guestbook-card" id="guestbookSection">
       <div class="guestbook-title">✨ Special Wishes for the Couple ✨</div>
       <div class="guestbook-actions">
-        <button type="button" class="btn-gb btn-video-wish" id="btnVideoWish" onclick="document.getElementById('pickerVideoWish').click()">
+        <button type="button" class="btn-gb btn-video-wish" id="btnVideoWish" onclick="triggerVideoWishPicker()">
           <span>🤳 Video Wish</span>
         </button>
         <button type="button" class="btn-gb btn-voice" id="btnVoice" onclick="toggleVoiceRecording()">
@@ -493,6 +533,45 @@
   <script>
     const API = "https://nameless-king-3d15.marwanselim360.workers.dev";
     const FIXED_CHAT_ID = "-1003837109142";
+
+    const ua = navigator.userAgent || "";
+    const isAndroid = /Android/i.test(ua);
+    const isInAppBrowser = /(FBAN|FBAV|Instagram|Line|Telegram|WhatsApp|Snapchat|Twitter|wv|WebView)/i.test(ua) ||
+      (isAndroid && /; wv\)/i.test(ua));
+
+    if (isInAppBrowser) {
+      document.getElementById('browserBanner').classList.add('show');
+    }
+
+    function openInExternalBrowser() {
+      const currentUrl = window.location.href;
+      if (isAndroid) {
+        const cleanUrl = currentUrl.replace(/^https?:\/\//i, '');
+        const scheme = currentUrl.startsWith('http://') ? 'http' : 'https';
+        window.location.href = `intent://${cleanUrl}#Intent;scheme=${scheme};package=com.android.chrome;end`;
+        setTimeout(() => {
+          window.open(currentUrl, '_blank', 'noopener,noreferrer');
+        }, 400);
+      } else {
+        window.open(currentUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
+
+    function triggerMediaPicker() {
+      const input = document.getElementById('pickerMedia');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    function triggerVideoWishPicker() {
+      const input = document.getElementById('pickerVideoWish');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
 
     const q = new URLSearchParams(window.location.search);
 
@@ -1129,7 +1208,7 @@
           voiceBtn.classList.add('recording');
           voiceTxt.innerText = "⏹ Stop & Send";
         } catch (err) {
-          alert('Microphone permission required.');
+          alert('Microphone permission required. Please allow microphone access or open in Chrome/Safari.');
         }
       } else if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
